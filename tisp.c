@@ -232,58 +232,36 @@ hash_merge(Hash ht, Hash ht2)
 				hash_add(ht, ht2->items[i].key, ht2->items[i].val);
 }
 
-Val
-mk_val(Type t)
-{
-	Val v = emalloc(sizeof(struct Val));
-	v->t = t;
-	return v;
+#define MK_TYPE(TYPE, TYPE_NAME, TYPE_FULL, FN_NAME) \
+Val FN_NAME(TYPE TYPE_NAME) { \
+	Val ret = emalloc(sizeof(struct Val)); \
+	ret->t = TYPE_FULL; \
+	ret->v.TYPE_NAME = TYPE_NAME; \
+	return ret; \
 }
 
-Val
-mk_bool(bool b)
-{
-	Val v = mk_val(BOOLEAN);
-	v->v.i = b;
-	return v;
-}
+MK_TYPE(bool, i, BOOLEAN, mk_bool)
+MK_TYPE(int, i, INTEGER, mk_int)
+MK_TYPE(char *, s, STRING, mk_str)
+MK_TYPE(char *, s, SYMBOL, mk_sym)
+MK_TYPE(Prim, pr, PRIMITIVE, mk_prim)
 
 Val
-mk_int(int i)
+mk_func(Val args, Val body, Hash env)
 {
-	Val v = mk_val(INTEGER);
-	v->v.i = i;
-	return v;
-}
-
-Val
-mk_string(char *s)
-{
-	Val v = mk_val(STRING);
-	v->v.s = s;
-	return v;
-}
-
-Val
-mk_symbol(char *s)
-{
-	Val v = mk_val(SYMBOL);
-	v->v.s = s;
-	return v;
-}
-
-Val
-mk_prim(Prim pr)
-{
-	Val v = mk_val(PRIMITIVE);
-	v->v.pr = pr;
-	return v;
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = FUNCTION;
+	ret->v.f.args = args;
+	ret->v.f.body = body;
+	ret->v.f.env  = env;
+	return ret;
 }
 
 Val
 mk_pair(Val a, Val b)
 {
-	Val ret = mk_val(PAIR);
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = PAIR;
 	car(ret) = a;
 	cdr(ret) = b;
 	return ret;
@@ -315,7 +293,7 @@ read_string(Str str)
 	char *s = ++str->d;
 	for (; *str->d && *str->d++ != '"'; len++);
 	s[len] = '\0';
-	return mk_string(estrdup(s));
+	return mk_str(estrdup(s));
 }
 
 Val
@@ -325,7 +303,7 @@ read_symbol(Str str)
 	char *sym = str->d;
 	for (; *str->d && issymbol(*str->d++); len++);
 	sym[len] = '\0';
-	return mk_symbol(estrdup(sym));
+	return mk_sym(estrdup(sym));
 }
 
 Val
