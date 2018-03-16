@@ -90,6 +90,8 @@ struct Val {
 
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
+static void hash_extend(Hash ht, Val args, Val vals);
+static void hash_extendh(Hash ht, Hash ht2);
 
 Val read_val(Str str);
 Val read_list(Str str);
@@ -199,6 +201,42 @@ hash_add(Hash ht, char *key, Val val)
 		e->key = key;
 		ht->size++;
 		hash_grow(ht);
+	}
+}
+
+static void
+hash_extend(Hash ht, Val args, Val vals)
+{
+	// add each binding args[i] -> vals[i]
+	// args and vals are both scheme lists
+
+	Val arg, val;
+
+	while (!nilp(args) && !nilp(vals)) {
+		arg = car(args);
+		val = car(vals);
+		args = cdr(args);
+		vals = cdr(vals);
+		if (arg->t != SYMBOL) {
+			fprintf(stderr, "Error in hash_extend: Argument not a symbol.");
+			exit(1);
+		}
+		hash_add(ht, arg->v.s, val);
+	}
+}
+
+static void
+hash_extendh(Hash ht, Hash ht2)
+{
+	// add everything from ht2 into ht
+
+	int i;
+
+	while (ht2) {
+		for (i = 0; i < ht2->cap; i++) {
+			hash_add(ht, ht2->items[i].key, ht2->items[i].val);
+		}
+		ht2 = ht2->next;
 	}
 }
 
@@ -394,25 +432,47 @@ eval_pair(Hash env, Val v)
 }
 
 static Val
-tisp_eval(Hash env, Val v)
+tisp_trampoline(Hash env, Val v, int *continu)
 {
-	Val f;
+	Val f, args;
 	switch (v->t) {
 	case NIL:
 	case BOOLEAN:
 	case INTEGER:
 	case RATIONAL:
 	case STRING:
+		*continu = 0;
 		return v;
 	case SYMBOL:
+		*continu = 0;
 		return hash_get(env, v->v.s);
 	case PAIR:
 		f = tisp_eval(env, car(v));
-		if (f->t != PRIMITIVE)
+		args = eval_pair(env, cdr(v));
+		switch (f->t) {
+		case PRIMITIVE:
+			*continu = 0;
+			return (*f->v.pr)(env, args);
+		case FUNCTION:
+			// tail call into the function body with the extended env
+			hash_extend(env, f->v.f.args, args);
+			hash_extendh(env, f->v.f.env);
+			*continu = 1;
+			return f->v.f.body;
+		default:
 			die(1, "%s: Attempt to eval non primitive", argv0);
-		return (*f->v.pr)(env, eval_pair(env, cdr(v)));
+		}
 	default: break;
 	}
+	return v;
+}
+
+static Val
+tisp_eval(Hash env, Val v)
+{
+	int continu = 1;
+	while(continu)
+		v = tisp_trampoline(env, v, &continu);
 	return v;
 }
 
@@ -440,11 +500,7 @@ tisp_print(Val v)
 		printf(v->v.s);
 		break;
 	case FUNCTION:
-		printf("(lambda ");
-		tisp_print(v->v.f.args);
-		putchar(' ');
-		tisp_print(v->v.f.body);
-		putchar(')');
+		printf("#<closure>");
 		break;
 	case PAIR:
 		putchar('(');
