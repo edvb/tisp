@@ -91,7 +91,7 @@ struct Val {
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
 static void hash_extend(Hash ht, Val args, Val vals);
-static void hash_extendh(Hash ht, Hash ht2);
+static void hash_merge(Hash ht, Hash ht2);
 
 Val read_val(Str str);
 Val read_list(Str str);
@@ -204,40 +204,32 @@ hash_add(Hash ht, char *key, Val val)
 	}
 }
 
+/* add each binding args[i] -> vals[i] */
+/* args and vals are both scheme lists */
 static void
 hash_extend(Hash ht, Val args, Val vals)
 {
-	// add each binding args[i] -> vals[i]
-	// args and vals are both scheme lists
-
 	Val arg, val;
 
-	while (!nilp(args) && !nilp(vals)) {
+	for (; !nilp(args) && !nilp(vals); args = cdr(args), vals = cdr(vals)) {
 		arg = car(args);
 		val = car(vals);
-		args = cdr(args);
-		vals = cdr(vals);
-		if (arg->t != SYMBOL) {
-			fprintf(stderr, "Error in hash_extend: Argument not a symbol.");
-			exit(1);
-		}
+		if (arg->t != SYMBOL)
+			die(1, "%s: hash_extend: Argument not a symbol", argv0);
 		hash_add(ht, arg->v.s, val);
 	}
 }
 
+/* add everything from ht2 into ht */
 static void
-hash_extendh(Hash ht, Hash ht2)
+hash_merge(Hash ht, Hash ht2)
 {
-	// add everything from ht2 into ht
-
 	int i;
 
-	while (ht2) {
-		for (i = 0; i < ht2->cap; i++) {
-			hash_add(ht, ht2->items[i].key, ht2->items[i].val);
-		}
-		ht2 = ht2->next;
-	}
+	for (; ht2; ht2 = ht2->next)
+		for (i = 0; i < ht2->cap; i++)
+			if (ht2->items[i].key)
+				hash_add(ht, ht2->items[i].key, ht2->items[i].val);
 }
 
 Val
@@ -454,9 +446,9 @@ tisp_trampoline(Hash env, Val v, int *continu)
 			*continu = 0;
 			return (*f->v.pr)(env, args);
 		case FUNCTION:
-			// tail call into the function body with the extended env
+			/* tail call into the function body with the extended env */
 			hash_extend(env, f->v.f.args, args);
-			hash_extendh(env, f->v.f.env);
+			hash_merge(env, f->v.f.env);
 			*continu = 1;
 			return f->v.f.body;
 		default:
