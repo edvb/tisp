@@ -424,7 +424,7 @@ eval_pair(Hash env, Val v)
 }
 
 static Val
-tisp_trampoline(Hash env, Val v, int *continu)
+tisp_eval(Hash env, Val v)
 {
 	Val f, args;
 	switch (v->t) {
@@ -433,38 +433,25 @@ tisp_trampoline(Hash env, Val v, int *continu)
 	case INTEGER:
 	case RATIONAL:
 	case STRING:
-		*continu = 0;
 		return v;
 	case SYMBOL:
-		*continu = 0;
 		return hash_get(env, v->v.s);
 	case PAIR:
 		f = tisp_eval(env, car(v));
 		args = eval_pair(env, cdr(v));
 		switch (f->t) {
 		case PRIMITIVE:
-			*continu = 0;
 			return (*f->v.pr)(env, args);
 		case FUNCTION:
 			/* tail call into the function body with the extended env */
 			hash_extend(env, f->v.f.args, args);
 			hash_merge(env, f->v.f.env);
-			*continu = 1;
-			return f->v.f.body;
+			return tisp_eval(env, f->v.f.body);
 		default:
 			die(1, "%s: Attempt to eval non primitive", argv0);
 		}
 	default: break;
 	}
-	return v;
-}
-
-static Val
-tisp_eval(Hash env, Val v)
-{
-	int continu = 1;
-	while(continu)
-		v = tisp_trampoline(env, v, &continu);
 	return v;
 }
 
