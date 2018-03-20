@@ -1,12 +1,12 @@
 .\" x-roff document
 .do mso man.tmac
-.TH tisp 1 "February 2018" "tisp 0.0.0"
+.TH tisp 1 "March 2018" "tisp 0.0.0"
 .PP
 .SH NAME
 tisp - tiny lisp
 .PP
 .SH SYNOPSIS
-\fBtisp\fP [\fB-hv\fP] [\fICODE\fP] 
+\fBtisp\fP [\fB-hv\fP] [\fIFILENAME\fP] 
 .PP
 .SH DESCRIPTION
 Tiny lisp implementation, still in heavy development, barely even "useable." Designed to be scheme-like, ie very minimalist.
@@ -21,15 +21,50 @@ Tiny lisp implementation, still in heavy development, barely even "useable." Des
 \fRPrint version info and exit
 .PP
 .SH USAGE
-Run the program from the command line to launch the REPL, type command and press enter to see result. Alternatively you can pass a single command as the first argument to the command line program and see a result instantly.
+Run the program from the command line to launch the REPL, type a command and press enter to see the result.
+.PP
+.RS 4
+.EX
+
+$ tisp
+> (+ (+ 1 2) 3)
+6
+> (+ 1 2 3)
+6
+
+.EE
+.RE
+.PP
+Alternatively you can pass a file name which will be opened and run, outputting the result before exiting.
+.PP
+.RS 4
+.EX
+
+$ echo '(+ 1 2 3)' > add.lisp
+$ tisp add.lisp
+6
+
+.EE
+.RE
+.PP
+Commands can also be piped directing into tisp through the command line.
+.PP
+.RS 4
+.EX
+
+$ echo '(+ 1 2 3)' | tisp
+6
+
+.EE
+.RE
 .PP
 .SH AUTHOR
-Ed van Bruggen <ed@edryd.org>
+Ed van Bruggen <edvb@uw.edu>
 .PP
 .SH SEE ALSO
 See project page at <https://edryd.org/projects/tisp.html>
 .PP
-View source code at <https://github.com/edvb/tisp>
+View source code at <https://git.edryd.org/tisp>
 .PP
 .SH LICENSE
 zlib License

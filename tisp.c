@@ -14,6 +14,8 @@
 #include "util.h"
 
 /* defines */
+#define BUF_SIZE 2048
+
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
@@ -114,7 +116,8 @@ issymbol(char c)
 
 /* TODO skip comments */
 static void
-skip_spaces(Str str) {
+skip_spaces(Str str)
+{
 	for (; *str->d && isspace(*str->d); str->d++);
 }
 
@@ -513,7 +516,7 @@ val_free(Val v)
 static void
 usage(const int eval)
 {
-	die(eval, "usage: %s [-hv] [CODE]", argv0);
+	die(eval, "usage: %s [-hv] [FILENAME]", argv0);
 }
 
 int
@@ -529,14 +532,20 @@ main(int argc, char *argv[])
 		usage(1);
 	} ARGEND;
 
-	char *str = NULL;
+	size_t nread;
+	char *str = NULL, buf[BUF_SIZE];
+	FILE *fp;
 	Val v;
 	Hash env = init_env();
 
 	nil.t = NIL;
 
-	if (argc > 0 && argv[0][0] == '(')
-		str = argv[0];
+	if (argc > 0) {
+		if (!(fp = fopen(*argv, "r")))
+			die(1, "%s: %s:", argv[0], *argv);
+		while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) ;
+		str = buf;
+	}
 
 	while ((v = tisp_read(str))) {
 		v = tisp_eval(env, v);
