@@ -389,17 +389,17 @@ tisp_read(char *cmd)
 static Val
 eval_pair(Hash env, Val v)
 {
-	int cap = 0, size = 0;
+	int cap = 1, size = 0;
 	Val *new = emalloc(sizeof(Val));
 	while (!nilp(v)) {
-		new[cap++] = tisp_eval(env, car(v));
-		if (cap == size) {
-			size *= 2;
-			v = erealloc(v, size*sizeof(Val));
+		new[size++] = tisp_eval(env, car(v));
+		if (size == cap) {
+			cap *= 2;
+			new = erealloc(new, cap*sizeof(Val));
 		}
 		v = cdr(v);
 	}
-	Val ret = mk_list(cap, new);
+	Val ret = mk_list(size, new);
 	free(new);
 	return ret;
 }
