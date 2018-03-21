@@ -114,11 +114,12 @@ issymbol(char c)
 	return BETWEEN(c, 'a', 'z') || strchr("+-*/", c);
 }
 
-/* TODO skip comments */
 static void
 skip_spaces(Str str)
 {
-	for (; *str->d && isspace(*str->d); str->d++);
+	str->d += strspn(str->d, " \t\n"); /* skip white space */
+	for (; *str->d == ';'; str->d++) /* skip comments until newline */
+		str->d += strcspn(str->d, "\n");
 }
 
 /* return hashed number based on key */
