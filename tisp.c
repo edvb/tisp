@@ -29,8 +29,6 @@ typedef struct Str {
 	char *d;
 } *Str;
 
-typedef enum { false, true } bool;
-
 typedef enum {
 	ERROR_OK,
 	ERROR_SYNTAX
@@ -68,7 +66,6 @@ typedef struct {
 
 typedef enum {
 	NIL,
-	BOOLEAN,
 	INTEGER,
 	RATIONAL,
 	STRING,
@@ -244,7 +241,6 @@ Val FN_NAME(TYPE TYPE_NAME) { \
 	return ret; \
 }
 
-MK_TYPE(bool, i, BOOLEAN, mk_bool)
 MK_TYPE(int, i, INTEGER, mk_int)
 MK_TYPE(char *, s, STRING, mk_str)
 MK_TYPE(char *, s, SYMBOL, mk_sym)
@@ -332,8 +328,6 @@ Val
 read_val(Str str)
 {
 	skip_spaces(str);
-	if (*str->d == '#') /* TODO check 2nd char */
-		return mk_bool(*(++str->d) == 't' ? true : false);
 	if (isdigit(*str->d)) /* TODO negitive numbers */
 		return read_int(str);
 	if (*str->d == '"') /* TODO fix */
@@ -411,7 +405,6 @@ tisp_eval(Hash env, Val v)
 	Val f, args;
 	switch (v->t) {
 	case NIL:
-	case BOOLEAN:
 	case INTEGER:
 	case RATIONAL:
 	case STRING:
@@ -444,9 +437,6 @@ tisp_print(Val v)
 	switch (v->t) {
 	case NIL:
 		printf("()");
-		break;
-	case BOOLEAN:
-		printf(v->v.i ? "#t" : "#f");
 		break;
 	case INTEGER:
 		printf("%d", v->v.i);
@@ -503,6 +493,7 @@ init_env(void)
 {
 	Hash h = hash_new(64);
 	hash_add(h, "+", mk_prim(add));
+	hash_add(h, "t", mk_sym("t"));
 	return h;
 }
 
