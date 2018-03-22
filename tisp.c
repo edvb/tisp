@@ -460,8 +460,11 @@ tisp_print(Val v)
 	case SYMBOL:
 		printf(v->v.s);
 		break;
+	case PRIMITIVE:
+		printf("#<primitive>");
+		break;
 	case FUNCTION:
-		printf("#<closure>");
+		printf("#<function>");
 		break;
 	case PAIR:
 		putchar('(');
@@ -481,7 +484,7 @@ tisp_print(Val v)
 		putchar(')');
 		break;
 	default:
-		printf("%s: Could not print value type [%d]", argv0, v->t);
+		printf("%s: could not print value type [%d]", argv0, v->t);
 	}
 }
 
