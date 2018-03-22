@@ -413,13 +413,13 @@ tisp_eval(Hash env, Val v)
 		return hash_get(env, v->v.s);
 	case PAIR:
 		f = tisp_eval(env, car(v));
-		args = eval_pair(env, cdr(v));
+		args = cdr(v);
 		switch (f->t) {
 		case PRIMITIVE:
 			return (*f->v.pr)(env, args);
 		case FUNCTION:
 			/* tail call into the function body with the extended env */
-			hash_extend(env, f->v.f.args, args);
+			hash_extend(env, f->v.f.args, eval_pair(env, args));
 			hash_merge(env, f->v.f.env);
 			return tisp_eval(env, f->v.f.body);
 		default:
@@ -479,11 +479,11 @@ tisp_print(Val v)
 }
 
 static Val
-add(Hash env, Val args)
+prim_add(Hash env, Val args)
 {
 	Val v;
 	int i = 0;
-	for (v = args; !nilp(v); v = cdr(v))
+	for (v = eval_pair(env, args); !nilp(v); v = cdr(v))
 		i += car(v)->v.i;
 	return mk_int(i);
 }
@@ -492,8 +492,8 @@ static Hash
 init_env(void)
 {
 	Hash h = hash_new(64);
-	hash_add(h, "+", mk_prim(add));
 	hash_add(h, "t", mk_sym("t"));
+	hash_add(h, "+", mk_prim(prim_add));
 	return h;
 }
 
