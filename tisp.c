@@ -496,7 +496,7 @@ tisp_print(Val v)
 				tisp_print(car(v));
 				v = cdr(v);
 			} else {
-				puts(" . ");
+				printf(" . ");
 				tisp_print(v);
 				break;
 			}
