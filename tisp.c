@@ -129,6 +129,16 @@ skip_spaces(Str str)
 		str->d += strcspn(str->d, "\n");
 }
 
+static int
+list_len(Val v)
+{
+	int len = 0;
+	Val a;
+	for (a = v; a->t == PAIR; a = cdr(a))
+		len++;
+	return a->t == NIL ? len : -1;
+}
+
 /* return hashed number based on key */
 static uint32_t
 hash(char *key)
@@ -499,6 +509,55 @@ tisp_print(Val v)
 }
 
 static Val
+prim_car(Hash env, Val args)
+{
+	if (car(args)->t != PAIR)
+		warnf("car: expected list, recieved type [%d]", car(args)->t);
+	return car(car(eval_pair(env, args)));
+}
+
+static Val
+prim_cdr(Hash env, Val args)
+{
+	if (car(args)->t != PAIR)
+		warnf("cdr: expected list, recieved type [%d]", car(args)->t);
+	return cdr(car(eval_pair(env, args)));
+}
+
+static Val
+prim_cons(Hash env, Val args)
+{
+	if (list_len(args) != 2)
+		warnf("cons: expected 2 arguments, recieved [%d]", list_len(args));
+	Val a = eval_pair(env, args);
+	return mk_pair(car(a), car(cdr(a)));
+}
+
+static Val
+prim_quote(Hash env, Val args)
+{
+	if (list_len(args) != 1)
+		warnf("quote: expected 1 argument, recieved [%d]", list_len(args));
+	return car(args);
+}
+
+static Val
+prim_lambda(Hash env, Val args)
+{
+	if (list_len(args) < 2 || car(args)->t != PAIR)
+		warn("lambda: incorrect format");
+	return mk_func(car(args), car(cdr(args)), env);
+}
+
+static Val
+prim_define(Hash env, Val args)
+{
+	if (list_len(args) != 2 || car(args)->t != SYMBOL)
+		warn("define: incorrect format");
+	return hash_add(env, car(args)->v.s, tisp_eval(env, car(cdr(args))));
+}
+
+static Val
 prim_add(Hash env, Val args)
 {
 	Val v;
@@ -507,7 +566,7 @@ prim_add(Hash env, Val args)
 		if (car(v)->t == INTEGER)
 			i += car(v)->v.i;
 		else
-			warnf("+: expecting integer, got type [%d]", car(v)->t);
+			warnf("+: expected integer, recieved type [%d]", car(v)->t);
 	return mk_int(i);
 }
 
@@ -516,6 +575,12 @@ init_env(void)
 {
 	Hash h = hash_new(64);
 	hash_add(h, "t", mk_sym("t"));
+	hash_add(h, "car",    mk_prim(prim_car));
+	hash_add(h, "cdr",    mk_prim(prim_cdr));
+	hash_add(h, "cons",   mk_prim(prim_cons));
+	hash_add(h, "quote",  mk_prim(prim_quote));
+	hash_add(h, "lambda", mk_prim(prim_lambda));
+	hash_add(h, "define", mk_prim(prim_define));
 	hash_add(h, "+", mk_prim(prim_add));
 	return h;
 }
