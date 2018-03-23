@@ -20,6 +20,16 @@
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
 
+#define warnf(M, ...) do {                                                        \
+	fprintf(stderr, "%s:%d: error: " M "\n", argv0, __LINE__, ##__VA_ARGS__); \
+	return NULL;                                                              \
+} while(0)
+
+#define warn(M) do {                                                              \
+	fprintf(stderr, "%s:%d: error: " M "\n", argv0, __LINE__);                \
+	return NULL;                                                              \
+} while(0)
+
 /* typedefs */
 struct Val;
 typedef struct Val *Val;
@@ -88,8 +98,8 @@ struct Val {
 };
 
 /* functions */
-static void hash_add(Hash ht, char *key, Val val);
-static void hash_extend(Hash ht, Val args, Val vals);
+static Val  hash_add(Hash ht, char *key, Val val);
+static Hash hash_extend(Hash ht, Val args, Val vals);
 static void hash_merge(Hash ht, Hash ht2);
 
 Val read_val(Str str);
@@ -193,7 +203,7 @@ hash_grow(Hash ht)
 }
 
 /* create new key and value pair to the hash table */
-static void
+static Val
 hash_add(Hash ht, char *key, Val val)
 {
 	Entry e = entry_get(ht, key);
@@ -203,11 +213,12 @@ hash_add(Hash ht, char *key, Val val)
 		ht->size++;
 		hash_grow(ht);
 	}
+	return val;
 }
 
 /* add each binding args[i] -> vals[i] */
 /* args and vals are both scheme lists */
-static void
+static Hash
 hash_extend(Hash ht, Val args, Val vals)
 {
 	Val arg, val;
@@ -216,9 +227,10 @@ hash_extend(Hash ht, Val args, Val vals)
 		arg = car(args);
 		val = car(vals);
 		if (arg->t != SYMBOL)
-			die(1, "%s: hash_extend: Argument not a symbol", argv0);
+			warn("hash_extend: argument not a symbol");
 		hash_add(ht, arg->v.s, val);
 	}
+	return ht;
 }
 
 /* add everything from ht2 into ht */
@@ -426,11 +438,12 @@ tisp_eval(Hash env, Val v)
 			return (*f->v.pr)(env, args);
 		case FUNCTION:
 			/* tail call into the function body with the extended env */
-			hash_extend(env, f->v.f.args, eval_pair(env, args));
+			if (!(hash_extend(env, f->v.f.args, eval_pair(env, args))))
+				return NULL;
 			hash_merge(env, f->v.f.env);
 			return tisp_eval(env, f->v.f.body);
 		default:
-			die(1, "%s: Attempt to eval non primitive", argv0);
+			warn("attempt to evaluate non primitive");
 		}
 	default: break;
 	}
@@ -491,7 +504,10 @@ prim_add(Hash env, Val args)
 	Val v;
 	int i = 0;
 	for (v = eval_pair(env, args); !nilp(v); v = cdr(v))
-		i += car(v)->v.i;
+		if (car(v)->t == INTEGER)
+			i += car(v)->v.i;
+		else
+			warnf("+: expecting integer, got type [%d]", car(v)->t);
 	return mk_int(i);
 }
 
@@ -550,7 +566,8 @@ main(int argc, char *argv[])
 	}
 
 	while ((v = tisp_read(str))) {
-		v = tisp_eval(env, v);
+		if (!(v = tisp_eval(env, v)))
+			continue;
 
 		tisp_print(v);
 		putchar('\n');
