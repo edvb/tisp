@@ -106,7 +106,7 @@ struct Val nil;
 #include "config.h"
 
 static int
-issymbol(char c)
+issym(char c)
 {
 	return BETWEEN(c, 'a', 'z') || strchr("+-*/", c);
 }
@@ -287,7 +287,7 @@ read_int(Str str)
 }
 
 Val
-read_string(Str str)
+read_str(Str str)
 {
 	int len = 0;
 	char *s = ++str->d;
@@ -297,13 +297,20 @@ read_string(Str str)
 }
 
 Val
-read_symbol(Str str)
+read_sym(Str str)
 {
-	int len = 0;
-	char *sym = str->d;
-	for (; *str->d && issymbol(*str->d++); len++);
-	sym[len] = '\0';
-	return mk_sym(estrdup(sym));
+	int n = 1;
+	int i = 0;
+	char *sym = emalloc(n);
+	for (; issym(*str->d); str->d++) {
+		sym[i++] = *str->d;
+		if (i == n) {
+			n *= 2;
+			sym = erealloc(sym, n);
+		}
+	}
+	sym[i] = '\0';
+	return mk_sym(sym);
 }
 
 Val
@@ -320,6 +327,7 @@ read_list(Str str)
 	}
 	b = mk_list(n, a);
 	free(a);
+	str->d++;
 	skip_spaces(str);
 	return b;
 }
@@ -328,12 +336,12 @@ Val
 read_val(Str str)
 {
 	skip_spaces(str);
-	if (isdigit(*str->d)) /* TODO negitive numbers */
+	if (isdigit(*str->d)) /* TODO negative numbers */
 		return read_int(str);
 	if (*str->d == '"') /* TODO fix */
-		return read_string(str);
-	if (issymbol(*str->d))
-		return read_symbol(str);
+		return read_str(str);
+	if (issym(*str->d))
+		return read_sym(str);
 	if (*str->d == '(')
 		return read_list(str);
 	return NULL;
@@ -386,13 +394,12 @@ eval_pair(Hash env, Val v)
 {
 	int cap = 1, size = 0;
 	Val *new = emalloc(sizeof(Val));
-	while (!nilp(v)) {
+	for (; !nilp(v); v = cdr(v)) {
 		new[size++] = tisp_eval(env, car(v));
 		if (size == cap) {
 			cap *= 2;
 			new = erealloc(new, cap*sizeof(Val));
 		}
-		v = cdr(v);
 	}
 	Val ret = mk_list(size, new);
 	free(new);
@@ -547,7 +554,6 @@ main(int argc, char *argv[])
 
 		tisp_print(v);
 		putchar('\n');
-		val_free(v);
 		if (str) break;
 	}
 
