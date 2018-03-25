@@ -121,7 +121,7 @@ struct Val t;
 static int
 issym(char c)
 {
-	return BETWEEN(c, 'a', 'z') || strchr("+-*/", c);
+	return BETWEEN(c, 'a', 'z') || strchr("+-*/=?", c);
 }
 
 static void
@@ -414,6 +414,33 @@ tisp_read(char *cmd)
 	return ast;
 }
 
+static int
+list_eq(Val v)
+{
+	Val t;
+	if (nilp(v))
+		return 1;
+	for (t = v; !nilp(cdr(t)); t = cdr(t))
+		if (car(t)->t != car(cdr(t))->t)
+			return 0;
+	for (; !nilp(cdr(v)); v = cdr(v))
+		switch (car(v)->t) {
+		case INTEGER:
+			if (car(v)->v.i != car(cdr(v))->v.i)
+				return 0;
+			break;
+		case SYMBOL:
+		case STRING:
+			if (strcmp(car(v)->v.s, car(cdr(v))->v.s))
+				return 0;
+			break;
+		default:
+			if (car(v) != car(cdr(v)))
+				return 0;
+		}
+	return 1;
+}
+
 static Val
 eval_list(Hash env, Val v)
 {
@@ -549,6 +576,15 @@ prim_cons(Hash env, Val args)
 }
 
 static Val
+prim_eq(Hash env, Val args)
+{
+	Val v;
+	if (!(v = eval_list(env, args)))
+		return NULL;
+	return list_eq(v) ? &t : &nil;
+}
+
+static Val
 prim_quote(Hash env, Val args)
 {
 	if (list_len(args) != 1)
@@ -598,10 +634,11 @@ init_env(void)
 	hash_add(h, "car",    mk_prim(prim_car));
 	hash_add(h, "cdr",    mk_prim(prim_cdr));
 	hash_add(h, "cons",   mk_prim(prim_cons));
+	hash_add(h, "=",      mk_prim(prim_eq));
 	hash_add(h, "quote",  mk_prim(prim_quote));
 	hash_add(h, "lambda", mk_prim(prim_lambda));
 	hash_add(h, "define", mk_prim(prim_define));
-	hash_add(h, "+", mk_prim(prim_add));
+	hash_add(h, "+",      mk_prim(prim_add));
 	return h;
 }
 
