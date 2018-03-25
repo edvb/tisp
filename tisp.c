@@ -20,14 +20,16 @@
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
 
-#define warnf(M, ...) do {                                                        \
-	fprintf(stderr, "%s:%d: error: " M "\n", argv0, __LINE__, ##__VA_ARGS__); \
-	return NULL;                                                              \
+#define warnf(M, ...) do {                                \
+	fprintf(stderr, "%s:%d: error: " M "\n",          \
+	                 argv0, __LINE__, ##__VA_ARGS__); \
+	return NULL;                                      \
 } while(0)
 
-#define warn(M) do {                                                              \
-	fprintf(stderr, "%s:%d: error: " M "\n", argv0, __LINE__);                \
-	return NULL;                                                              \
+#define warn(M) do {                                      \
+	fprintf(stderr, "%s:%d: error: " M "\n",          \
+	                 argv0, __LINE__);                \
+	return NULL;                                      \
 } while(0)
 
 /* typedefs */
@@ -190,7 +192,7 @@ hash_get(Hash ht, char *key)
 		if (e->key)
 			return e->val;
 	}
-	return &nil;
+	warnf("hash_get: could not find symbol [%s]", key);
 }
 
 /* enlarge the hash table to ensure algorithm's efficiency */
@@ -412,12 +414,13 @@ tisp_read(char *cmd)
 }
 
 static Val
-eval_pair(Hash env, Val v)
+eval_list(Hash env, Val v)
 {
 	int cap = 1, size = 0;
 	Val *new = emalloc(sizeof(Val));
 	for (; !nilp(v); v = cdr(v)) {
-		new[size++] = tisp_eval(env, car(v));
+		if (!(new[size++] = tisp_eval(env, car(v))))
+			return NULL;
 		if (size == cap) {
 			cap *= 2;
 			new = erealloc(new, cap*sizeof(Val));
@@ -441,14 +444,17 @@ tisp_eval(Hash env, Val v)
 	case SYMBOL:
 		return hash_get(env, v->v.s);
 	case PAIR:
-		f = tisp_eval(env, car(v));
+		if (!(f = tisp_eval(env, car(v))))
+			return NULL;
 		args = cdr(v);
 		switch (f->t) {
 		case PRIMITIVE:
 			return (*f->v.pr)(env, args);
 		case FUNCTION:
 			/* tail call into the function body with the extended env */
-			if (!(hash_extend(env, f->v.f.args, eval_pair(env, args))))
+			if (!(args = eval_list(env, args)))
+				return NULL;
+			if (!(hash_extend(env, f->v.f.args, args)))
 				return NULL;
 			hash_merge(env, f->v.f.env);
 			return tisp_eval(env, f->v.f.body);
@@ -511,26 +517,34 @@ tisp_print(Val v)
 static Val
 prim_car(Hash env, Val args)
 {
+	Val v;
 	if (car(args)->t != PAIR)
 		warnf("car: expected list, recieved type [%d]", car(args)->t);
-	return car(car(eval_pair(env, args)));
+	if (!(v = eval_list(env, args)))
+		return NULL;
+	return car(car(v));
 }
 
 static Val
 prim_cdr(Hash env, Val args)
 {
+	Val v;
 	if (car(args)->t != PAIR)
 		warnf("cdr: expected list, recieved type [%d]", car(args)->t);
-	return cdr(car(eval_pair(env, args)));
+	if (!(v = eval_list(env, args)))
+		return NULL;
+	return cdr(car(v));
 }
 
 static Val
 prim_cons(Hash env, Val args)
 {
+	Val v;
 	if (list_len(args) != 2)
 		warnf("cons: expected 2 arguments, recieved [%d]", list_len(args));
-	Val a = eval_pair(env, args);
-	return mk_pair(car(a), car(cdr(a)));
+	if (!(v = eval_list(env, args)))
+		return NULL;
+	return mk_pair(car(v), car(cdr(v)));
 }
 
 static Val
@@ -552,9 +566,12 @@ prim_lambda(Hash env, Val args)
 static Val
 prim_define(Hash env, Val args)
 {
+	Val v;
 	if (list_len(args) != 2 || car(args)->t != SYMBOL)
 		warn("define: incorrect format");
-	return hash_add(env, car(args)->v.s, tisp_eval(env, car(cdr(args))));
+	if (!(v = tisp_eval(env, car(cdr(args)))))
+		return NULL;
+	return hash_add(env, car(args)->v.s, v);
 }
 
 static Val
@@ -562,7 +579,9 @@ prim_add(Hash env, Val args)
 {
 	Val v;
 	int i = 0;
-	for (v = eval_pair(env, args); !nilp(v); v = cdr(v))
+	if (!(v = eval_list(env, args)))
+		return NULL;
+	for (; !nilp(v); v = cdr(v))
 		if (car(v)->t == INTEGER)
 			i += car(v)->v.i;
 		else
