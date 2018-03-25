@@ -114,6 +114,7 @@ static Val tisp_eval(Hash env, Val v);
 char *argv0;
 
 struct Val nil;
+struct Val t;
 
 #include "config.h"
 
@@ -593,7 +594,7 @@ static Hash
 init_env(void)
 {
 	Hash h = hash_new(64);
-	hash_add(h, "t", mk_sym("t"));
+	hash_add(h, "t", &t);
 	hash_add(h, "car",    mk_prim(prim_car));
 	hash_add(h, "cdr",    mk_prim(prim_cdr));
 	hash_add(h, "cons",   mk_prim(prim_cons));
@@ -641,6 +642,8 @@ main(int argc, char *argv[])
 	Hash env = init_env();
 
 	nil.t = NIL;
+	t.t = SYMBOL;
+	t.v.s = estrdup("t");
 
 	if (argc > 0) {
 		if (!(fp = fopen(*argv, "r")))
@@ -656,14 +659,6 @@ main(int argc, char *argv[])
 		tisp_print(v);
 		putchar('\n');
 		if (str) break;
-	}
-
-	for (; env; env = env->next) {
-		for (int i = 0; i < env->cap; i++)
-			if (env->items[i].key)
-				val_free(env->items[i].val);
-		free(env->items);
-		free(env);
 	}
 
 	return 0;
