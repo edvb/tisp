@@ -593,6 +593,18 @@ prim_quote(Hash env, Val args)
 }
 
 static Val
+prim_cond(Hash env, Val args)
+{
+	Val v, cond;
+	for (v = args; !nilp(v); v = cdr(v))
+		if (!(cond = tisp_eval(env, car(car(v)))))
+			return NULL;
+		else if (vals_eq(cond, &t))
+			return tisp_eval(env, car(cdr(car(v))));
+	return &nil;
+}
+
+static Val
 prim_lambda(Hash env, Val args)
 {
 	if (list_len(args) < 2 || car(args)->t != PAIR)
@@ -636,6 +648,7 @@ init_env(void)
 	hash_add(h, "cons",   mk_prim(prim_cons));
 	hash_add(h, "=",      mk_prim(prim_eq));
 	hash_add(h, "quote",  mk_prim(prim_quote));
+	hash_add(h, "cond",   mk_prim(prim_cond));
 	hash_add(h, "lambda", mk_prim(prim_lambda));
 	hash_add(h, "define", mk_prim(prim_define));
 	hash_add(h, "+",      mk_prim(prim_add));
