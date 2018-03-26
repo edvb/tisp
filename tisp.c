@@ -415,29 +415,24 @@ tisp_read(char *cmd)
 }
 
 static int
-list_eq(Val v)
+vals_eq(Val a, Val b)
 {
-	Val t;
-	if (nilp(v))
-		return 1;
-	for (t = v; !nilp(cdr(t)); t = cdr(t))
-		if (car(t)->t != car(cdr(t))->t)
+	if (a->t != b->t)
+		return 0;
+	switch (a->t) {
+	case INTEGER:
+		if (a->v.i != b->v.i)
 			return 0;
-	for (; !nilp(cdr(v)); v = cdr(v))
-		switch (car(v)->t) {
-		case INTEGER:
-			if (car(v)->v.i != car(cdr(v))->v.i)
-				return 0;
-			break;
-		case SYMBOL:
-		case STRING:
-			if (strcmp(car(v)->v.s, car(cdr(v))->v.s))
-				return 0;
-			break;
-		default:
-			if (car(v) != car(cdr(v)))
-				return 0;
-		}
+		break;
+	case SYMBOL:
+	case STRING:
+		if (strcmp(a->v.s, b->v.s))
+			return 0;
+		break;
+	default:
+		if (a != b)
+			return 0;
+	}
 	return 1;
 }
 
@@ -581,7 +576,12 @@ prim_eq(Hash env, Val args)
 	Val v;
 	if (!(v = eval_list(env, args)))
 		return NULL;
-	return list_eq(v) ? &t : &nil;
+	if (nilp(v))
+		return &t;
+	for (; !nilp(cdr(v)); v = cdr(v))
+		if (!vals_eq(car(v), car(cdr(v))))
+			return &nil;
+	return &t;
 }
 
 static Val
