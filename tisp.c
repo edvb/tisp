@@ -599,7 +599,7 @@ prim_cond(Hash env, Val args)
 	for (v = args; !nilp(v); v = cdr(v))
 		if (!(cond = tisp_eval(env, car(car(v)))))
 			return NULL;
-		else if (vals_eq(cond, &t))
+		else if (!nilp(cond))
 			return tisp_eval(env, car(cdr(car(v))));
 	return &nil;
 }
