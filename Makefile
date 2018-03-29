@@ -57,6 +57,10 @@ uninstall:
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@echo \ done
 
+test: $(EXE)
+	@echo running tests
+	@cd t && ./t
+
 man:
 	@echo -n updating man page $(EXE).1 ...
 	@(head -1 README.md | sed "s/$(EXE)/$(EXE) 1 \"`date +%B\ %Y`\" \"$(EXE)\ $(VERSION)\"\n\n##NAME\n\n&/"; \
