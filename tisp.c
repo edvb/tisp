@@ -607,7 +607,7 @@ prim_cond(Hash env, Val args)
 static Val
 prim_lambda(Hash env, Val args)
 {
-	if (list_len(args) < 2 || car(args)->t != PAIR)
+	if (list_len(args) < 2 || (car(args)->t != PAIR && !nilp(car(args))))
 		warn("lambda: incorrect format");
 	return mk_func(car(args), car(cdr(args)), env);
 }
