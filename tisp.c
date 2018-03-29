@@ -391,27 +391,20 @@ hints(const char *buf, int *color, int *bold)
 }
 
 static Val
-tisp_read(char *cmd)
+tisp_read(Str cmd)
 {
-	char *line;
 	struct Str str;
-	Val ast;
 
-	if (cmd) {
-		line = estrdup(cmd);
-	} else {
-		if (SHOW_HINTS)
-			linenoiseSetHintsCallback(hints);
-		if (!(line = linenoise("> ")))
-			return NULL;
-		linenoiseHistoryAdd(line);
-	}
+	if (cmd->d)
+		return read_val(cmd);
 
-	str.d = line;
-	ast = read_val(&str);
-	free(line);
+	if (SHOW_HINTS)
+		linenoiseSetHintsCallback(hints);
+	if (!(str.d = linenoise("> ")))
+		return NULL;
+	linenoiseHistoryAdd(str.d);
 
-	return ast;
+	return read_val(&str);
 }
 
 static int
@@ -686,7 +679,8 @@ main(int argc, char *argv[])
 	} ARGEND;
 
 	size_t nread;
-	char *str = NULL, buf[BUF_SIZE];
+	char buf[BUF_SIZE];
+	struct Str str = { NULL };
 	FILE *fp;
 	Val v;
 	Hash env = init_env();
@@ -699,16 +693,19 @@ main(int argc, char *argv[])
 		if (!(fp = fopen(*argv, "r")))
 			die(1, "%s: %s:", argv[0], *argv);
 		while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) ;
-		str = buf;
+		str.d = estrdup(buf);
 	}
 
-	while ((v = tisp_read(str))) {
+	while ((v = tisp_read(&str))) {
 		if (!(v = tisp_eval(env, v)))
 			continue;
 
 		tisp_print(v);
 		putchar('\n');
-		if (str) break;
+
+		if (!str.d) continue;
+		skip_spaces(&str);
+		if (!*str.d) break;
 	}
 
 	return 0;
