@@ -613,7 +613,8 @@ prim_define(Hash env, Val args)
 		warn("define: incorrect format");
 	if (!(v = tisp_eval(env, car(cdr(args)))))
 		return NULL;
-	return hash_add(env, car(args)->v.s, v);
+	hash_add(env, car(args)->v.s, v);
+	return NULL;
 }
 
 static Val
