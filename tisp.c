@@ -1,135 +1,30 @@
 /* See LICENSE file for copyright and license details. */
 #include <ctype.h>
-#include <libgen.h>
 #include <limits.h>
-#include <regex.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include "extern/arg.h"
-#include "extern/linenoise.h"
+#include "tisp.h"
 #include "util.h"
 
-/* defines */
-#define BUF_SIZE 2048
-
-#define car(P)  ((P)->v.p.car)
-#define cdr(P)  ((P)->v.p.cdr)
-#define nilp(P) ((P)->t == NIL)
-
-#define warnf(M, ...) do {                                \
-	fprintf(stderr, "%s:%d: error: " M "\n",          \
-	                 argv0, __LINE__, ##__VA_ARGS__); \
-	return NULL;                                      \
-} while(0)
-
-#define warn(M) do {                                      \
-	fprintf(stderr, "%s:%d: error: " M "\n",          \
-	                 argv0, __LINE__);                \
-	return NULL;                                      \
-} while(0)
-
-/* typedefs */
-struct Val;
-typedef struct Val *Val;
-
-/* improved interface for a pointer to a string */
-typedef struct Str {
-	char *d;
-} *Str;
-
-typedef enum {
-	ERROR_OK,
-	ERROR_SYNTAX
-} Error;
-
-/* fraction */
-typedef struct {
-	int num, den;
-} Ratio;
-
-typedef struct Entry *Entry;
-
-typedef struct Hash {
-	int size, cap;
-	struct Entry {
-		char *key;
-		Val val;
-	} *items;
-	struct Hash *next;
-} *Hash;
-
-/* basic function written in C, not lisp */
-typedef Val (*Prim)(Hash, Val);
-
-/* function written directly in lisp instead of C */
-typedef struct {
-	Val args;
-	Val body;
-	Hash env;
-} Func;
-
-typedef struct {
-	Val car, cdr;
-} Pair;
-
-typedef enum {
-	NIL,
-	INTEGER,
-	RATIONAL,
-	STRING,
-	SYMBOL,
-	PRIMITIVE,
-	FUNCTION,
-	PAIR,
-} Type;
-
-struct Val {
-	Type t;
-	union {
-		int i;
-		Ratio r;
-		char *s;
-		Prim pr;
-		Func f;
-		Pair p;
-	} v;
-};
-
 /* functions */
-static Val  hash_add(Hash ht, char *key, Val val);
 static Hash hash_extend(Hash ht, Val args, Val vals);
 static void hash_merge(Hash ht, Hash ht2);
 
-Val read_val(Str str);
-Val read_list(Str str);
-
-static void tisp_print(Val v);
-static Val tisp_eval(Hash env, Val v);
-
-/* variables */
-char *argv0;
-
-struct Val nil;
-struct Val t;
-
-#include "config.h"
-
-static int
-issym(char c)
-{
-	return BETWEEN(c, 'a', 'z') || strchr("+-*/=?", c);
-}
-
-static void
+void
 skip_spaces(Str str)
 {
 	str->d += strspn(str->d, " \t\n"); /* skip white space */
 	for (; *str->d == ';'; str->d++) /* skip comments until newline */
 		str->d += strcspn(str->d, "\n");
+}
+
+static int
+issym(char c)
+{
+	return BETWEEN(c, 'a', 'z') || strchr("+-*/=?", c);
 }
 
 static int
@@ -252,7 +147,7 @@ hash_grow(Hash ht)
 }
 
 /* create new key and value pair to the hash table */
-static Val
+Val
 hash_add(Hash ht, char *key, Val val)
 {
 	Entry e = entry_get(ht, key);
@@ -399,7 +294,7 @@ read_list(Str str)
 	skip_spaces(str);
 	while (*str->d && *str->d != ')') {
 		a = erealloc(a, (n+1) * sizeof(Val)); /* TODO realloc less */
-		a[n++] = read_val(str);
+		a[n++] = tisp_read(str);
 		skip_spaces(str);
 	}
 	b = mk_list(n, a);
@@ -410,7 +305,7 @@ read_list(Str str)
 }
 
 Val
-read_val(Str str)
+tisp_read(Str str)
 {
 	skip_spaces(str);
 	if (isdigit(*str->d)) /* TODO negative numbers */
@@ -424,42 +319,7 @@ read_val(Str str)
 	return NULL;
 }
 
-char *
-hints(const char *buf, int *color, int *bold)
-{
-	struct { char *match, *hint; int color, bold; } hint[] = {
-		{ "(lambda", " (args) (body))", 35, 0 },
-		{ "(define", " var exp)",       35, 0 },
-		{ NULL, NULL, 0, 0 }
-	};
-	for (int i = 0; hint[i].match; i++) {
-		if (!strcasecmp(buf, hint[i].match)){
-			*color = hint[i].color;
-			*bold = hint[i].bold;
-			return hint[i].hint;
-		}
-	}
-	return NULL;
-}
-
-static Val
-tisp_read(Str cmd)
-{
-	struct Str str;
-
-	if (cmd->d)
-		return read_val(cmd);
-
-	if (SHOW_HINTS)
-		linenoiseSetHintsCallback(hints);
-	if (!(str.d = linenoise("> ")))
-		return NULL;
-	linenoiseHistoryAdd(str.d);
-
-	return read_val(&str);
-}
-
-static Val
+Val
 eval_list(Hash env, Val v)
 {
 	int cap = 1, size = 0;
@@ -477,7 +337,7 @@ eval_list(Hash env, Val v)
 	return ret;
 }
 
-static Val
+Val
 tisp_eval(Hash env, Val v)
 {
 	Val f, args;
@@ -513,7 +373,7 @@ tisp_eval(Hash env, Val v)
 }
 
 /* TODO return str for error msgs? */
-static void
+void
 tisp_print(Val v)
 {
 	switch (v->t) {
@@ -556,7 +416,7 @@ tisp_print(Val v)
 		putchar(')');
 		break;
 	default:
-		printf("%s: could not print value type [%d]", argv0, v->t);
+		fprintf(stderr, "tisp: could not print value type [%d]", v->t);
 	}
 }
 
@@ -647,25 +507,10 @@ prim_define(Hash env, Val args)
 	return NULL;
 }
 
-static Val
-prim_add(Hash env, Val args)
+Hash
+tisp_init_env(size_t cap)
 {
-	Val v;
-	int i = 0;
-	if (!(v = eval_list(env, args)))
-		return NULL;
-	for (; !nilp(v); v = cdr(v))
-		if (car(v)->t == INTEGER)
-			i += car(v)->v.i;
-		else
-			warnf("+: expected integer, recieved type [%d]", car(v)->t);
-	return mk_int(i);
-}
-
-static Hash
-init_env(void)
-{
-	Hash h = hash_new(64);
+	Hash h = hash_new(cap);
 	hash_add(h, "t", &t);
 	hash_add(h, "car",    mk_prim(prim_car));
 	hash_add(h, "cdr",    mk_prim(prim_cdr));
@@ -675,7 +520,6 @@ init_env(void)
 	hash_add(h, "cond",   mk_prim(prim_cond));
 	hash_add(h, "lambda", mk_prim(prim_lambda));
 	hash_add(h, "define", mk_prim(prim_define));
-	hash_add(h, "+",      mk_prim(prim_add));
 	return h;
 }
 
@@ -688,56 +532,4 @@ val_free(Val v)
 	}
 	if (v->t != NIL)
 		free(v);
-}
-
-static void
-usage(const int eval)
-{
-	die(eval, "usage: %s [-hv] [FILENAME]", argv0);
-}
-
-int
-main(int argc, char *argv[])
-{
-	ARGBEGIN {
-	case 'h':
-		usage(0);
-	case 'v':
-		printf("%s v%s (c) 2017-2018 Ed van Bruggen\n", argv0, VERSION);
-		return 0;
-	default:
-		usage(1);
-	} ARGEND;
-
-	size_t nread;
-	char buf[BUF_SIZE];
-	struct Str str = { NULL };
-	FILE *fp;
-	Val v;
-	Hash env = init_env();
-
-	nil.t = NIL;
-	t.t = SYMBOL;
-	t.v.s = estrdup("t");
-
-	if (argc > 0) {
-		if (!(fp = fopen(*argv, "r")))
-			die(1, "%s: %s:", argv[0], *argv);
-		while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) ;
-		str.d = estrdup(buf);
-	}
-
-	while ((v = tisp_read(&str))) {
-		if (!(v = tisp_eval(env, v)))
-			continue;
-
-		tisp_print(v);
-		putchar('\n');
-
-		if (!str.d) continue;
-		skip_spaces(&str);
-		if (!*str.d) break;
-	}
-
-	return 0;
 }
