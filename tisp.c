@@ -142,6 +142,42 @@ list_len(Val v)
 	return a->t == NIL ? len : -1;
 }
 
+static int
+vals_eq(Val a, Val b)
+{
+	if (a->t != b->t)
+		return 0;
+	switch (a->t) {
+	case INTEGER:
+		if (a->v.i != b->v.i)
+			return 0;
+		break;
+	case SYMBOL:
+	case STRING:
+		if (strcmp(a->v.s, b->v.s))
+			return 0;
+		break;
+	default:
+		if (a != b)
+			return 0;
+	}
+	return 1;
+}
+
+/* reduce fraction by modifying supplied numerator and denominator */
+static void
+frac_reduce(int *num, int *den)
+{
+	int a = *num, b = *den, c = a % b;
+	while(c > 0) {
+		a = b;
+		b = c;
+		c = a % b;
+	}
+	*num = *num / b;
+	*den = *den / b;
+}
+
 /* return hashed number based on key */
 static uint32_t
 hash(char *key)
@@ -272,6 +308,18 @@ MK_TYPE(char *, s, SYMBOL, mk_sym)
 MK_TYPE(Prim, pr, PRIMITIVE, mk_prim)
 
 Val
+mk_rat(int num, int den)
+{
+	frac_reduce(&num, &den);
+	if (den == 1) /* simplify fraction into integer if denominator is 1 */
+		return mk_int(num);
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = RATIONAL;
+	ret->v.r = (Ratio){ num, den };
+	return ret;
+}
+
+Val
 mk_func(Val args, Val body, Hash env)
 {
 	Val ret = emalloc(sizeof(struct Val));
@@ -305,10 +353,14 @@ mk_list(int n, Val *a)
 Val
 read_int(Str str)
 {
-	int i = 0;
-	for (; isdigit(*str->d); str->d++)
+	int i, j;
+	for (i = 0; isdigit(*str->d); str->d++)
 		i = i * 10 + *str->d - '0';
-	return mk_int(i);
+	if (*str->d != '/')
+		return mk_int(i);
+	for (j = 0, *str->d++; isdigit(*str->d); str->d++)
+		j = j * 10 + *str->d - '0';
+	return mk_rat(i, j);
 }
 
 Val
@@ -405,28 +457,6 @@ tisp_read(Str cmd)
 	linenoiseHistoryAdd(str.d);
 
 	return read_val(&str);
-}
-
-static int
-vals_eq(Val a, Val b)
-{
-	if (a->t != b->t)
-		return 0;
-	switch (a->t) {
-	case INTEGER:
-		if (a->v.i != b->v.i)
-			return 0;
-		break;
-	case SYMBOL:
-	case STRING:
-		if (strcmp(a->v.s, b->v.s))
-			return 0;
-		break;
-	default:
-		if (a != b)
-			return 0;
-	}
-	return 1;
 }
 
 static Val
