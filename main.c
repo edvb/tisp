@@ -76,10 +76,6 @@ main(int argc, char *argv[])
 	Hash env = tisp_init_env(64);
 	tib_math_env(env);
 
-	nil.t = NIL;
-	t.t = SYMBOL;
-	t.v.s = estrdup("t");
-
 	if (argc > 0) {
 		if (!(fp = fopen(*argv, "r")))
 			die(1, "%s: %s:", argv[0], *argv);

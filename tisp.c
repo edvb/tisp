@@ -512,6 +512,10 @@ prim_define(Hash env, Val args)
 Hash
 tisp_init_env(size_t cap)
 {
+	nil.t = NIL;
+	t.t = SYMBOL;
+	t.v.s = estrdup("t");
+
 	Hash h = hash_new(cap);
 	hash_add(h, "t", &t);
 	hash_add(h, "car",    mk_prim(prim_car));
