@@ -424,10 +424,10 @@ static Val
 prim_car(Hash env, Val args)
 {
 	Val v;
-	if (car(args)->t != PAIR)
-		warnf("car: expected list, recieved type [%d]", car(args)->t);
 	if (!(v = eval_list(env, args)))
 		return NULL;
+	if (v->t != PAIR)
+		warnf("car: expected list, recieved type [%d]", car(args)->t);
 	return car(car(v));
 }
 
@@ -435,10 +435,10 @@ static Val
 prim_cdr(Hash env, Val args)
 {
 	Val v;
-	if (car(args)->t != PAIR)
-		warnf("cdr: expected list, recieved type [%d]", car(args)->t);
 	if (!(v = eval_list(env, args)))
 		return NULL;
+	if (v->t != PAIR)
+		warnf("cdr: expected list, recieved type [%d]", car(args)->t);
 	return cdr(car(v));
 }
 
