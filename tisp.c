@@ -205,6 +205,8 @@ MK_TYPE(Prim, pr, PRIMITIVE, mk_prim)
 Val
 mk_rat(int num, int den)
 {
+	if (den == 0)
+		warn("division by zero");
 	frac_reduce(&num, &den);
 	if (den == 1) /* simplify fraction into integer if denominator is 1 */
 		return mk_int(num);
