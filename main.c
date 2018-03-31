@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 	FILE *fp;
 	Val v;
 	Hash env = tisp_init_env(64);
-	env = tib_math_env(env);
+	tib_math_env(env);
 
 	nil.t = NIL;
 	t.t = SYMBOL;

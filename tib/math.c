@@ -4,7 +4,7 @@
 #include "../tisp.h"
 #include "math.h"
 
-Val
+static Val
 prim_add(Hash env, Val args)
 {
 	Val v;
@@ -19,9 +19,8 @@ prim_add(Hash env, Val args)
 	return mk_int(i);
 }
 
-Hash
+void
 tib_math_env(Hash ht)
 {
 	hash_add(ht, "+", mk_prim(prim_add));
-	return ht;
 }
