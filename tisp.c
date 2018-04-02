@@ -426,10 +426,12 @@ static Val
 prim_car(Hash env, Val args)
 {
 	Val v;
+	if (list_len(args) != 1)
+		warnf("car: expected 1 argument, received [%d]", list_len(args));
 	if (!(v = eval_list(env, args)))
 		return NULL;
-	if (v->t != PAIR)
-		warnf("car: expected list, recieved type [%d]", car(args)->t);
+	if (car(v)->t != PAIR)
+		warnf("car: expected list, received type [%d]", car(v)->t);
 	return car(car(v));
 }
 
@@ -437,10 +439,12 @@ static Val
 prim_cdr(Hash env, Val args)
 {
 	Val v;
+	if (list_len(args) != 1)
+		warnf("cdr: expected 1 argument, received [%d]", list_len(args));
 	if (!(v = eval_list(env, args)))
 		return NULL;
-	if (v->t != PAIR)
-		warnf("cdr: expected list, recieved type [%d]", car(args)->t);
+	if (car(v)->t != PAIR)
+		warnf("cdr: expected list, received type [%d]", car(v)->t);
 	return cdr(car(v));
 }
 
@@ -449,7 +453,7 @@ prim_cons(Hash env, Val args)
 {
 	Val v;
 	if (list_len(args) != 2)
-		warnf("cons: expected 2 arguments, recieved [%d]", list_len(args));
+		warnf("cons: expected 2 arguments, received [%d]", list_len(args));
 	if (!(v = eval_list(env, args)))
 		return NULL;
 	return mk_pair(car(v), car(cdr(v)));
@@ -473,7 +477,7 @@ static Val
 prim_quote(Hash env, Val args)
 {
 	if (list_len(args) != 1)
-		warnf("quote: expected 1 argument, recieved [%d]", list_len(args));
+		warnf("quote: expected 1 argument, received [%d]", list_len(args));
 	return car(args);
 }
 
