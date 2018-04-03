@@ -73,6 +73,22 @@ frac_reduce(int *num, int *den)
 	*den = *den / b;
 }
 
+static char *
+type_str(Type t)
+{
+	switch (t) {
+	case NIL:       return "nil";
+	case INTEGER:   return "integer";
+	case RATIONAL:  return "rational";
+	case STRING:    return "string";
+	case SYMBOL:    return "symbol";
+	case PRIMITIVE: return "primitive";
+	case FUNCTION:  return "function";
+	case PAIR:      return "pair";
+	default:        return "invalid";
+	}
+}
+
 /* return hashed number based on key */
 static uint32_t
 hash(char *key)
@@ -418,7 +434,7 @@ tisp_print(Val v)
 		putchar(')');
 		break;
 	default:
-		fprintf(stderr, "tisp: could not print value type [%d]", v->t);
+		fprintf(stderr, "tisp: could not print value type [%s]", type_str(v->t));
 	}
 }
 
@@ -431,7 +447,7 @@ prim_car(Hash env, Val args)
 	if (!(v = eval_list(env, args)))
 		return NULL;
 	if (car(v)->t != PAIR)
-		warnf("car: expected list, received type [%d]", car(v)->t);
+		warnf("car: expected list, received type [%s]", type_str(car(v)->t));
 	return car(car(v));
 }
 
@@ -444,7 +460,7 @@ prim_cdr(Hash env, Val args)
 	if (!(v = eval_list(env, args)))
 		return NULL;
 	if (car(v)->t != PAIR)
-		warnf("cdr: expected list, received type [%d]", car(v)->t);
+		warnf("cdr: expected list, received type [%s]", type_str(car(v)->t));
 	return cdr(car(v));
 }
 
