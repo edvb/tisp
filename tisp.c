@@ -328,8 +328,12 @@ tisp_read(Str str)
 	skip_spaces(str);
 	if (isdigit(*str->d)) /* TODO negative numbers */
 		return read_int(str);
-	if (*str->d == '"') /* TODO fix */
+	if (*str->d == '"')
 		return read_str(str);
+	if (*str->d == '\'') {
+		str->d++;
+		return mk_pair(mk_sym("quote"), mk_pair(tisp_read(str), &nil));
+	}
 	if (issym(*str->d))
 		return read_sym(str);
 	if (*str->d == '(')
