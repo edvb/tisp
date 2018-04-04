@@ -63,7 +63,7 @@ vals_eq(Val a, Val b)
 static void
 frac_reduce(int *num, int *den)
 {
-	int a = *num, b = *den, c = a % b;
+	int a = abs(*num), b = abs(*den), c = a % b;
 	while(c > 0) {
 		a = b;
 		b = c;
@@ -224,7 +224,11 @@ mk_rat(int num, int den)
 	if (den == 0)
 		warn("division by zero");
 	frac_reduce(&num, &den);
-	if (den == 1) /* simplify fraction into integer if denominator is 1 */
+	if (den < 0) { /* simplify so only numerator is negative */
+		den = abs(den);
+		num = -num;
+	}
+	if (den == 1) /* simplify into integer if denominator is 1 */
 		return mk_int(num);
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = RATIONAL;
@@ -263,17 +267,26 @@ mk_list(int n, Val *a)
 	return b;
 }
 
+static int
+read_int(Str str) {
+	int ret, sign = 1;
+	if (*str->d == '-') {
+		str->d++;
+		sign = -1;
+	}
+	for (ret = 0; isdigit(*str->d); str->d++)
+		ret = ret * 10 + *str->d - '0';
+	return sign * ret;
+}
+
 Val
-read_int(Str str)
+read_num(Str str)
 {
-	int i, j;
-	for (i = 0; isdigit(*str->d); str->d++)
-		i = i * 10 + *str->d - '0';
+	int num = read_int(str);
 	if (*str->d != '/')
-		return mk_int(i);
-	for (j = 0, *str->d++; isdigit(*str->d); str->d++)
-		j = j * 10 + *str->d - '0';
-	return mk_rat(i, j);
+		return mk_int(num);
+	str->d++;
+	return mk_rat(num, read_int(str));
 }
 
 Val
@@ -326,8 +339,8 @@ Val
 tisp_read(Str str)
 {
 	skip_spaces(str);
-	if (isdigit(*str->d)) /* TODO negative numbers */
-		return read_int(str);
+	if (isdigit(*str->d) || (*str->d == '-' && isdigit(str->d[1])))
+		return read_num(str);
 	if (*str->d == '"')
 		return read_str(str);
 	if (*str->d == '\'') {
