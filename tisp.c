@@ -47,6 +47,10 @@ vals_eq(Val a, Val b)
 		if (a->v.i != b->v.i)
 			return 0;
 		break;
+	case RATIONAL:
+		if (a->v.r.num != b->v.r.num || a->v.r.den != b->v.r.den)
+			return 0;
+		break;
 	case SYMBOL:
 	case STRING:
 		if (strcmp(a->v.s, b->v.s))
