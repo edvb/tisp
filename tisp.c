@@ -24,7 +24,8 @@ skip_spaces(Str str)
 static int
 issym(char c)
 {
-	return BETWEEN(c, 'a', 'z') || strchr("+-*/=?", c);
+	return BETWEEN(c, 'a', 'z') || BETWEEN(c, 'A', 'Z') ||
+	       BETWEEN(c, '0', '9') || strchr("+-*/=?", c);
 }
 
 static int
@@ -274,9 +275,12 @@ mk_list(int n, Val *a)
 static int
 read_int(Str str) {
 	int ret, sign = 1;
-	if (*str->d == '-') {
-		str->d++;
+	switch (*str->d) {
+	case '-':
 		sign = -1;
+	case '+':
+		str->d++;
+		break;
 	}
 	for (ret = 0; isdigit(*str->d); str->d++)
 		ret = ret * 10 + *str->d - '0';
@@ -343,7 +347,7 @@ Val
 tisp_read(Str str)
 {
 	skip_spaces(str);
-	if (isdigit(*str->d) || (*str->d == '-' && isdigit(str->d[1])))
+	if (isdigit(*str->d) || ((*str->d == '-' || *str->d == '+') && isdigit(str->d[1])))
 		return read_num(str);
 	if (*str->d == '"')
 		return read_str(str);
