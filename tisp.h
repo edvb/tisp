@@ -86,6 +86,7 @@ struct Val nil;
 struct Val t;
 
 void skip_spaces(Str str);
+char *type_str(Type t);
 
 Val hash_add(Hash ht, char *key, Val val);
 

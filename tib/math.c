@@ -4,6 +4,13 @@
 #include "../tisp.h"
 #include "math.h"
 
+#define INC(SIGN, FUNC) do {                                                               \
+	if (car(v)->t == INTEGER)                                                          \
+		i = i SIGN car(v)->v.i;                                                    \
+	else                                                                               \
+		warnf(FUNC ": expected integer, recieved type [%s]", type_str(car(v)->t)); \
+} while (0)
+
 static Val
 prim_add(Hash env, Val args)
 {
@@ -12,10 +19,7 @@ prim_add(Hash env, Val args)
 	if (!(v = eval_list(env, args)))
 		return NULL;
 	for (; !nilp(v); v = cdr(v))
-		if (car(v)->t == INTEGER)
-			i += car(v)->v.i;
-		else
-			warnf("+: expected integer, recieved type [%d]", car(v)->t);
+		INC(+, "+");
 	return mk_int(i);
 }
 

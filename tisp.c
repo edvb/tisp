@@ -78,7 +78,7 @@ frac_reduce(int *num, int *den)
 	*den = *den / b;
 }
 
-static char *
+char *
 type_str(Type t)
 {
 	switch (t) {
