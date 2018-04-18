@@ -25,7 +25,7 @@ static int
 issym(char c)
 {
 	return BETWEEN(c, 'a', 'z') || BETWEEN(c, 'A', 'Z') ||
-	       BETWEEN(c, '0', '9') || strchr("+-*/=?", c);
+	       BETWEEN(c, '0', '9') || strchr("+-*/=<>?", c);
 }
 
 static int
