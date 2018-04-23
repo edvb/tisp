@@ -33,29 +33,24 @@ $(EXE): $(OBJ)
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
 
 clean:
-	@echo -n cleaning ...
+	@echo cleaning
 	@rm -f $(OBJ) $(EXE)
-	@echo \ done
 
 install: all
-	@echo -n installing $(EXE) to $(DESTDIR)$(PREFIX)/bin ...
+	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
 	@mkdir -p $(DESTDIR)$(PREFIX)/bin
 	@cp -f $(EXE) $(DESTDIR)$(PREFIX)/bin
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)
-	@echo \ done
-	@echo -n installing manual page to $(DESTDIR)$(MANPREFIX)/man1 ...
+	@echo installing manual page to $(DESTDIR)$(MANPREFIX)/man1
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	@sed "s/VERSION/$(VERSION)/g" < $(EXE).1 > $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@echo \ done
 
 uninstall:
-	@echo -n removing $(EXE) from $(DESTDIR)$(PREFIX)/bin ...
+	@echo removing $(EXE) from $(DESTDIR)$(PREFIX)/bin
 	@rm -f $(DESTDIR)$(PREFIX)/bin/$(EXE)
-	@echo \ done
-	@echo -n removing manual page from $(DESTDIR)$(MANPREFIX)/man1 ...
+	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man1
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@echo \ done
 
 test: $(EXE)
 	@echo running tests
