@@ -168,7 +168,7 @@ hash_grow(Hash ht)
 }
 
 /* create new key and value pair to the hash table */
-Val
+void
 hash_add(Hash ht, char *key, Val val)
 {
 	Entry e = entry_get(ht, key);
@@ -178,7 +178,6 @@ hash_add(Hash ht, char *key, Val val)
 		ht->size++;
 		hash_grow(ht);
 	}
-	return val;
 }
 
 /* add each binding args[i] -> vals[i] */
@@ -408,7 +407,7 @@ tisp_eval(Hash env, Val v)
 			hash_merge(env, f->v.f.env);
 			return tisp_eval(env, f->v.f.body);
 		default:
-			warn("attempt to evaluate non primitive");
+			warnf("attempt to evaluate non primitive type [%s]", type_str(f->t));
 		}
 	default: break;
 	}

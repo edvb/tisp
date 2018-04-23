@@ -23,7 +23,7 @@ hints(const char *buf, int *color, int *bold)
 		{ NULL, NULL, 0, 0 }
 	};
 	for (int i = 0; hint[i].match; i++) {
-		if (!strcasecmp(buf, hint[i].match)){
+		if (!strcasecmp(buf, hint[i].match)) {
 			*color = hint[i].color;
 			*bold = hint[i].bold;
 			return hint[i].hint;
@@ -62,8 +62,7 @@ main(int argc, char *argv[])
 	case 'h':
 		usage(0);
 	case 'v':
-		printf("%s v%s (c) 2017-2018 Ed van Bruggen\n", argv0, VERSION);
-		return 0;
+		die(0, "%s v%s (c) 2017-2018 Ed van Bruggen", argv0, VERSION);
 	default:
 		usage(1);
 	} ARGEND;
