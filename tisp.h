@@ -18,6 +18,7 @@
 
 struct Val;
 typedef struct Val *Val;
+typedef struct Env *Env;
 
 /* improved interface for a pointer to a string */
 typedef struct Str {
@@ -46,13 +47,13 @@ typedef struct Hash {
 } *Hash;
 
 /* basic function written in C, not lisp */
-typedef Val (*Prim)(Hash, Val);
+typedef Val (*Prim)(Env, Val);
 
 /* function written directly in lisp instead of C */
 typedef struct {
 	Val args;
 	Val body;
-	Hash env;
+	Env env;
 } Func;
 
 typedef struct {
@@ -82,27 +83,32 @@ struct Val {
 	} v;
 };
 
-struct Val nil;
-struct Val t;
+struct Env {
+	struct Val nil;
+	struct Val t;
+	Hash h;
+};
 
 void skip_spaces(Str str);
 char *type_str(Type t);
+int issym(char c);
+int list_len(Val v);
 
-Val hash_add(Hash ht, char *key, Val val);
+void hash_add(Hash ht, char *key, Val val);
 
 Val mk_int(int i);
 Val mk_str(char *s);
 Val mk_prim(Prim prim);
 Val mk_rat(int num, int den);
 Val mk_sym(char *s);
-Val mk_func(Val args, Val body, Hash env);
+Val mk_func(Val args, Val body, Env env);
 Val mk_pair(Val a, Val b);
-Val mk_list(int n, Val *a);
+Val mk_list(Env env, int n, Val *a);
 
-Val eval_list(Hash env, Val v);
+Val eval_list(Env env, Val v);
 
-Val tisp_read(Str str);
+Val tisp_read(Env env, Str str);
 void tisp_print(Val v);
-Val tisp_eval(Hash env, Val v);
+Val tisp_eval(Env env, Val v);
 
-Hash tisp_init_env(size_t cap);
+Env  tisp_env_init(size_t cap);

@@ -21,14 +21,14 @@ skip_spaces(Str str)
 		str->d += strcspn(str->d, "\n");
 }
 
-static int
+int
 issym(char c)
 {
 	return BETWEEN(c, 'a', 'z') || BETWEEN(c, 'A', 'Z') ||
 	       BETWEEN(c, '0', '9') || strchr("+-*/=<>?", c);
 }
 
-static int
+int
 list_len(Val v)
 {
 	int len = 0;
@@ -210,11 +210,11 @@ hash_merge(Hash ht, Hash ht2)
 }
 
 #define MK_TYPE(TYPE, TYPE_NAME, TYPE_FULL, FN_NAME) \
-Val FN_NAME(TYPE TYPE_NAME) { \
-	Val ret = emalloc(sizeof(struct Val)); \
-	ret->t = TYPE_FULL; \
-	ret->v.TYPE_NAME = TYPE_NAME; \
-	return ret; \
+Val FN_NAME(TYPE TYPE_NAME) {                        \
+	Val ret = emalloc(sizeof(struct Val));       \
+	ret->t = TYPE_FULL;                          \
+	ret->v.TYPE_NAME = TYPE_NAME;                \
+	return ret;                                  \
 }
 
 MK_TYPE(int, i, INTEGER, mk_int)
@@ -241,7 +241,7 @@ mk_rat(int num, int den)
 }
 
 Val
-mk_func(Val args, Val body, Hash env)
+mk_func(Val args, Val body, Env env)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = FUNCTION;
@@ -262,10 +262,10 @@ mk_pair(Val a, Val b)
 }
 
 Val
-mk_list(int n, Val *a)
+mk_list(Env env, int n, Val *a)
 {
 	int i;
-	Val b = &nil;
+	Val b = &env->nil;
 	for (i = n-1; i >= 0; i--)
 		b = mk_pair(a[i], b);
 	return b;
@@ -324,7 +324,7 @@ read_sym(Str str)
 }
 
 Val
-read_list(Str str)
+read_list(Env env, Str str)
 {
 	int n = 0;
 	Val *a = emalloc(sizeof(Val)), b;
@@ -332,10 +332,10 @@ read_list(Str str)
 	skip_spaces(str);
 	while (*str->d && *str->d != ')') {
 		a = erealloc(a, (n+1) * sizeof(Val)); /* TODO realloc less */
-		a[n++] = tisp_read(str);
+		a[n++] = tisp_read(env, str);
 		skip_spaces(str);
 	}
-	b = mk_list(n, a);
+	b = mk_list(env, n, a);
 	free(a);
 	str->d++;
 	skip_spaces(str);
@@ -343,7 +343,7 @@ read_list(Str str)
 }
 
 Val
-tisp_read(Str str)
+tisp_read(Env env, Str str)
 {
 	skip_spaces(str);
 	if (isdigit(*str->d) || ((*str->d == '-' || *str->d == '+') && isdigit(str->d[1])))
@@ -352,17 +352,17 @@ tisp_read(Str str)
 		return read_str(str);
 	if (*str->d == '\'') {
 		str->d++;
-		return mk_pair(mk_sym("quote"), mk_pair(tisp_read(str), &nil));
+		return mk_pair(mk_sym("quote"), mk_pair(tisp_read(env, str), &env->nil));
 	}
 	if (issym(*str->d))
 		return read_sym(str);
 	if (*str->d == '(')
-		return read_list(str);
+		return read_list(env, str);
 	return NULL;
 }
 
 Val
-eval_list(Hash env, Val v)
+eval_list(Env env, Val v)
 {
 	int cap = 1, size = 0;
 	Val *new = emalloc(sizeof(Val));
@@ -374,13 +374,13 @@ eval_list(Hash env, Val v)
 			new = erealloc(new, cap*sizeof(Val));
 		}
 	}
-	Val ret = mk_list(size, new);
+	Val ret = mk_list(env, size, new);
 	free(new);
 	return ret;
 }
 
 Val
-tisp_eval(Hash env, Val v)
+tisp_eval(Env env, Val v)
 {
 	Val f, args;
 	switch (v->t) {
@@ -390,7 +390,7 @@ tisp_eval(Hash env, Val v)
 	case STRING:
 		return v;
 	case SYMBOL:
-		return hash_get(env, v->v.s);
+		return hash_get(env->h, v->v.s);
 	case PAIR:
 		if (!(f = tisp_eval(env, car(v))))
 			return NULL;
@@ -402,9 +402,9 @@ tisp_eval(Hash env, Val v)
 			/* tail call into the function body with the extended env */
 			if (!(args = eval_list(env, args)))
 				return NULL;
-			if (!(hash_extend(env, f->v.f.args, args)))
+			if (!(hash_extend(env->h, f->v.f.args, args)))
 				return NULL;
-			hash_merge(env, f->v.f.env);
+			hash_merge(env->h, f->v.f.env->h);
 			return tisp_eval(env, f->v.f.body);
 		default:
 			warnf("attempt to evaluate non primitive type [%s]", type_str(f->t));
@@ -463,7 +463,7 @@ tisp_print(Val v)
 }
 
 static Val
-prim_car(Hash env, Val args)
+prim_car(Env env, Val args)
 {
 	Val v;
 	if (list_len(args) != 1)
@@ -476,7 +476,7 @@ prim_car(Hash env, Val args)
 }
 
 static Val
-prim_cdr(Hash env, Val args)
+prim_cdr(Env env, Val args)
 {
 	Val v;
 	if (list_len(args) != 1)
@@ -489,7 +489,7 @@ prim_cdr(Hash env, Val args)
 }
 
 static Val
-prim_cons(Hash env, Val args)
+prim_cons(Env env, Val args)
 {
 	Val v;
 	if (list_len(args) != 2)
@@ -500,21 +500,21 @@ prim_cons(Hash env, Val args)
 }
 
 static Val
-prim_eq(Hash env, Val args)
+prim_eq(Env env, Val args)
 {
 	Val v;
 	if (!(v = eval_list(env, args)))
 		return NULL;
 	if (nilp(v))
-		return &t;
+		return &env->t;
 	for (; !nilp(cdr(v)); v = cdr(v))
 		if (!vals_eq(car(v), car(cdr(v))))
-			return &nil;
-	return &t;
+			return &env->nil;
+	return &env->t;
 }
 
 static Val
-prim_quote(Hash env, Val args)
+prim_quote(Env env, Val args)
 {
 	if (list_len(args) != 1)
 		warnf("quote: expected 1 argument, received [%d]", list_len(args));
@@ -522,7 +522,7 @@ prim_quote(Hash env, Val args)
 }
 
 static Val
-prim_cond(Hash env, Val args)
+prim_cond(Env env, Val args)
 {
 	Val v, cond;
 	for (v = args; !nilp(v); v = cdr(v))
@@ -530,11 +530,11 @@ prim_cond(Hash env, Val args)
 			return NULL;
 		else if (!nilp(cond))
 			return tisp_eval(env, car(cdr(car(v))));
-	return &nil;
+	return &env->nil;
 }
 
 static Val
-prim_lambda(Hash env, Val args)
+prim_lambda(Env env, Val args)
 {
 	if (list_len(args) < 2 || (car(args)->t != PAIR && !nilp(car(args))))
 		warn("lambda: incorrect format");
@@ -542,35 +542,37 @@ prim_lambda(Hash env, Val args)
 }
 
 static Val
-prim_define(Hash env, Val args)
+prim_define(Env env, Val args)
 {
 	Val v;
 	if (list_len(args) != 2 || car(args)->t != SYMBOL)
 		warn("define: incorrect format");
 	if (!(v = tisp_eval(env, car(cdr(args)))))
 		return NULL;
-	hash_add(env, car(args)->v.s, v);
+	hash_add(env->h, car(args)->v.s, v);
 	return NULL;
 }
 
-Hash
-tisp_init_env(size_t cap)
+Env
+tisp_env_init(size_t cap)
 {
-	nil.t = NIL;
-	t.t = SYMBOL;
-	t.v.s = estrdup("t");
+	Env e = emalloc(sizeof(struct Env));
+	e->nil.t = NIL;
+	e->t.t = SYMBOL;
+	e->t.v.s = "t";
 
-	Hash h = hash_new(cap);
-	hash_add(h, "t", &t);
-	hash_add(h, "car",    mk_prim(prim_car));
-	hash_add(h, "cdr",    mk_prim(prim_cdr));
-	hash_add(h, "cons",   mk_prim(prim_cons));
-	hash_add(h, "=",      mk_prim(prim_eq));
-	hash_add(h, "quote",  mk_prim(prim_quote));
-	hash_add(h, "cond",   mk_prim(prim_cond));
-	hash_add(h, "lambda", mk_prim(prim_lambda));
-	hash_add(h, "define", mk_prim(prim_define));
-	return h;
+	e->h = hash_new(cap);
+	hash_add(e->h, "t", &e->t);
+	hash_add(e->h, "car",    mk_prim(prim_car));
+	hash_add(e->h, "cdr",    mk_prim(prim_cdr));
+	hash_add(e->h, "cons",   mk_prim(prim_cons));
+	hash_add(e->h, "=",      mk_prim(prim_eq));
+	hash_add(e->h, "quote",  mk_prim(prim_quote));
+	hash_add(e->h, "cond",   mk_prim(prim_cond));
+	hash_add(e->h, "lambda", mk_prim(prim_lambda));
+	hash_add(e->h, "define", mk_prim(prim_define));
+
+	return e;
 }
 
 void

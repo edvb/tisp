@@ -33,12 +33,12 @@ hints(const char *buf, int *color, int *bold)
 }
 
 static Val
-read_val(Str cmd)
+read_val(Env env, Str cmd)
 {
 	struct Str str;
 
 	if (cmd->d)
-		return tisp_read(cmd);
+		return tisp_read(env, cmd);
 
 	if (SHOW_HINTS)
 		linenoiseSetHintsCallback(hints);
@@ -46,7 +46,7 @@ read_val(Str cmd)
 		return NULL;
 	linenoiseHistoryAdd(str.d);
 
-	return tisp_read(&str);
+	return tisp_read(env, &str);
 }
 
 static void
@@ -72,8 +72,8 @@ main(int argc, char *argv[])
 	struct Str str = { NULL };
 	FILE *fp;
 	Val v;
-	Hash env = tisp_init_env(64);
-	tib_math_env(env);
+	Env env = tisp_env_init(64);
+	tib_env_math(env);
 
 	if (argc > 0) {
 		if (!(fp = fopen(*argv, "r")))
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 		str.d = estrdup(buf);
 	}
 
-	while ((v = read_val(&str))) {
+	while ((v = read_val(env, &str))) {
 		if (!(v = tisp_eval(env, v)))
 			continue;
 

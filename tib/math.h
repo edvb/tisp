@@ -1,3 +1,3 @@
 /* See LICENSE file for copyright and license details. */
 
-void tib_math_env(Hash ht);
+void tib_env_math(Env env);
