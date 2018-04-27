@@ -265,7 +265,7 @@ Val
 mk_list(Env env, int n, Val *a)
 {
 	int i;
-	Val b = &env->nil;
+	Val b = env->nil;
 	for (i = n-1; i >= 0; i--)
 		b = mk_pair(a[i], b);
 	return b;
@@ -352,7 +352,7 @@ tisp_read(Env env, Str str)
 		return read_str(str);
 	if (*str->d == '\'') {
 		str->d++;
-		return mk_pair(mk_sym("quote"), mk_pair(tisp_read(env, str), &env->nil));
+		return mk_pair(mk_sym("quote"), mk_pair(tisp_read(env, str), env->nil));
 	}
 	if (issym(*str->d))
 		return read_sym(str);
@@ -506,11 +506,11 @@ prim_eq(Env env, Val args)
 	if (!(v = eval_list(env, args)))
 		return NULL;
 	if (nilp(v))
-		return &env->t;
+		return env->t;
 	for (; !nilp(cdr(v)); v = cdr(v))
 		if (!vals_eq(car(v), car(cdr(v))))
-			return &env->nil;
-	return &env->t;
+			return env->nil;
+	return env->t;
 }
 
 static Val
@@ -530,7 +530,7 @@ prim_cond(Env env, Val args)
 			return NULL;
 		else if (!nilp(cond))
 			return tisp_eval(env, car(cdr(car(v))));
-	return &env->nil;
+	return env->nil;
 }
 
 static Val
@@ -557,12 +557,14 @@ Env
 tisp_env_init(size_t cap)
 {
 	Env e = emalloc(sizeof(struct Env));
-	e->nil.t = NIL;
-	e->t.t = SYMBOL;
-	e->t.v.s = "t";
+	e->nil = emalloc(sizeof(struct Val));
+	e->nil->t = NIL;
+	e->t = emalloc(sizeof(struct Val));
+	e->t->t = SYMBOL;
+	e->t->v.s = "t";
 
 	e->h = hash_new(cap);
-	hash_add(e->h, "t", &e->t);
+	hash_add(e->h, "t", e->t);
 	hash_add(e->h, "car",    mk_prim(prim_car));
 	hash_add(e->h, "cdr",    mk_prim(prim_cdr));
 	hash_add(e->h, "cons",   mk_prim(prim_cons));

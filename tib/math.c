@@ -44,18 +44,18 @@ prim_sub(Env env, Val args)
 		warnf(FUNC ": expected integer, recieved type [%s]", type_str(V->t)); \
 } while (0)
 
-#define PRIM_COMPARE(NAME, OP, FUNC)                                    \
-static Val                                                              \
-prim_##NAME(Env env, Val args)                                          \
-{                                                                       \
-	Val v;                                                          \
-	if (!(v = eval_list(env, args)))                                \
-		return NULL;                                            \
-	if (list_len(v) != 2)                                           \
-		return &env->t;                                         \
-	INT_TEST(car(v), FUNC);                                         \
-	INT_TEST(car(cdr(v)), FUNC);                                    \
-	return (car(v)->v.i OP car(cdr(v))->v.i) ? &env->t : &env->nil; \
+#define PRIM_COMPARE(NAME, OP, FUNC)                                  \
+static Val                                                            \
+prim_##NAME(Env env, Val args)                                        \
+{                                                                     \
+	Val v;                                                        \
+	if (!(v = eval_list(env, args)))                              \
+		return NULL;                                          \
+	if (list_len(v) != 2)                                         \
+		return env->t;                                        \
+	INT_TEST(car(v), FUNC);                                       \
+	INT_TEST(car(cdr(v)), FUNC);                                  \
+	return (car(v)->v.i OP car(cdr(v))->v.i) ? env->t : env->nil; \
 }
 
 PRIM_COMPARE(lt,  <,  "<")

@@ -84,8 +84,7 @@ struct Val {
 };
 
 struct Env {
-	struct Val nil;
-	struct Val t;
+	Val nil, t;
 	Hash h;
 };
 
