@@ -14,24 +14,6 @@
 
 char *argv0;
 
-char *
-hints(const char *buf, int *color, int *bold)
-{
-	struct { char *match, *hint; int color, bold; } hint[] = {
-		{ "(lambda", " (args) body)", 35, 0 },
-		{ "(define", " var exp)",     35, 0 },
-		{ NULL, NULL, 0, 0 }
-	};
-	for (int i = 0; hint[i].match; i++) {
-		if (!strcasecmp(buf, hint[i].match)) {
-			*color = hint[i].color;
-			*bold = hint[i].bold;
-			return hint[i].hint;
-		}
-	}
-	return NULL;
-}
-
 static Val
 read_val(Env env, Str cmd)
 {
@@ -40,8 +22,6 @@ read_val(Env env, Str cmd)
 	if (cmd->d)
 		return tisp_read(env, cmd);
 
-	if (SHOW_HINTS)
-		linenoiseSetHintsCallback(hints);
 	if (!(str.d = linenoise("> ")))
 		return NULL;
 	linenoiseHistoryAdd(str.d);
