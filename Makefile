@@ -6,6 +6,7 @@ include config.mk
 EXE = tisp
 SRC = $(wildcard *.c */*.c)
 OBJ = $(SRC:.c=.o)
+LIB = tib/libtibmath.so
 
 all: options $(EXE)
 
@@ -28,13 +29,17 @@ config.h:
 	@echo creating $@ from config.def.h
 	@cp config.def.h $@
 
-$(EXE): $(OBJ)
+$(LIB): $(wildcard tib/*.c)
+	@echo $(CC) -o $@
+	@gcc -shared -o $@ $(OBJ)
+
+$(EXE): $(OBJ) $(LIB)
 	@echo $(CC) -o $@
 	@$(CC) -o $@ $(OBJ) $(LDFLAGS)
 
 clean:
 	@echo cleaning
-	@rm -f $(OBJ) $(EXE)
+	@rm -f $(OBJ) $(LIB) $(EXE)
 
 install: all
 	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
@@ -45,6 +50,9 @@ install: all
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	@sed "s/VERSION/$(VERSION)/g" < $(EXE).1 > $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
+	@echo installing libraries to $(DESTDIR)$(PREFIX)/lib/tisp
+	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp
+	@cp -f $(LIB) $(DESTDIR)$(PREFIX)/lib/tisp
 
 uninstall:
 	@echo removing $(EXE) from $(DESTDIR)$(PREFIX)/bin

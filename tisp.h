@@ -86,6 +86,8 @@ struct Val {
 struct Env {
 	Val nil, t;
 	Hash h;
+	void **libh;
+	size_t libhc;
 };
 
 void skip_spaces(Str str);

@@ -1,3 +1,4 @@
+(load "math")
 (quote 1)
 (quote 9234)
 (quote "foo")

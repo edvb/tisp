@@ -3,6 +3,8 @@
 total=0
 pass=0
 
+export LD_LIBRARY_PATH="$PWD/../tib:$LD_LIBRARY_PATH"
+
 for file in */*.tsp; do
 	expect=${file%.tsp}.expect
 

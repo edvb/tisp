@@ -10,7 +10,9 @@
 #include "config.h"
 
 #include "tisp.h"
-#include "tib/math.h"
+#if TIB_STATIC
+#  include "tib/math.h"
+#endif
 
 char *argv0;
 
@@ -53,7 +55,9 @@ main(int argc, char *argv[])
 	FILE *fp;
 	Val v;
 	Env env = tisp_env_init(64);
+#if TIB_STATIC
 	tib_env_math(env);
+#endif
 
 	if (argc > 0) {
 		if (!(fp = fopen(*argv, "r")))

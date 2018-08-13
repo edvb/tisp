@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "../tisp.h"
-#include "math.h"
 
 #define INC(SIGN, FUNC) do {                                                               \
 	if (car(v)->t == INTEGER)                                                          \

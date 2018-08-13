@@ -1,5 +1,6 @@
 /* See LICENSE file for copyright and license details. */
 #include <ctype.h>
+#include <dlfcn.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -553,6 +554,41 @@ prim_define(Env env, Val args)
 	return NULL;
 }
 
+static Val
+prim_load(Env env, Val args)
+{
+	Val v;
+	void (*tibenv)(Env);
+	char *lib, *func;
+	if (list_len(args) != 1)
+		warn("load: incorrect format");
+	if (!(v = tisp_eval(env, car(args))))
+		return NULL;
+
+	env->libh = erealloc(env->libh, (env->libhc+1)*sizeof(void*));
+
+	lib = ecalloc(strlen(v->v.s)+10, sizeof(char));
+	strcat(lib, "libtib");
+	strcat(lib, v->v.s);
+	strcat(lib, ".so");
+	if (!(env->libh[env->libhc] = dlopen(lib, RTLD_LAZY)))
+		warnf("load: could not load [%s]: %s", v->v.s, dlerror());
+	dlerror();
+	efree(lib);
+
+	func = ecalloc(strlen(v->v.s)+9, sizeof(char));
+	strcat(func, "tib_env_");
+	strcat(func, v->v.s);
+	tibenv = dlsym(env->libh[env->libhc], func);
+	if (dlerror())
+		warnf("load: could not run [%s]: %s", v->v.s, dlerror());
+	(*tibenv)(env);
+	efree(func);
+
+	env->libhc++;
+	return NULL;
+}
+
 Env
 tisp_env_init(size_t cap)
 {
@@ -573,7 +609,10 @@ tisp_env_init(size_t cap)
 	hash_add(e->h, "cond",   mk_prim(prim_cond));
 	hash_add(e->h, "lambda", mk_prim(prim_lambda));
 	hash_add(e->h, "define", mk_prim(prim_define));
+	hash_add(e->h, "load",   mk_prim(prim_load));
 
+	e->libh = NULL;
+	e->libhc = 0;
 	return e;
 }
 
