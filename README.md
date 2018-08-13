@@ -1,5 +1,7 @@
 # tisp \- tiny lisp
 
+[![Build Status](https://travis-ci.org/edvb/tisp.svg)](https://travis-ci.org/edvb/tisp)
+
 Tiny lisp implementation, still in heavy development, barely even "useable."
 Designed to be scheme-like, ie very minimalist.
 
