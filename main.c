@@ -19,7 +19,9 @@ char *argv0;
 static Val
 read_val(Env env, Str cmd)
 {
+	char *strf;
 	struct Str str;
+	Val ret;
 
 	if (cmd->d)
 		return tisp_read(env, cmd);
@@ -28,7 +30,10 @@ read_val(Env env, Str cmd)
 		return NULL;
 	linenoiseHistoryAdd(str.d);
 
-	return tisp_read(env, &str);
+	strf = str.d;
+	ret = tisp_read(env, &str);
+	efree(strf);
+	return ret;
 }
 
 static void
