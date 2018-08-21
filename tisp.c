@@ -129,14 +129,11 @@ hash(char *key)
 static Hash
 hash_new(size_t cap)
 {
-	int i;
 	if (cap < 1) return NULL;
 	Hash ht = emalloc(sizeof(struct Hash));
 	ht->size = 0;
 	ht->cap = cap;
 	ht->items = ecalloc(cap, sizeof(struct Entry));
-	for (i = 0; i < cap; i++)
-		ht->items[i].key = NULL;
 	ht->next = NULL;
 	return ht;
 }
@@ -179,8 +176,6 @@ hash_grow(Hash ht)
 	Entry oitems = ht->items;
 	ht->cap *= 2;
 	ht->items = ecalloc(ht->cap, sizeof(struct Entry));
-	for (i = 0; i < ht->cap; i++) /* empty the new larger hash table */
-		ht->items[i].key = NULL;
 	for (i = 0; i < ocap; i++) /* repopulate new hash table with old values */
 		if (oitems[i].key)
 			hash_add(ht, oitems[i].key, oitems[i].val);
