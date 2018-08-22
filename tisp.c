@@ -224,18 +224,14 @@ hash_merge(Hash ht, Hash ht2)
 				hash_add(ht, ht2->items[i].key, ht2->items[i].val);
 }
 
-#define MK_TYPE(TYPE, TYPE_NAME, TYPE_FULL, FN_NAME) \
-Val FN_NAME(TYPE TYPE_NAME) {                        \
-	Val ret = emalloc(sizeof(struct Val));       \
-	ret->t = TYPE_FULL;                          \
-	ret->v.TYPE_NAME = TYPE_NAME;                \
-	return ret;                                  \
+Val
+mk_int(int i)
+{
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = INTEGER;
+	ret->v.i = i;
+	return ret;
 }
-
-MK_TYPE(int, i, INTEGER, mk_int)
-MK_TYPE(char *, s, STRING, mk_str)
-MK_TYPE(char *, s, SYMBOL, mk_sym)
-MK_TYPE(Prim, pr, PRIMITIVE, mk_prim)
 
 Val
 mk_rat(int num, int den)
@@ -252,6 +248,33 @@ mk_rat(int num, int den)
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = RATIONAL;
 	ret->v.r = (Ratio){ num, den };
+	return ret;
+}
+
+Val mk_str(char *s) {
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = STRING;
+	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
+	strcpy(ret->v.s, s);
+	return ret;
+}
+
+/* TODO return existing symbol */
+Val
+mk_sym(char *s)
+{
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = SYMBOL;
+	ret->v.s = s;
+	return ret;
+}
+
+Val
+mk_prim(Prim pr)
+{
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = PRIMITIVE;
+	ret->v.pr = pr;
 	return ret;
 }
 
@@ -318,7 +341,7 @@ read_str(Str str)
 	char *s = ++str->d;
 	for (; *str->d && *str->d++ != '"'; len++);
 	s[len] = '\0';
-	return mk_str(estrdup(s));
+	return mk_str(s);
 }
 
 Val
