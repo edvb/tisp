@@ -83,5 +83,7 @@ main(int argc, char *argv[])
 		if (!*str.d) break;
 	}
 
+	tisp_env_free(env);
+
 	return 0;
 }

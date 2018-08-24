@@ -701,6 +701,25 @@ tisp_env_init(size_t cap)
 }
 
 void
+tisp_env_free(Env env)
+{
+	int i;
+	Hash h;
+
+	for (h = env->h; h; h = h->next) {
+		for (i = 0; i < h->cap; i++)
+			if (h->items[i].key)
+				free(h->items[i].val);
+		free(h->items);
+	}
+	free(env->h);
+	for (i = 0; i < env->libhc; i++)
+		dlclose(env->libh[i]);
+	free(env->nil);
+	free(env);
+}
+
+void
 val_free(Val v)
 {
 	if (v->t == PAIR) {

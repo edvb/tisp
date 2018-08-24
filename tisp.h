@@ -132,3 +132,4 @@ void tisp_print(Val v);
 Val tisp_eval(Env env, Val v);
 
 Env  tisp_env_init(size_t cap);
+void tisp_env_free(Env env);
