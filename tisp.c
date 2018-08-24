@@ -21,17 +21,64 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "tisp.h"
-#include "util.h"
+
+#define BETWEEN(X, A, B)  ((A) <= (X) && (X) <= (B))
 
 /* functions */
 static Hash hash_extend(Hash ht, Val args, Val vals);
 static void hash_merge(Hash ht, Hash ht2);
+
+static void
+die(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
+	if (fmt[0] && fmt[strlen(fmt)-1] == ':') {
+		fputc(' ', stderr);
+		perror(NULL);
+	} else {
+		fputc('\n', stderr);
+	}
+
+	exit(1);
+}
+
+static void *
+ecalloc(size_t nmemb, size_t size)
+{
+	void *p;
+	if (!(p = calloc(nmemb, size)))
+		die("calloc:");
+	return p;
+}
+
+static void *
+emalloc(size_t size)
+{
+	void *p;
+	if (!(p = malloc(size)))
+		die("malloc:");
+	return p;
+}
+
+static void *
+erealloc(void *p, size_t size)
+{
+	if (!(p = realloc(p, size)))
+		die("realloc:");
+	return p;
+}
 
 void
 skip_spaces(Str str)
