@@ -604,23 +604,23 @@ prim_load(Env env, Val args)
 
 	env->libh = erealloc(env->libh, (env->libhc+1)*sizeof(void*));
 
-	lib = ecalloc(strlen(v->v.s)+10, sizeof(char));
+	lib = emalloc((strlen(v->v.s)+10) * sizeof(char));
 	strcat(lib, "libtib");
 	strcat(lib, v->v.s);
 	strcat(lib, ".so");
 	if (!(env->libh[env->libhc] = dlopen(lib, RTLD_LAZY)))
 		warnf("load: could not load [%s]: %s", v->v.s, dlerror());
 	dlerror();
-	efree(lib);
+	free(lib);
 
-	func = ecalloc(strlen(v->v.s)+9, sizeof(char));
+	func = emalloc((strlen(v->v.s)+9) * sizeof(char));
 	strcat(func, "tib_env_");
 	strcat(func, v->v.s);
 	tibenv = dlsym(env->libh[env->libhc], func);
 	if (dlerror())
 		warnf("load: could not run [%s]: %s", v->v.s, dlerror());
 	(*tibenv)(env);
-	efree(func);
+	free(func);
 
 	env->libhc++;
 	return NULL;
