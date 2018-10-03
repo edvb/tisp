@@ -19,18 +19,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define warnf(M, ...) do {                          \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                  __LINE__, ##__VA_ARGS__); \
-	return NULL;                                \
-} while(0)
-
-#define warn(M) do {                                \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                 __LINE__);                 \
-	return NULL;                                \
-} while(0)
-
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
@@ -109,12 +97,7 @@ struct Env {
 	size_t libhc;
 };
 
-void skip_spaces(Str str);
 char *type_str(Type t);
-int issym(char c);
-int list_len(Val v);
-
-void hash_add(Hash ht, char *key, Val val);
 
 Val mk_int(int i);
 Val mk_str(char *s);
@@ -125,11 +108,10 @@ Val mk_func(Val args, Val body, Env env);
 Val mk_pair(Val a, Val b);
 Val mk_list(Env env, int n, Val *a);
 
-Val eval_list(Env env, Val v);
-
 Val tisp_read(Env env, Str str);
 void tisp_print(Val v);
 Val tisp_eval(Env env, Val v);
 
+void tisp_env_add(Env e, char *key, Val v);
 Env  tisp_env_init(size_t cap);
 void tisp_env_free(Env env);

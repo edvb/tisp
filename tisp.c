@@ -31,9 +31,38 @@
 
 #define BETWEEN(X, A, B)  ((A) <= (X) && (X) <= (B))
 
+#define warnf(M, ...) do {                          \
+	fprintf(stderr, "tisp:%d: error: " M "\n",  \
+	                  __LINE__, ##__VA_ARGS__); \
+	return NULL;                                \
+} while(0)
+#define warn(M) do {                                \
+	fprintf(stderr, "tisp:%d: error: " M "\n",  \
+	                 __LINE__);                 \
+	return NULL;                                \
+} while(0)
+
+
 /* functions */
+static void hash_add(Hash ht, char *key, Val val);
 static Hash hash_extend(Hash ht, Val args, Val vals);
 static void hash_merge(Hash ht, Hash ht2);
+
+char *
+type_str(Type t)
+{
+	switch (t) {
+	case NIL:       return "nil";
+	case INTEGER:   return "integer";
+	case RATIONAL:  return "rational";
+	case STRING:    return "string";
+	case SYMBOL:    return "symbol";
+	case PRIMITIVE: return "primitive";
+	case FUNCTION:  return "function";
+	case PAIR:      return "pair";
+	default:        return "invalid";
+	}
+}
 
 static void
 die(const char *fmt, ...)
@@ -80,7 +109,7 @@ erealloc(void *p, size_t size)
 	return p;
 }
 
-void
+static void
 skip_spaces(Str str)
 {
 	str->d += strspn(str->d, " \t\n"); /* skip white space */
@@ -88,14 +117,14 @@ skip_spaces(Str str)
 		str->d += strcspn(str->d, "\n");
 }
 
-int
+static int
 issym(char c)
 {
 	return BETWEEN(c, 'a', 'z') || BETWEEN(c, 'A', 'Z') ||
 	       BETWEEN(c, '0', '9') || strchr("+-*/=<>?", c);
 }
 
-int
+static int
 list_len(Val v)
 {
 	int len = 0;
@@ -136,29 +165,13 @@ static void
 frac_reduce(int *num, int *den)
 {
 	int a = abs(*num), b = abs(*den), c = a % b;
-	while(c > 0) {
+	while (c > 0) {
 		a = b;
 		b = c;
 		c = a % b;
 	}
 	*num = *num / b;
 	*den = *den / b;
-}
-
-char *
-type_str(Type t)
-{
-	switch (t) {
-	case NIL:       return "nil";
-	case INTEGER:   return "integer";
-	case RATIONAL:  return "rational";
-	case STRING:    return "string";
-	case SYMBOL:    return "symbol";
-	case PRIMITIVE: return "primitive";
-	case FUNCTION:  return "function";
-	case PAIR:      return "pair";
-	default:        return "invalid";
-	}
 }
 
 /* return hashed number based on key */
@@ -230,7 +243,7 @@ hash_grow(Hash ht)
 }
 
 /* create new key and value pair to the hash table */
-void
+static void
 hash_add(Hash ht, char *key, Val val)
 {
 	Entry e = entry_get(ht, key);
@@ -298,7 +311,8 @@ mk_rat(int num, int den)
 	return ret;
 }
 
-Val mk_str(char *s) {
+Val
+mk_str(char *s) {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = STRING;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
@@ -391,7 +405,7 @@ read_str(Str str)
 	return mk_str(s);
 }
 
-Val
+static Val
 read_sym(Str str)
 {
 	int n = 1;
@@ -408,7 +422,7 @@ read_sym(Str str)
 	return mk_sym(sym);
 }
 
-Val
+static Val
 read_list(Env env, Str str)
 {
 	int n = 0;
@@ -446,7 +460,7 @@ tisp_read(Env env, Str str)
 	return NULL;
 }
 
-Val
+static Val
 eval_list(Env env, Val v)
 {
 	int cap = 1, size = 0;
@@ -671,6 +685,12 @@ prim_load(Env env, Val args)
 
 	env->libhc++;
 	return NULL;
+}
+
+void
+tisp_env_add(Env e, char *key, Val v)
+{
+	hash_add(e->h, key, v);
 }
 
 Env
