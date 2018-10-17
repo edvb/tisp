@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 		putchar('\n');
 
 		if (!str.d) continue;
-		skip_spaces(&str);
+		skip_ws(&str);
 		if (!*str.d) break;
 	}
 

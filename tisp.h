@@ -98,6 +98,8 @@ struct Env {
 };
 
 char *type_str(Type t);
+int list_len(Val v);
+void skip_ws(Str str);
 
 Val mk_int(int i);
 Val mk_str(char *s);
@@ -110,6 +112,7 @@ Val mk_list(Env env, int n, Val *a);
 
 Val tisp_read(Env env, Str str);
 void tisp_print(Val v);
+Val tisp_eval_list(Env env, Val v);
 Val tisp_eval(Env env, Val v);
 
 void tisp_env_add(Env e, char *key, Val v);

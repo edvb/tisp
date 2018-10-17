@@ -64,6 +64,16 @@ type_str(Type t)
 	}
 }
 
+int
+list_len(Val v)
+{
+	int len = 0;
+	Val a;
+	for (a = v; a->t == PAIR; a = cdr(a))
+		len++;
+	return a->t == NIL ? len : -1;
+}
+
 static void
 die(const char *fmt, ...)
 {
@@ -109,8 +119,8 @@ erealloc(void *p, size_t size)
 	return p;
 }
 
-static void
-skip_spaces(Str str)
+void
+skip_ws(Str str)
 {
 	str->d += strspn(str->d, " \t\n"); /* skip white space */
 	for (; *str->d == ';'; str->d++) /* skip comments until newline */
@@ -121,17 +131,7 @@ static int
 issym(char c)
 {
 	return BETWEEN(c, 'a', 'z') || BETWEEN(c, 'A', 'Z') ||
-	       BETWEEN(c, '0', '9') || strchr("+-*/=<>?", c);
-}
-
-static int
-list_len(Val v)
-{
-	int len = 0;
-	Val a;
-	for (a = v; a->t == PAIR; a = cdr(a))
-		len++;
-	return a->t == NIL ? len : -1;
+	       BETWEEN(c, '0', '9') || strchr("_+-*/=<>?", c);
 }
 
 static int
@@ -395,7 +395,7 @@ read_num(Str str)
 	return mk_rat(num, read_int(str));
 }
 
-Val
+static Val
 read_str(Str str)
 {
 	int len = 0;
@@ -428,23 +428,23 @@ read_list(Env env, Str str)
 	int n = 0;
 	Val *a = emalloc(sizeof(Val)), b;
 	str->d++;
-	skip_spaces(str);
+	skip_ws(str);
 	while (*str->d && *str->d != ')') {
 		a = erealloc(a, (n+1) * sizeof(Val)); /* TODO realloc less */
 		a[n++] = tisp_read(env, str);
-		skip_spaces(str);
+		skip_ws(str);
 	}
 	b = mk_list(env, n, a);
 	free(a);
 	str->d++;
-	skip_spaces(str);
+	skip_ws(str);
 	return b;
 }
 
 Val
 tisp_read(Env env, Str str)
 {
-	skip_spaces(str);
+	skip_ws(str);
 	if (isdigit(*str->d) || ((*str->d == '-' || *str->d == '+') && isdigit(str->d[1])))
 		return read_num(str);
 	if (*str->d == '"')
@@ -460,8 +460,8 @@ tisp_read(Env env, Str str)
 	return NULL;
 }
 
-static Val
-eval_list(Env env, Val v)
+Val
+tisp_eval_list(Env env, Val v)
 {
 	int cap = 1, size = 0;
 	Val *new = emalloc(sizeof(Val));
@@ -499,7 +499,7 @@ tisp_eval(Env env, Val v)
 			return (*f->v.pr)(env, args);
 		case FUNCTION:
 			/* tail call into the function body with the extended env */
-			if (!(args = eval_list(env, args)))
+			if (!(args = tisp_eval_list(env, args)))
 				return NULL;
 			if (!(hash_extend(env->h, f->v.f.args, args)))
 				return NULL;
@@ -567,7 +567,7 @@ prim_car(Env env, Val args)
 	Val v;
 	if (list_len(args) != 1)
 		warnf("car: expected 1 argument, received [%d]", list_len(args));
-	if (!(v = eval_list(env, args)))
+	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	if (car(v)->t != PAIR)
 		warnf("car: expected list, received type [%s]", type_str(car(v)->t));
@@ -580,7 +580,7 @@ prim_cdr(Env env, Val args)
 	Val v;
 	if (list_len(args) != 1)
 		warnf("cdr: expected 1 argument, received [%d]", list_len(args));
-	if (!(v = eval_list(env, args)))
+	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	if (car(v)->t != PAIR)
 		warnf("cdr: expected list, received type [%s]", type_str(car(v)->t));
@@ -593,7 +593,7 @@ prim_cons(Env env, Val args)
 	Val v;
 	if (list_len(args) != 2)
 		warnf("cons: expected 2 arguments, received [%d]", list_len(args));
-	if (!(v = eval_list(env, args)))
+	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	return mk_pair(car(v), car(cdr(v)));
 }
@@ -602,7 +602,7 @@ static Val
 prim_eq(Env env, Val args)
 {
 	Val v;
-	if (!(v = eval_list(env, args)))
+	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	if (nilp(v))
 		return env->t;

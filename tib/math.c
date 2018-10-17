@@ -3,6 +3,18 @@
 
 #include "../tisp.h"
 
+#define warnf(M, ...) do {                          \
+	fprintf(stderr, "tisp:%d: error: " M "\n",  \
+	                  __LINE__, ##__VA_ARGS__); \
+	return NULL;                                \
+} while(0)
+#define warn(M) do {                                \
+	fprintf(stderr, "tisp:%d: error: " M "\n",  \
+	                 __LINE__);                 \
+	return NULL;                                \
+} while(0)
+
+
 #define INC(SIGN, FUNC) do {                                                               \
 	if (car(v)->t == INTEGER)                                                          \
 		i = i SIGN car(v)->v.i;                                                    \
@@ -15,7 +27,7 @@ prim_add(Env env, Val args)
 {
 	Val v;
 	int i = 0;
-	if (!(v = eval_list(env, args)))
+	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	for (; !nilp(v); v = cdr(v))
 		INC(+, "+");
@@ -27,7 +39,7 @@ prim_sub(Env env, Val args)
 {
 	Val v;
 	int i = 0;
-	if (!(v = eval_list(env, args)))
+	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	INC(+, "-");
 	v = cdr(v);
@@ -48,7 +60,7 @@ static Val                                                            \
 prim_##NAME(Env env, Val args)                                        \
 {                                                                     \
 	Val v;                                                        \
-	if (!(v = eval_list(env, args)))                              \
+	if (!(v = tisp_eval_list(env, args)))                         \
 		return NULL;                                          \
 	if (list_len(v) != 2)                                         \
 		return env->t;                                        \
@@ -65,10 +77,10 @@ PRIM_COMPARE(gte, >=, ">=")
 void
 tib_env_math(Env env)
 {
-	hash_add(env->h, "+",  mk_prim(prim_add));
-	hash_add(env->h, "-",  mk_prim(prim_sub));
-	hash_add(env->h, "<",  mk_prim(prim_lt));
-	hash_add(env->h, ">",  mk_prim(prim_gt));
-	hash_add(env->h, "<=", mk_prim(prim_lte));
-	hash_add(env->h, ">=", mk_prim(prim_gte));
+	tisp_env_add(env, "+",  mk_prim(prim_add));
+	tisp_env_add(env, "-",  mk_prim(prim_sub));
+	tisp_env_add(env, "<",  mk_prim(prim_lt));
+	tisp_env_add(env, ">",  mk_prim(prim_gt));
+	tisp_env_add(env, "<=", mk_prim(prim_lte));
+	tisp_env_add(env, ">=", mk_prim(prim_gte));
 }
