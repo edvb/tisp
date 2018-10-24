@@ -59,6 +59,8 @@ uninstall:
 	@rm -f $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man1
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
+	@echo removing libraries from $(DESTDIR)$(PREFIX)/lib/tisp
+	@rm -rf $(DESTDIR)$(PREFIX)/lib/tisp/
 
 test: $(EXE)
 	@echo running tests
