@@ -445,6 +445,8 @@ Val
 tisp_read(Env env, Str str)
 {
 	skip_ws(str);
+	if (strlen(str->d) == 0)
+		return env->nil;
 	if (isdigit(*str->d) || ((*str->d == '-' || *str->d == '+') && isdigit(str->d[1])))
 		return read_num(str);
 	if (*str->d == '"')
