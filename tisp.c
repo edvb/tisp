@@ -75,6 +75,14 @@ list_len(Val v)
 	return a->t == NIL ? len : -1;
 }
 
+void
+skip_ws(Str str)
+{
+	str->d += strspn(str->d, " \t\n"); /* skip white space */
+	for (; *str->d == ';'; str->d++) /* skip comments until newline */
+		str->d += strcspn(str->d, "\n");
+}
+
 static void
 die(const char *fmt, ...)
 {
@@ -118,14 +126,6 @@ erealloc(void *p, size_t size)
 	if (!(p = realloc(p, size)))
 		die("realloc:");
 	return p;
-}
-
-void
-skip_ws(Str str)
-{
-	str->d += strspn(str->d, " \t\n"); /* skip white space */
-	for (; *str->d == ';'; str->d++) /* skip comments until newline */
-		str->d += strcspn(str->d, "\n");
 }
 
 static int
