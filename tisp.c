@@ -568,7 +568,7 @@ tisp_print(Val v)
 		printf("%d", v->v.i);
 		break;
 	case DOUBLE:
-		printf("%f", v->v.d);
+		printf("%.1f", v->v.d);
 		break;
 	case RATIONAL:
 		printf("%d/%d", v->v.r.num, v->v.r.den);
