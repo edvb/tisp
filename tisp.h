@@ -71,6 +71,7 @@ typedef enum {
 	NIL,
 	INTEGER,
 	RATIONAL,
+	DOUBLE,
 	STRING,
 	SYMBOL,
 	PRIMITIVE,
@@ -83,6 +84,7 @@ struct Val {
 	union {
 		int i;
 		Ratio r;
+		double d;
 		char *s;
 		Prim pr;
 		Func f;

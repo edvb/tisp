@@ -54,6 +54,7 @@ type_str(Type t)
 	switch (t) {
 	case NIL:       return "nil";
 	case INTEGER:   return "integer";
+	case DOUBLE:    return "double";
 	case RATIONAL:  return "rational";
 	case STRING:    return "string";
 	case SYMBOL:    return "symbol";
@@ -142,6 +143,10 @@ vals_eq(Val a, Val b)
 	switch (a->t) {
 	case INTEGER:
 		if (a->v.i != b->v.i)
+			return 0;
+		break;
+	case DOUBLE:
+		if (a->v.d != b->v.d)
 			return 0;
 		break;
 	case RATIONAL:
@@ -294,6 +299,15 @@ mk_int(int i)
 }
 
 Val
+mk_dub(double d)
+{
+	Val ret = emalloc(sizeof(struct Val));
+	ret->t = DOUBLE;
+	ret->v.d = d;
+	return ret;
+}
+
+Val
 mk_rat(int num, int den)
 {
 	if (den == 0)
@@ -371,28 +385,47 @@ mk_list(Env env, int n, Val *a)
 }
 
 static int
-read_int(Str str) {
-	int ret, sign = 1;
+read_sign(Str str)
+{
 	switch (*str->d) {
-	case '-':
-		sign = -1;
-	case '+':
-		str->d++;
-		break;
+	case '-': ++str->d; return -1;
+	case '+': ++str->d; return 1;
+	default: return 1;
 	}
+}
+
+static int
+read_int(Str str)
+{
+	int ret;
 	for (ret = 0; isdigit(*str->d); str->d++)
 		ret = ret * 10 + *str->d - '0';
-	return sign * ret;
+	return ret;
 }
 
 Val
 read_num(Str str)
 {
+	int sign = read_sign(str);
 	int num = read_int(str);
-	if (*str->d != '/')
-		return mk_int(num);
-	str->d++;
-	return mk_rat(num, read_int(str));
+	Str s;
+	switch (*str->d) {
+	case '/':
+		str->d++;
+		return mk_rat(sign * num, read_int(str));
+	case '.':
+		s = emalloc(sizeof(str));
+		s->d = ++str->d;
+		double d = (double) read_int(s);
+		int size = s->d - str->d;
+		str->d = s->d;
+		free(s);
+		while (size--)
+			d /= 10.0;
+		return mk_dub(sign * (num+d));
+	default:
+		return mk_int(sign * num);
+	}
 }
 
 static Val
@@ -441,13 +474,20 @@ read_list(Env env, Str str)
 	return b;
 }
 
+static int
+isnum(char *str)
+{
+	return isdigit(*str) || (*str == '.' && isdigit(str[1])) ||
+	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
+}
+
 Val
 tisp_read(Env env, Str str)
 {
 	skip_ws(str);
 	if (strlen(str->d) == 0)
 		return env->nil;
-	if (isdigit(*str->d) || ((*str->d == '-' || *str->d == '+') && isdigit(str->d[1])))
+	if (isnum(str->d))
 		return read_num(str);
 	if (*str->d == '"')
 		return read_str(str);
@@ -487,6 +527,7 @@ tisp_eval(Env env, Val v)
 	switch (v->t) {
 	case NIL:
 	case INTEGER:
+	case DOUBLE:
 	case RATIONAL:
 	case STRING:
 		return v;
@@ -525,6 +566,9 @@ tisp_print(Val v)
 		break;
 	case INTEGER:
 		printf("%d", v->v.i);
+		break;
+	case DOUBLE:
+		printf("%f", v->v.d);
 		break;
 	case RATIONAL:
 		printf("%d/%d", v->v.r.num, v->v.r.den);
