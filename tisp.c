@@ -403,7 +403,18 @@ read_int(Str str)
 	return ret;
 }
 
-Val
+static Val
+read_sci(Str str, double val) {
+	if (tolower(*str->d++) != 'e')
+		return mk_dub(val);
+
+	double sign = read_sign(str) == 1 ? 10.0 : 0.1;
+	for (int expo = read_int(str); expo--; val *= sign) ;
+
+	return mk_dub(val);
+}
+
+static Val
 read_num(Str str)
 {
 	int sign = read_sign(str);
@@ -422,7 +433,7 @@ read_num(Str str)
 		free(s);
 		while (size--)
 			d /= 10.0;
-		return mk_dub(sign * (num+d));
+		return read_sci(str, sign * (num+d));
 	default:
 		return mk_int(sign * num);
 	}
