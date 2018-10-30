@@ -404,13 +404,17 @@ read_int(Str str)
 }
 
 static Val
-read_sci(Str str, double val) {
-	if (tolower(*str->d++) != 'e')
-		return mk_dub(val);
+read_sci(Str str, double val, int isint) {
+	if (tolower(*str->d) != 'e')
+		goto finish;
 
+	str->d++;
 	double sign = read_sign(str) == 1 ? 10.0 : 0.1;
 	for (int expo = read_int(str); expo--; val *= sign) ;
 
+finish:
+	if (isint)
+		return mk_int(val);
 	return mk_dub(val);
 }
 
@@ -433,9 +437,9 @@ read_num(Str str)
 		free(s);
 		while (size--)
 			d /= 10.0;
-		return read_sci(str, sign * (num+d));
+		return read_sci(str, sign * (num+d), 0);
 	default:
-		return mk_int(sign * num);
+		return read_sci(str, sign * num, 1);
 	}
 }
 
