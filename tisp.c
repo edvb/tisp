@@ -427,7 +427,7 @@ read_num(Str str)
 	switch (*str->d) {
 	case '/':
 		str->d++;
-		return mk_rat(sign * num, read_int(str));
+		return mk_rat(sign * num, read_sign(str) * read_int(str));
 	case '.':
 		s = emalloc(sizeof(str));
 		s->d = ++str->d;
