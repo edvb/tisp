@@ -95,6 +95,7 @@ struct Val {
 struct Env {
 	Val nil, t;
 	Hash h;
+	Hash strs;
 	void **libh;
 	size_t libhc;
 };
@@ -104,7 +105,7 @@ int list_len(Val v);
 void skip_ws(Str str);
 
 Val mk_int(int i);
-Val mk_str(char *s);
+Val mk_str(Env env, char *s);
 Val mk_prim(Prim prim);
 Val mk_rat(int num, int den);
 Val mk_sym(char *s);

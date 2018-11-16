@@ -154,11 +154,10 @@ vals_eq(Val a, Val b)
 			return 0;
 		break;
 	case SYMBOL:
-	case STRING:
 		if (strcmp(a->v.s, b->v.s))
 			return 0;
 		break;
-	default:
+	default: /* PRIMITIVE, STRING, TODO SYMBOL */
 		if (a != b)
 			return 0;
 	}
@@ -217,7 +216,7 @@ entry_get(Hash ht, char *key)
 	return &ht->items[i];
 }
 
-/* get vale of given key in hash table  */
+/* get value of given key in hash table  */
 static Val
 hash_get(Hash ht, char *key)
 {
@@ -227,7 +226,7 @@ hash_get(Hash ht, char *key)
 		if (e->key)
 			return e->val;
 	}
-	warnf("hash_get: could not find symbol [%s]", key);
+	return NULL;
 }
 
 /* enlarge the hash table to ensure algorithm's efficiency */
@@ -289,6 +288,18 @@ hash_merge(Hash ht, Hash ht2)
 				hash_add(ht, ht2->items[i].key, ht2->items[i].val);
 }
 
+static void
+hash_free(Hash ht)
+{
+	for (Hash h = ht; h; h = h->next) {
+		for (int i = 0; i < h->cap; i++)
+			if (h->items[i].key)
+				free(h->items[i].val);
+		free(h->items);
+	}
+	free(ht);
+}
+
 Val
 mk_int(int i)
 {
@@ -326,11 +337,15 @@ mk_rat(int num, int den)
 }
 
 Val
-mk_str(char *s) {
-	Val ret = emalloc(sizeof(struct Val));
+mk_str(Env env, char *s) {
+	Val ret;
+	if ((ret = hash_get(env->strs, s)))
+		return ret;
+	ret = emalloc(sizeof(struct Val));
 	ret->t = STRING;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
 	strcpy(ret->v.s, s);
+	hash_add(env->strs, s, ret);
 	return ret;
 }
 
@@ -444,13 +459,13 @@ read_num(Str str)
 }
 
 static Val
-read_str(Str str)
+read_str(Env env, Str str)
 {
 	int len = 0;
 	char *s = ++str->d;
 	for (; *str->d && *str->d++ != '"'; len++);
 	s[len] = '\0';
-	return mk_str(s);
+	return mk_str(env, s);
 }
 
 static Val
@@ -505,7 +520,7 @@ tisp_read(Env env, Str str)
 	if (isnum(str->d))
 		return read_num(str);
 	if (*str->d == '"')
-		return read_str(str);
+		return read_str(env, str);
 	if (*str->d == '\'') {
 		str->d++;
 		return mk_pair(mk_sym("quote"), mk_pair(tisp_read(env, str), env->nil));
@@ -547,7 +562,9 @@ tisp_eval(Env env, Val v)
 	case STRING:
 		return v;
 	case SYMBOL:
-		return hash_get(env->h, v->v.s);
+		if (!(f = hash_get(env->h, v->v.s)))
+			warnf("could not find symbol [%s]", v->v.s);
+		return f;
 	case PAIR:
 		if (!(f = tisp_eval(env, car(v))))
 			return NULL;
@@ -776,6 +793,8 @@ tisp_env_init(size_t cap)
 	hash_add(e->h, "define", mk_prim(prim_define));
 	hash_add(e->h, "load",   mk_prim(prim_load));
 
+	e->strs = hash_new(cap);
+
 	e->libh = NULL;
 	e->libhc = 0;
 	return e;
@@ -785,15 +804,9 @@ void
 tisp_env_free(Env env)
 {
 	int i;
-	Hash h;
 
-	for (h = env->h; h; h = h->next) {
-		for (i = 0; i < h->cap; i++)
-			if (h->items[i].key)
-				free(h->items[i].val);
-		free(h->items);
-	}
-	free(env->h);
+	hash_free(env->h);
+	hash_free(env->strs);
 	for (i = 0; i < env->libhc; i++)
 		dlclose(env->libh[i]);
 	free(env->nil);
