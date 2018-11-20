@@ -1,4 +1,3 @@
-(load "math")
 (cond)
 (cond (t 1))
 (cond ((= 1 1) 1) ((= 1 2) 2) (t 3))

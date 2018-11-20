@@ -1,4 +1,3 @@
-(load "math")
 (define foo 4)
 foo
 (define bar foo)

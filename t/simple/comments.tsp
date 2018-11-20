@@ -1,4 +1,3 @@
-(load "math")
 ; commment
 ; (+ 1 1)
 (+ 1 1 ; more comments
