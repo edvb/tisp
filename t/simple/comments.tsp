@@ -1,6 +1,6 @@
 ; commment
 ; (+ 1 1)
-(+ 1 1 ; more comments
+(+ 1 ; more comments
    1)
 
    ; white space too
