@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 		if (!(v = tisp_eval(env, v)))
 			continue;
 
-		tisp_print(v);
+		tisp_print(stdout, v);
 		putchar('\n');
 
 		if (!str.d) continue;

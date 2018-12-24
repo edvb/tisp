@@ -115,9 +115,9 @@ Val mk_pair(Val a, Val b);
 Val mk_list(Env env, int n, Val *a);
 
 Val tisp_read(Env env, Str str);
-void tisp_print(Val v);
 Val tisp_eval_list(Env env, Val v);
 Val tisp_eval(Env env, Val v);
+void tisp_print(FILE *f, Val v);
 
 void tisp_env_add(Env e, char *key, Val v);
 Env  tisp_env_init(size_t cap);

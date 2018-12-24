@@ -592,51 +592,51 @@ tisp_eval(Env env, Val v)
 
 /* TODO return str for error msgs? */
 void
-tisp_print(Val v)
+tisp_print(FILE *f, Val v)
 {
 	switch (v->t) {
 	case NONE:
 		break;
 	case NIL:
-		printf("()");
+		fprintf(f, "()");
 		break;
 	case INTEGER:
-		printf("%d", v->v.i);
+		fprintf(f, "%d", v->v.i);
 		break;
 	case DOUBLE:
-		printf("%.1f", v->v.d);
+		fprintf(f, "%.1f", v->v.d);
 		break;
 	case RATIONAL:
-		printf("%d/%d", v->v.r.num, v->v.r.den);
+		fprintf(f, "%d/%d", v->v.r.num, v->v.r.den);
 		break;
 	case STRING:
-		printf("\"%s\"", v->v.s);
+		fprintf(f, "\"%s\"", v->v.s);
 		break;
 	case SYMBOL:
-		printf(v->v.s);
+		fprintf(f, v->v.s);
 		break;
 	case PRIMITIVE:
-		printf("#<primitive>");
+		fprintf(f, "#<primitive>");
 		break;
 	case FUNCTION:
-		printf("#<function>");
+		fprintf(f, "#<function>");
 		break;
 	case PAIR:
-		putchar('(');
-		tisp_print(car(v));
+		putc('(', f);
+		tisp_print(f, car(v));
 		v = cdr(v);
 		while (!nilp(v)) {
 			if (v->t == PAIR) {
-				putchar(' ');
-				tisp_print(car(v));
+				putc(' ', f);
+				tisp_print(f, car(v));
 				v = cdr(v);
 			} else {
-				printf(" . ");
-				tisp_print(v);
+				fprintf(f, " . ");
+				tisp_print(f, v);
 				break;
 			}
 		}
-		putchar(')');
+		putc(')', f);
 		break;
 	default:
 		fprintf(stderr, "tisp: could not print value type [%s]", type_str(v->t));
