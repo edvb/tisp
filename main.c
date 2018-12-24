@@ -76,7 +76,8 @@ main(int argc, char *argv[])
 			continue;
 
 		tisp_print(stdout, v);
-		putchar('\n');
+		if (v->t != NONE)
+			putchar('\n');
 
 		if (!str.d) continue;
 		skip_ws(&str);
