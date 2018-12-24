@@ -52,6 +52,7 @@ char *
 type_str(Type t)
 {
 	switch (t) {
+	case NONE:      return "none";
 	case NIL:       return "nil";
 	case INTEGER:   return "integer";
 	case DOUBLE:    return "double";
@@ -555,6 +556,7 @@ tisp_eval(Env env, Val v)
 {
 	Val f, args;
 	switch (v->t) {
+	case NONE:
 	case NIL:
 	case INTEGER:
 	case DOUBLE:
@@ -593,6 +595,8 @@ void
 tisp_print(Val v)
 {
 	switch (v->t) {
+	case NONE:
+		break;
 	case NIL:
 		printf("()");
 		break;
@@ -727,7 +731,7 @@ prim_define(Env env, Val args)
 	if (!(v = tisp_eval(env, car(cdr(args)))))
 		return NULL;
 	hash_add(env->h, car(args)->v.s, v);
-	return NULL;
+	return env->none;
 }
 
 static Val
@@ -762,7 +766,7 @@ prim_load(Env env, Val args)
 	free(func);
 
 	env->libhc++;
-	return NULL;
+	return env->none;
 }
 
 void
@@ -777,6 +781,8 @@ tisp_env_init(size_t cap)
 	Env e = emalloc(sizeof(struct Env));
 	e->nil = emalloc(sizeof(struct Val));
 	e->nil->t = NIL;
+	e->none = emalloc(sizeof(struct Val));
+	e->none->t = NONE;
 	e->t = emalloc(sizeof(struct Val));
 	e->t->t = SYMBOL;
 	e->t->v.s = "t";

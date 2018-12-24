@@ -68,6 +68,7 @@ typedef struct {
 } Pair;
 
 typedef enum {
+	NONE,
 	NIL,
 	INTEGER,
 	RATIONAL,
@@ -93,7 +94,7 @@ struct Val {
 };
 
 struct Env {
-	Val nil, t;
+	Val none, nil, t;
 	Hash h;
 	Hash strs;
 	void **libh;
