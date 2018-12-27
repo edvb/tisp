@@ -137,6 +137,13 @@ issym(char c)
 }
 
 static int
+isnum(char *str)
+{
+	return isdigit(*str) || (*str == '.' && isdigit(str[1])) ||
+	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
+}
+
+static int
 vals_eq(Val a, Val b)
 {
 	if (a->t != b->t)
@@ -493,7 +500,9 @@ read_list(Env env, Str str)
 	Val *a = emalloc(sizeof(Val)), b;
 	str->d++;
 	skip_ws(str);
-	while (*str->d && *str->d != ')') {
+	while (*str->d != ')') {
+		if (!str->d[1])
+			warn("reached end before closing ')'");
 		a = erealloc(a, (n+1) * sizeof(Val)); /* TODO realloc less */
 		if (!(a[n++] = tisp_read(env, str)))
 			return NULL;
@@ -504,13 +513,6 @@ read_list(Env env, Str str)
 	str->d++;
 	skip_ws(str);
 	return b;
-}
-
-static int
-isnum(char *str)
-{
-	return isdigit(*str) || (*str == '.' && isdigit(str[1])) ||
-	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
 }
 
 Val
