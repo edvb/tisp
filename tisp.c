@@ -41,7 +41,15 @@
 	                 __LINE__);                 \
 	return NULL;                                \
 } while(0)
-
+#define arg_num(ARGS, NAME, NARGS) do {                                   \
+	if (list_len(ARGS) != NARGS)                                      \
+		warnf(NAME ": expected %d argument%s, received %d",       \
+		            NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
+} while(0)
+#define arg_type(ARG, NAME, TYPE) do {                                                     \
+	if (ARG->t != TYPE)                                                                 \
+		warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
+} while(0)
 
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
@@ -568,7 +576,7 @@ tisp_eval(Env env, Val v)
 		return v;
 	case SYMBOL:
 		if (!(f = hash_get(env->h, v->v.s)))
-			warnf("could not find symbol [%s]", v->v.s);
+			warnf("could not find symbol %s", v->v.s);
 		return f;
 	case PAIR:
 		if (!(f = tisp_eval(env, car(v))))
@@ -586,7 +594,7 @@ tisp_eval(Env env, Val v)
 			hash_merge(env->h, f->v.f.env->h);
 			return tisp_eval(env, f->v.f.body);
 		default:
-			warnf("attempt to evaluate non procedural type [%s]", type_str(f->t));
+			warnf("attempt to evaluate non procedural type %s", type_str(f->t));
 		}
 	default: break;
 	}
@@ -642,7 +650,7 @@ tisp_print(FILE *f, Val v)
 		putc(')', f);
 		break;
 	default:
-		fprintf(stderr, "tisp: could not print value type [%s]", type_str(v->t));
+		fprintf(stderr, "tisp: could not print value type %s", type_str(v->t));
 	}
 }
 
@@ -650,12 +658,10 @@ static Val
 prim_car(Env env, Val args)
 {
 	Val v;
-	if (list_len(args) != 1)
-		warnf("car: expected 1 argument, received [%d]", list_len(args));
+	arg_num(args, "car", 1);
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
-	if (car(v)->t != PAIR)
-		warnf("car: expected list, received type [%s]", type_str(car(v)->t));
+	arg_type(car(v), "car", PAIR);
 	return car(car(v));
 }
 
@@ -663,12 +669,10 @@ static Val
 prim_cdr(Env env, Val args)
 {
 	Val v;
-	if (list_len(args) != 1)
-		warnf("cdr: expected 1 argument, received [%d]", list_len(args));
+	arg_num(args, "cdr", 1);
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
-	if (car(v)->t != PAIR)
-		warnf("cdr: expected list, received type [%s]", type_str(car(v)->t));
+	arg_type(car(v), "cdr", PAIR);
 	return cdr(car(v));
 }
 
@@ -676,8 +680,7 @@ static Val
 prim_cons(Env env, Val args)
 {
 	Val v;
-	if (list_len(args) != 2)
-		warnf("cons: expected 2 arguments, received [%d]", list_len(args));
+	arg_num(args, "cons", 2);
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	return mk_pair(car(v), car(cdr(v)));
@@ -700,8 +703,7 @@ prim_eq(Env env, Val args)
 static Val
 prim_quote(Env env, Val args)
 {
-	if (list_len(args) != 1)
-		warnf("quote: expected 1 argument, received [%d]", list_len(args));
+	arg_num(args, "quote", 1);
 	return car(args);
 }
 
@@ -743,10 +745,10 @@ prim_load(Env env, Val args)
 	Val v;
 	void (*tibenv)(Env);
 	char *lib, *func;
-	if (list_len(args) != 1)
-		warn("load: incorrect format");
+	arg_num(args, "load", 1);
 	if (!(v = tisp_eval(env, car(args))))
 		return NULL;
+	arg_type(v, "load", STRING);
 
 	env->libh = erealloc(env->libh, (env->libhc+1)*sizeof(void*));
 
@@ -755,7 +757,7 @@ prim_load(Env env, Val args)
 	strcat(lib, v->v.s);
 	strcat(lib, ".so");
 	if (!(env->libh[env->libhc] = dlopen(lib, RTLD_LAZY)))
-		warnf("load: could not load [%s]: %s", v->v.s, dlerror());
+		warnf("load: could not load '%s':\n%s", v->v.s, dlerror());
 	dlerror();
 	free(lib);
 
@@ -764,7 +766,7 @@ prim_load(Env env, Val args)
 	strcat(func, v->v.s);
 	tibenv = dlsym(env->libh[env->libhc], func);
 	if (dlerror())
-		warnf("load: could not run [%s]: %s", v->v.s, dlerror());
+		warnf("load: could not run '%s':\n%s", v->v.s, dlerror());
 	(*tibenv)(env);
 	free(func);
 
