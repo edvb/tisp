@@ -495,7 +495,8 @@ read_list(Env env, Str str)
 	skip_ws(str);
 	while (*str->d && *str->d != ')') {
 		a = erealloc(a, (n+1) * sizeof(Val)); /* TODO realloc less */
-		a[n++] = tisp_read(env, str);
+		if (!(a[n++] = tisp_read(env, str)))
+			return NULL;
 		skip_ws(str);
 	}
 	b = mk_list(env, n, a);
@@ -530,7 +531,7 @@ tisp_read(Env env, Str str)
 		return read_sym(str);
 	if (*str->d == '(')
 		return read_list(env, str);
-	return NULL;
+	warn("could not read given input");
 }
 
 Val
@@ -583,7 +584,7 @@ tisp_eval(Env env, Val v)
 			hash_merge(env->h, f->v.f.env->h);
 			return tisp_eval(env, f->v.f.body);
 		default:
-			warnf("attempt to evaluate non primitive type [%s]", type_str(f->t));
+			warnf("attempt to evaluate non procedural type [%s]", type_str(f->t));
 		}
 	default: break;
 	}
