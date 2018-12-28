@@ -722,20 +722,28 @@ prim_cond(Env env, Val args)
 static Val
 prim_lambda(Env env, Val args)
 {
-	if (list_len(args) < 2 || (car(args)->t != PAIR && !nilp(car(args))))
-		warn("lambda: incorrect format");
+	arg_num(args, "lambda", 2);
+	if (car(args)->t != PAIR && !nilp(car(args)))
+		warn("lambda: incorrect format, no argument list found");
 	return mk_func(car(args), car(cdr(args)), env);
 }
 
 static Val
 prim_define(Env env, Val args)
 {
-	Val v;
-	if (list_len(args) != 2 || car(args)->t != SYMBOL)
-		warn("define: incorrect format");
-	if (!(v = tisp_eval(env, car(cdr(args)))))
+	Val sym, val;
+	arg_num(args, "define", 2);
+	if (car(args)->t == PAIR) {
+		sym = car(car(args));
+		val = mk_func(cdr(car(args)), car(cdr(args)), env);
+	} else if (car(args)->t == SYMBOL) {
+		sym = car(args);
+		val = tisp_eval(env, car(cdr(args)));
+	} else
+		warn("define: incorrect format, no variable name found");
+	if (!val)
 		return NULL;
-	hash_add(env->h, car(args)->v.s, v);
+	hash_add(env->h, sym->v.s, val);
 	return env->none;
 }
 
