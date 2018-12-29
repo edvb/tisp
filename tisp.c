@@ -169,11 +169,7 @@ vals_eq(Val a, Val b)
 		if (a->v.r.num != b->v.r.num || a->v.r.den != b->v.r.den)
 			return 0;
 		break;
-	case SYMBOL:
-		if (strcmp(a->v.s, b->v.s))
-			return 0;
-		break;
-	default: /* PRIMITIVE, STRING, TODO SYMBOL */
+	default: /* PRIMITIVE, STRING, SYMBOL */
 		if (a != b)
 			return 0;
 	}
@@ -232,7 +228,7 @@ entry_get(Hash ht, char *key)
 	return &ht->items[i];
 }
 
-/* get value of given key in hash table  */
+/* get value of given key in hash table */
 static Val
 hash_get(Hash ht, char *key)
 {
@@ -355,8 +351,10 @@ mk_rat(int num, int den)
 Val
 mk_str(Env env, char *s) {
 	Val ret;
-	if ((ret = hash_get(env->strs, s)))
+	if ((ret = hash_get(env->strs, s))) {
+		ret->t = STRING;
 		return ret;
+	}
 	ret = emalloc(sizeof(struct Val));
 	ret->t = STRING;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
@@ -367,11 +365,17 @@ mk_str(Env env, char *s) {
 
 /* TODO return existing symbol */
 Val
-mk_sym(char *s)
+mk_sym(Env env, char *s)
 {
-	Val ret = emalloc(sizeof(struct Val));
+	Val ret;
+	if ((ret = hash_get(env->strs, s))) {
+		ret->t = SYMBOL;
+		return ret;
+	}
+	ret = emalloc(sizeof(struct Val));
 	ret->t = SYMBOL;
 	ret->v.s = s;
+	hash_add(env->strs, s, ret);
 	return ret;
 }
 
@@ -489,7 +493,7 @@ read_str(Env env, Str str)
 }
 
 static Val
-read_sym(Str str)
+read_sym(Env env, Str str)
 {
 	int n = 1;
 	int i = 0;
@@ -502,7 +506,7 @@ read_sym(Str str)
 		}
 	}
 	sym[i] = '\0';
-	return mk_sym(sym);
+	return mk_sym(env, sym);
 }
 
 static Val
@@ -539,10 +543,10 @@ tisp_read(Env env, Str str)
 		return read_str(env, str);
 	if (*str->d == '\'') {
 		str->d++;
-		return mk_pair(mk_sym("quote"), mk_pair(tisp_read(env, str), env->nil));
+		return mk_pair(mk_sym(env, "quote"), mk_pair(tisp_read(env, str), env->nil));
 	}
 	if (issym(*str->d))
-		return read_sym(str);
+		return read_sym(env, str);
 	if (*str->d == '(')
 		return read_list(env, str);
 	warn("could not read given input");
