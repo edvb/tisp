@@ -458,6 +458,8 @@ read_num(Str str)
 	switch (*str->d) {
 	case '/':
 		str->d++;
+		if (!isnum(str->d))
+			warn("incorrect ratio format, no denominator found");
 		return mk_rat(sign * num, read_sign(str) * read_int(str));
 	case '.':
 		s = emalloc(sizeof(str));
@@ -479,7 +481,9 @@ read_str(Env env, Str str)
 {
 	int len = 0;
 	char *s = ++str->d;
-	for (; *str->d && *str->d++ != '"'; len++);
+	for (; *str->d++ != '"'; len++)
+		if (!*str->d)
+			warn("reached end before closing double quote");
 	s[len] = '\0';
 	return mk_str(env, s);
 }
