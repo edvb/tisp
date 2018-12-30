@@ -31,26 +31,6 @@
 
 #define BETWEEN(X, A, B)  ((A) <= (X) && (X) <= (B))
 
-#define warnf(M, ...) do {                          \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                  __LINE__, ##__VA_ARGS__); \
-	return NULL;                                \
-} while(0)
-#define warn(M) do {                                \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                 __LINE__);                 \
-	return NULL;                                \
-} while(0)
-#define arg_num(ARGS, NAME, NARGS) do {                                   \
-	if (list_len(ARGS) != NARGS)                                      \
-		warnf(NAME ": expected %d argument%s, received %d",       \
-		            NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
-} while(0)
-#define arg_type(ARG, NAME, TYPE) do {                                                     \
-	if (ARG->t != TYPE)                                                                 \
-		warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
-} while(0)
-
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
 static Hash hash_extend(Hash ht, Val args, Val vals);
@@ -282,7 +262,7 @@ hash_extend(Hash ht, Val args, Val vals)
 		arg = car(args);
 		val = car(vals);
 		if (arg->t != SYMBOL)
-			warn("hash_extend: argument not a symbol");
+			tsp_warn("hash_extend: argument not a symbol");
 		hash_add(ht, arg->v.s, val);
 	}
 	return ht;
@@ -334,7 +314,7 @@ Val
 mk_rat(int num, int den)
 {
 	if (den == 0)
-		warn("division by zero");
+		tsp_warn("division by zero");
 	frac_reduce(&num, &den);
 	if (den < 0) { /* simplify so only numerator is negative */
 		den = abs(den);
@@ -463,7 +443,7 @@ read_num(Str str)
 	case '/':
 		str->d++;
 		if (!isnum(str->d))
-			warn("incorrect ratio format, no denominator found");
+			tsp_warn("incorrect ratio format, no denominator found");
 		return mk_rat(sign * num, read_sign(str) * read_int(str));
 	case '.':
 		s = emalloc(sizeof(str));
@@ -487,7 +467,7 @@ read_str(Env env, Str str)
 	char *s = ++str->d;
 	for (; *str->d++ != '"'; len++)
 		if (!*str->d)
-			warn("reached end before closing double quote");
+			tsp_warn("reached end before closing double quote");
 	s[len] = '\0';
 	return mk_str(env, s);
 }
@@ -518,7 +498,7 @@ read_list(Env env, Str str)
 	skip_ws(str);
 	while (*str->d != ')') {
 		if (!str->d[1])
-			warn("reached end before closing ')'");
+			tsp_warn("reached end before closing ')'");
 		a = erealloc(a, (n+1) * sizeof(Val)); /* TODO realloc less */
 		if (!(a[n++] = tisp_read(env, str)))
 			return NULL;
@@ -549,7 +529,7 @@ tisp_read(Env env, Str str)
 		return read_sym(env, str);
 	if (*str->d == '(')
 		return read_list(env, str);
-	warn("could not read given input");
+	tsp_warn("could not read given input");
 }
 
 Val
@@ -584,7 +564,7 @@ tisp_eval(Env env, Val v)
 		return v;
 	case SYMBOL:
 		if (!(f = hash_get(env->h, v->v.s)))
-			warnf("could not find symbol %s", v->v.s);
+			tsp_warnf("could not find symbol %s", v->v.s);
 		return f;
 	case PAIR:
 		if (!(f = tisp_eval(env, car(v))))
@@ -602,7 +582,7 @@ tisp_eval(Env env, Val v)
 			hash_merge(env->h, f->v.f.env->h);
 			return tisp_eval(env, f->v.f.body);
 		default:
-			warnf("attempt to evaluate non procedural type %s", type_str(f->t));
+			tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
 		}
 	default: break;
 	}
@@ -666,10 +646,10 @@ static Val
 prim_car(Env env, Val args)
 {
 	Val v;
-	arg_num(args, "car", 1);
+	tsp_arg_num(args, "car", 1);
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
-	arg_type(car(v), "car", PAIR);
+	tsp_arg_type(car(v), "car", PAIR);
 	return car(car(v));
 }
 
@@ -677,10 +657,10 @@ static Val
 prim_cdr(Env env, Val args)
 {
 	Val v;
-	arg_num(args, "cdr", 1);
+	tsp_arg_num(args, "cdr", 1);
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
-	arg_type(car(v), "cdr", PAIR);
+	tsp_arg_type(car(v), "cdr", PAIR);
 	return cdr(car(v));
 }
 
@@ -688,7 +668,7 @@ static Val
 prim_cons(Env env, Val args)
 {
 	Val v;
-	arg_num(args, "cons", 2);
+	tsp_arg_num(args, "cons", 2);
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	return mk_pair(car(v), car(cdr(v)));
@@ -711,7 +691,7 @@ prim_eq(Env env, Val args)
 static Val
 prim_quote(Env env, Val args)
 {
-	arg_num(args, "quote", 1);
+	tsp_arg_num(args, "quote", 1);
 	return car(args);
 }
 
@@ -730,9 +710,9 @@ prim_cond(Env env, Val args)
 static Val
 prim_lambda(Env env, Val args)
 {
-	arg_num(args, "lambda", 2);
+	tsp_arg_num(args, "lambda", 2);
 	if (car(args)->t != PAIR && !nilp(car(args)))
-		warn("lambda: incorrect format, no argument list found");
+		tsp_warn("lambda: incorrect format, no argument list found");
 	return mk_func(car(args), car(cdr(args)), env);
 }
 
@@ -740,7 +720,7 @@ static Val
 prim_define(Env env, Val args)
 {
 	Val sym, val;
-	arg_num(args, "define", 2);
+	tsp_arg_num(args, "define", 2);
 	if (car(args)->t == PAIR) {
 		sym = car(car(args));
 		val = mk_func(cdr(car(args)), car(cdr(args)), env);
@@ -748,7 +728,7 @@ prim_define(Env env, Val args)
 		sym = car(args);
 		val = tisp_eval(env, car(cdr(args)));
 	} else
-		warn("define: incorrect format, no variable name found");
+		tsp_warn("define: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
 	hash_add(env->h, sym->v.s, val);
@@ -761,10 +741,10 @@ prim_load(Env env, Val args)
 	Val v;
 	void (*tibenv)(Env);
 	char *lib, *func;
-	arg_num(args, "load", 1);
+	tsp_arg_num(args, "load", 1);
 	if (!(v = tisp_eval(env, car(args))))
 		return NULL;
-	arg_type(v, "load", STRING);
+	tsp_arg_type(v, "load", STRING);
 
 	env->libh = erealloc(env->libh, (env->libhc+1)*sizeof(void*));
 
@@ -773,7 +753,7 @@ prim_load(Env env, Val args)
 	strcat(lib, v->v.s);
 	strcat(lib, ".so");
 	if (!(env->libh[env->libhc] = dlopen(lib, RTLD_LAZY)))
-		warnf("load: could not load '%s':\n%s", v->v.s, dlerror());
+		tsp_warnf("load: could not load '%s':\n%s", v->v.s, dlerror());
 	dlerror();
 	free(lib);
 
@@ -782,7 +762,7 @@ prim_load(Env env, Val args)
 	strcat(func, v->v.s);
 	tibenv = dlsym(env->libh[env->libhc], func);
 	if (dlerror())
-		warnf("load: could not run '%s':\n%s", v->v.s, dlerror());
+		tsp_warnf("load: could not run '%s':\n%s", v->v.s, dlerror());
 	(*tibenv)(env);
 	free(func);
 

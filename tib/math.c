@@ -3,32 +3,17 @@
 
 #include "../tisp.h"
 
-#define warnf(M, ...) do {                          \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                  __LINE__, ##__VA_ARGS__); \
-	return NULL;                                \
-} while(0)
-#define warn(M) do {                                \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                 __LINE__);                 \
-	return NULL;                                \
-} while(0)
-
-
 #define PRIM_OP(NAME, OP, FUNC)                                                        \
 static Val                                                                             \
 prim_##NAME(Env env, Val args)                                                         \
 {                                                                                      \
 	Val a, b;                                                                      \
-	int len = list_len(args);                                                      \
-	if (len != 2)                                                                  \
-		warnf(FUNC ": expected 2 arguments, recieved %d", len);                \
-	if (!(a = tisp_eval(env, car(args))) || !(b = tisp_eval(env, car(cdr(args))))) \
+	tsp_arg_num(args, FUNC, 2);                                                    \
+	if (!(a = tisp_eval(env, car(args))) ||                                        \
+	    !(b = tisp_eval(env, car(cdr(args)))))                                     \
 		return NULL;                                                           \
-	if (a->t != INTEGER)                                                           \
-		warnf(FUNC ": expected integer, recieved type [%s]", type_str(a->t));  \
-	if (b->t != INTEGER)                                                           \
-		warnf(FUNC ": expected integer, recieved type [%s]", type_str(b->t));  \
+	tsp_arg_type(a, FUNC, INTEGER);                                                \
+	tsp_arg_type(b, FUNC, INTEGER);                                                \
 	return mk_int(a->v.i OP b->v.i);                                               \
 }
 
@@ -42,17 +27,15 @@ prim_sub(Env env, Val args)
 	Val a, b;
 	int len = list_len(args);
 	if (len != 2 && len != 1)
-		warnf("-: expected 1 or 2 arguments, recieved %d", len);
+		tsp_warnf("-: expected 1 or 2 arguments, recieved %d", len);
 	if (!(a = tisp_eval(env, car(args))))
 		return NULL;
-	if (a->t != INTEGER)
-		warnf("-: expected integer, recieved type [%s]", type_str(a->t));
+	tsp_arg_type(a, "-", INTEGER);
 	if (len == 1)
 		return mk_int(-a->v.i);
 	if (!(b = tisp_eval(env, car(cdr(args)))))
 		return NULL;
-	if (b->t != INTEGER)
-		warnf("-: expected integer, recieved type [%s]", type_str(b->t));
+	tsp_arg_type(b, "-", INTEGER);
 	return mk_int(a->v.i - b->v.i);
 }
 
@@ -60,22 +43,13 @@ static Val
 prim_div(Env env, Val args)
 {
 	Val a, b;
-	int len = list_len(args);
-	if (len != 2)
-		warnf("/: expected 2 arguments, recieved %d", len);
+	tsp_arg_num(args, "/", 2);
 	if (!(a = tisp_eval(env, car(args))) || !(b = tisp_eval(env, car(cdr(args)))))
 		return NULL;
-	if (a->t != INTEGER)
-		warnf("/: expected integer, recieved type [%s]", type_str(a->t));
-	if (b->t != INTEGER)
-		warnf("/: expected integer, recieved type [%s]", type_str(b->t));
+	tsp_arg_type(a, "/", INTEGER);
+	tsp_arg_type(b, "/", INTEGER);
 	return mk_rat(a->v.i, b->v.i);
 }
-
-#define INT_TEST(V, FUNC) do {                                                        \
-	if (V->t != INTEGER)                                                          \
-		warnf(FUNC ": expected integer, recieved type [%s]", type_str(V->t)); \
-} while (0)
 
 #define PRIM_COMPARE(NAME, OP, FUNC)                                  \
 static Val                                                            \
@@ -86,8 +60,8 @@ prim_##NAME(Env env, Val args)                                        \
 		return NULL;                                          \
 	if (list_len(v) != 2)                                         \
 		return env->t;                                        \
-	INT_TEST(car(v), FUNC);                                       \
-	INT_TEST(car(cdr(v)), FUNC);                                  \
+	tsp_arg_type(car(v), FUNC, INTEGER);                          \
+	tsp_arg_type(car(cdr(v)), FUNC, INTEGER);                     \
 	return (car(v)->v.i OP car(cdr(v))->v.i) ? env->t : env->nil; \
 }
 

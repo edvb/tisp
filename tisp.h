@@ -19,6 +19,26 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#define tsp_warnf(M, ...) do {                          \
+	fprintf(stderr, "tisp:%d: error: " M "\n",  \
+	                  __LINE__, ##__VA_ARGS__); \
+	return NULL;                                \
+} while(0)
+#define tsp_warn(M) do {                                \
+	fprintf(stderr, "tisp:%d: error: " M "\n",  \
+	                 __LINE__);                 \
+	return NULL;                                \
+} while(0)
+#define tsp_arg_num(ARGS, NAME, NARGS) do {                                   \
+	if (list_len(ARGS) != NARGS)                                      \
+		tsp_warnf(NAME ": expected %d argument%s, received %d",       \
+		            NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
+} while(0)
+#define tsp_arg_type(ARG, NAME, TYPE) do {                                                     \
+	if (ARG->t != TYPE)                                                                 \
+		tsp_warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
+} while(0)
+
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
