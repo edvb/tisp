@@ -127,6 +127,7 @@ void skip_ws(Str str);
 Val mk_int(int i);
 Val mk_str(Env env, char *s);
 Val mk_prim(Prim prim);
+Val mk_dub(double d);
 Val mk_rat(int num, int den);
 Val mk_sym(Env env, char *s);
 Val mk_func(Val args, Val body, Env env);

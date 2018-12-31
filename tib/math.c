@@ -73,11 +73,15 @@ PRIM_COMPARE(gte, >=, ">=")
 void
 tib_env_math(Env env)
 {
+	tisp_env_add(env, "pi",  mk_dub(3.1415926535));
+	tisp_env_add(env, "e",   mk_dub(2.7182818284));
+
 	tisp_env_add(env, "+",   mk_prim(prim_add));
 	tisp_env_add(env, "-",   mk_prim(prim_sub));
 	tisp_env_add(env, "*",   mk_prim(prim_mul));
 	tisp_env_add(env, "/",   mk_prim(prim_div));
 	tisp_env_add(env, "mod", mk_prim(prim_mod));
+
 	tisp_env_add(env, "<",   mk_prim(prim_lt));
 	tisp_env_add(env, ">",   mk_prim(prim_gt));
 	tisp_env_add(env, "<=",  mk_prim(prim_lte));
