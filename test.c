@@ -5,9 +5,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../util.h"
-#include "../tisp.h"
-#include "../tib/math.h"
+#include "util.h"
+#include "tisp.h"
+#include "tib/math.h"
 
 int
 tisp_test(Env env, const char *input, const char *expect)

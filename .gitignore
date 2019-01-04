@@ -6,6 +6,7 @@
 
 # compiled files
 tisp
+test
 *.exe
 *.out
 *.app
