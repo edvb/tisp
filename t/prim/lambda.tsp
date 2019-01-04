@@ -1,5 +1,0 @@
-((lambda (x) x) 3)
-((lambda (x) x) (+ 1 2))
-((lambda (x) (+ x 1)) 8)
-((lambda (a b) (+ a b)) 2 2)
-((lambda () 5))

@@ -4,9 +4,10 @@
 include config.mk
 
 EXE = tisp
-SRC = $(wildcard *.c */*.c)
-OBJ = $(SRC:.c=.o)
-LIB = tib/libtibmath.so
+SRC = tisp.c main.c util.c extern/linenoise.c
+TIB = tib/math.c tib/io.c
+OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
+LIB = tib/libtibmath.so tib/libtibio.so
 
 all: options $(EXE)
 
@@ -29,7 +30,7 @@ config.h:
 	@echo creating $@ from config.def.h
 	@cp config.def.h $@
 
-$(LIB): $(wildcard tib/*.c)
+$(LIB): $(TIB)
 	@echo $(CC) -o $@
 	@gcc -shared -o $@ $(OBJ)
 
@@ -39,7 +40,7 @@ $(EXE): $(OBJ) $(LIB)
 
 clean:
 	@echo cleaning
-	@rm -f $(OBJ) $(LIB) $(EXE)
+	@rm -f $(OBJ) $(LIB) $(EXE) test test.o test.out
 
 install: all
 	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
@@ -62,9 +63,11 @@ uninstall:
 	@echo removing libraries from $(DESTDIR)$(PREFIX)/lib/tisp
 	@rm -rf $(DESTDIR)$(PREFIX)/lib/tisp/
 
-test: $(EXE)
+test: $(OBJ) $(LIB) test.o
 	@echo running tests
-	@cd t && ./t
+	@echo $(CC) -o test
+	@$(CC) -o test tisp.o tib/math.o util.o test.o $(LDFLAGS)
+	@./test
 
 man:
 	@echo -n updating man page $(EXE).1 ...
@@ -79,4 +82,4 @@ man:
 	 md2roff - | sed "9s/]/]\ /g" | sed "9s/|/|\ /g" > $(EXE).1
 	@echo \ done
 
-.PHONY: all options clean install uninstall man
+.PHONY: all options clean install uninstall test man
