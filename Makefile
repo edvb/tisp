@@ -5,9 +5,9 @@ include config.mk
 
 EXE = tisp
 SRC = tisp.c main.c util.c extern/linenoise.c
-TIB = tib/math.c tib/io.c
+TIB = tib/math.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
-LIB = tib/libtibmath.so tib/libtibio.so
+LIB = tib/libtibmath.so
 
 all: options $(EXE)
 
