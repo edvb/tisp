@@ -171,6 +171,13 @@ char *tests[][2] = {
 	{ "(add foo bar)",               "8"  },
 	{ "(define (one x) (add x 1))",  ""   },
 	{ "(one foo)",                   "5"  },
+	{ "(define (more x)"
+	  "        (define term 3)"
+	  "        (+ x term))",         ""   },
+	{ "(more 8)",                    "11" },
+	{ "(define (add2 x)"
+	  "        (+ x 1) (+ x 2))",    ""   },
+	{ "(add2 2)",                    "4"  },
 
 	{ "lambda",                       NULL },
 	{ "((lambda (x) x) 3)",           "3" },

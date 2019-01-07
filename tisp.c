@@ -54,24 +54,6 @@ type_str(Type t)
 	}
 }
 
-int
-list_len(Val v)
-{
-	int len = 0;
-	Val a;
-	for (a = v; a->t == PAIR; a = cdr(a))
-		len++;
-	return a->t == NIL ? len : -1;
-}
-
-void
-skip_ws(Str str)
-{
-	str->d += strspn(str->d, " \t\n"); /* skip white space */
-	for (; *str->d == ';'; str->d++) /* skip comments until newline */
-		str->d += strcspn(str->d, "\n");
-}
-
 static void
 die(const char *fmt, ...)
 {
@@ -129,6 +111,32 @@ isnum(char *str)
 {
 	return isdigit(*str) || (*str == '.' && isdigit(str[1])) ||
 	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
+}
+
+void
+skip_ws(Str str)
+{
+	str->d += strspn(str->d, " \t\n"); /* skip white space */
+	for (; *str->d == ';'; str->d++) /* skip comments until newline */
+		str->d += strcspn(str->d, "\n");
+}
+
+int
+list_len(Val v)
+{
+	int len = 0;
+	Val a;
+	for (a = v; a->t == PAIR; a = cdr(a))
+		len++;
+	return a->t == NIL ? len : -1;
+}
+
+static Val
+list_last(Val v)
+{
+	while (!(cdr(v)->t & NIL))
+		v = cdr(v);
+	return car(v);
 }
 
 static int
@@ -580,7 +588,7 @@ tisp_eval(Env env, Val v)
 			if (!(hash_extend(env->h, f->v.f.args, args)))
 				return NULL;
 			hash_merge(env->h, f->v.f.env->h);
-			return tisp_eval(env, f->v.f.body);
+			return list_last(tisp_eval_list(env, f->v.f.body));
 		default:
 			tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
 		}
@@ -710,20 +718,22 @@ prim_cond(Env env, Val args)
 static Val
 prim_lambda(Env env, Val args)
 {
-	tsp_arg_num(args, "lambda", 2);
+	if (list_len(args) < 2)
+		tsp_warnf("lambda: expected 2 or more arguments, received %d", list_len(args));
 	if (car(args)->t != PAIR && !nilp(car(args)))
 		tsp_warn("lambda: incorrect format, no argument list found");
-	return mk_func(car(args), car(cdr(args)), env);
+	return mk_func(car(args), cdr(args), env);
 }
 
 static Val
 prim_define(Env env, Val args)
 {
 	Val sym, val;
-	tsp_arg_num(args, "define", 2);
+	if (list_len(args) < 2)
+		tsp_warnf("define: expected 2 or more arguments, received %d", list_len(args));
 	if (car(args)->t == PAIR) {
 		sym = car(car(args));
-		val = mk_func(cdr(car(args)), car(cdr(args)), env);
+		val = mk_func(cdr(car(args)), cdr(args), env);
 	} else if (car(args)->t == SYMBOL) {
 		sym = car(args);
 		val = tisp_eval(env, car(cdr(args)));
