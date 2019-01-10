@@ -44,13 +44,16 @@ type_str(Type t)
 	case NIL:       return "nil";
 	case INTEGER:   return "integer";
 	case DOUBLE:    return "double";
-	case RATIONAL:  return "rational";
+	case RATIO:     return "ratio";
 	case STRING:    return "string";
 	case SYMBOL:    return "symbol";
 	case PRIMITIVE: return "primitive";
 	case FUNCTION:  return "function";
 	case PAIR:      return "pair";
-	default:        return "invalid";
+	default:
+		if (t & NUMBER)
+			return "number";
+		return "invalid";
 	}
 }
 
@@ -153,7 +156,7 @@ vals_eq(Val a, Val b)
 		if (a->v.d != b->v.d)
 			return 0;
 		break;
-	case RATIONAL:
+	case RATIO:
 		if (a->v.r.num != b->v.r.num || a->v.r.den != b->v.r.den)
 			return 0;
 		break;
@@ -331,7 +334,7 @@ mk_rat(int num, int den)
 	if (den == 1) /* simplify into integer if denominator is 1 */
 		return mk_int(num);
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = RATIONAL;
+	ret->t = RATIO;
 	ret->v.r = (Ratio){ num, den };
 	return ret;
 }
@@ -567,7 +570,7 @@ tisp_eval(Env env, Val v)
 	case NIL:
 	case INTEGER:
 	case DOUBLE:
-	case RATIONAL:
+	case RATIO:
 	case STRING:
 		return v;
 	case SYMBOL:
@@ -613,7 +616,7 @@ tisp_print(FILE *f, Val v)
 	case DOUBLE:
 		fprintf(f, "%.1f", v->v.d);
 		break;
-	case RATIONAL:
+	case RATIO:
 		fprintf(f, "%d/%d", v->v.r.num, v->v.r.den);
 		break;
 	case STRING:

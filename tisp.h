@@ -19,23 +19,23 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define tsp_warnf(M, ...) do {                          \
+#define tsp_warnf(M, ...) do {                      \
 	fprintf(stderr, "tisp:%d: error: " M "\n",  \
 	                  __LINE__, ##__VA_ARGS__); \
 	return NULL;                                \
 } while(0)
-#define tsp_warn(M) do {                                \
+#define tsp_warn(M) do {                            \
 	fprintf(stderr, "tisp:%d: error: " M "\n",  \
 	                 __LINE__);                 \
 	return NULL;                                \
 } while(0)
-#define tsp_arg_num(ARGS, NAME, NARGS) do {                                   \
+#define tsp_arg_num(ARGS, NAME, NARGS) do {                               \
 	if (list_len(ARGS) != NARGS)                                      \
-		tsp_warnf(NAME ": expected %d argument%s, received %d",       \
+		tsp_warnf(NAME ": expected %d argument%s, received %d",   \
 		            NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
 } while(0)
-#define tsp_arg_type(ARG, NAME, TYPE) do {                                                     \
-	if (ARG->t != TYPE)                                                                 \
+#define tsp_arg_type(ARG, NAME, TYPE) do {                                                      \
+	if (!(ARG->t & TYPE))                                                                   \
 		tsp_warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
 } while(0)
 
@@ -88,17 +88,18 @@ typedef struct {
 } Pair;
 
 typedef enum {
-	NONE,
-	NIL,
-	INTEGER,
-	RATIONAL,
-	DOUBLE,
-	STRING,
-	SYMBOL,
-	PRIMITIVE,
-	FUNCTION,
-	PAIR,
+	NONE      = 1 << 0,
+	NIL       = 1 << 1,
+	INTEGER   = 1 << 2,
+	RATIO     = 1 << 3,
+	DOUBLE    = 1 << 4,
+	STRING    = 1 << 5,
+	SYMBOL    = 1 << 6,
+	PRIMITIVE = 1 << 7,
+	FUNCTION  = 1 << 8,
+	PAIR      = 1 << 9,
 } Type;
+static Type const NUMBER = INTEGER | DOUBLE | RATIO;
 
 struct Val {
 	Type t;
