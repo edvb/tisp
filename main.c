@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 	case 'h':
 		usage(0);
 	case 'v':
-		die(0, "%s v%s (c) 2017-2018 Ed van Bruggen", argv0, VERSION);
+		die(0, "%s v%s (c) 2017-2019 Ed van Bruggen", argv0, VERSION);
 	default:
 		usage(1);
 	} ARGEND;
