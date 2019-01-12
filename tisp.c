@@ -614,7 +614,9 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "%d", v->v.i);
 		break;
 	case DOUBLE:
-		fprintf(f, "%.1f", v->v.d);
+		fprintf(f, "%.16g", v->v.d);
+		if (v->v.d == (int)v->v.d)
+			fprintf(f, ".0");
 		break;
 	case RATIO:
 		fprintf(f, "%d/%d", v->v.r.num, v->v.r.den);
