@@ -49,7 +49,6 @@ install: all
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@echo installing manual page to $(DESTDIR)$(MANPREFIX)/man1
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
-	@sed "s/VERSION/$(VERSION)/g" < $(EXE).1 > $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@echo installing libraries to $(DESTDIR)$(PREFIX)/lib/tisp
 	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp
@@ -70,16 +69,8 @@ test: $(OBJ) $(LIB) test.o
 	@./test
 
 man:
-	@echo -n updating man page $(EXE).1 ...
-	@(head -1 README.md | sed "s/$(EXE)/$(EXE) 1 \"`date +%B\ %Y`\" \"$(EXE)\ $(VERSION)\"\n\n##NAME\n\n&/"; \
-	  echo "\n##SYNOPSIS\n"; \
-	  ./$(EXE) -h 2>&1 | sed -E 's/(\<[_A-Z][_A-Z]+\>)/\*\1\*/g' | \
-	                     sed -E 's/(-[a-Z]+\>)/\*\*\1\*\*/g' | \
-	                     sed -E 's/(\<$(EXE)\>)/\*\*\1\*\*/g' | \
-	                     sed 's/_/\\_/g' | sed 's/:/:\ /g'| cut -d' ' -f2-; \
-	  echo "\n##DESCRIPTION"; \
-	  tail +2 README.md;) | \
-	 md2roff - | sed "9s/]/]\ /g" | sed "9s/|/|\ /g" > $(EXE).1
-	@echo \ done
+	@echo updating man page doc/$(EXE).1
+	@markman -nCD -t TISP -V "$(VERSION)" -d "`date '+%B %Y'`" \
+		-s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" doc/$(EXE).1.md > doc/$(EXE).1
 
 .PHONY: all options clean install uninstall test man
