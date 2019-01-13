@@ -144,6 +144,11 @@ as the cdr.
 
 Returns the given argument unevaluated.
 
+#### void
+
+Returns nothing. Used to insert a void type in a list or force a function not
+to return anything.
+
 #### =
 
 Tests if multiple values equal. Returns nil if any are not, and `t` otherwise.

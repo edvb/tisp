@@ -600,6 +600,15 @@ tisp_eval(Env env, Val v)
 	return v;
 }
 
+static void
+list_print(FILE *f, Val v)
+{
+	if (v->t == NONE)
+		fprintf(f, "#<void>");
+	else
+		tisp_print(f, v);
+}
+
 /* TODO return str for error msgs? */
 void
 tisp_print(FILE *f, Val v)
@@ -635,16 +644,16 @@ tisp_print(FILE *f, Val v)
 		break;
 	case PAIR:
 		putc('(', f);
-		tisp_print(f, car(v));
+		list_print(f, car(v));
 		v = cdr(v);
 		while (!nilp(v)) {
 			if (v->t == PAIR) {
 				putc(' ', f);
-				tisp_print(f, car(v));
+				list_print(f, car(v));
 				v = cdr(v);
 			} else {
 				fprintf(f, " . ");
-				tisp_print(f, v);
+				list_print(f, v);
 				break;
 			}
 		}
@@ -688,6 +697,19 @@ prim_cons(Env env, Val args)
 }
 
 static Val
+prim_quote(Env env, Val args)
+{
+	tsp_arg_num(args, "quote", 1);
+	return car(args);
+}
+
+static Val
+prim_void(Env env, Val args)
+{
+	return env->none;
+}
+
+static Val
 prim_eq(Env env, Val args)
 {
 	Val v;
@@ -699,13 +721,6 @@ prim_eq(Env env, Val args)
 		if (!vals_eq(car(v), car(cdr(v))))
 			return env->nil;
 	return env->t;
-}
-
-static Val
-prim_quote(Env env, Val args)
-{
-	tsp_arg_num(args, "quote", 1);
-	return car(args);
 }
 
 static Val
@@ -808,8 +823,9 @@ tisp_env_init(size_t cap)
 	hash_add(e->h, "car",    mk_prim(prim_car));
 	hash_add(e->h, "cdr",    mk_prim(prim_cdr));
 	hash_add(e->h, "cons",   mk_prim(prim_cons));
-	hash_add(e->h, "=",      mk_prim(prim_eq));
 	hash_add(e->h, "quote",  mk_prim(prim_quote));
+	hash_add(e->h, "void",   mk_prim(prim_void));
+	hash_add(e->h, "=",      mk_prim(prim_eq));
 	hash_add(e->h, "cond",   mk_prim(prim_cond));
 	hash_add(e->h, "lambda", mk_prim(prim_lambda));
 	hash_add(e->h, "define", mk_prim(prim_define));
