@@ -527,7 +527,7 @@ tisp_read(Env env, Str str)
 {
 	skip_ws(str);
 	if (strlen(str->d) == 0)
-		return env->nil;
+		return env->none;
 	if (isnum(str->d))
 		return read_num(str);
 	if (*str->d == '"')
