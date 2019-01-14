@@ -4,7 +4,7 @@
 include config.mk
 
 EXE = tisp
-SRC = tisp.c main.c util.c extern/linenoise.c
+SRC = tisp.c main.c extern/linenoise.c
 TIB = tib/math.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
 LIB = tib/libtibmath.so
@@ -65,7 +65,7 @@ uninstall:
 test: $(OBJ) $(LIB) test.o
 	@echo running tests
 	@echo $(CC) -o test
-	@$(CC) -o test tisp.o tib/math.o util.o test.o $(LDFLAGS)
+	@$(CC) -o test tisp.o tib/math.o test.o $(LDFLAGS)
 	@./test
 
 man:

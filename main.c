@@ -1,12 +1,13 @@
 /* See LICENSE file for copyright and license details. */
 #include <libgen.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "extern/arg.h"
 #include "extern/linenoise.h"
 
-#include "util.h"
 #include "config.h"
 
 #include "tisp.h"
@@ -15,6 +16,26 @@
 #endif
 
 char *argv0;
+
+void
+die(int eval, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
+	if (fmt[0] && fmt[strlen(fmt)-1] == ':') {
+		fputc(' ', stderr);
+		perror(NULL);
+	} else {
+		fputc('\n', stderr);
+	}
+
+	if (eval > -1)
+		exit(eval);
+}
 
 static Val
 read_val(Env env, Str cmd)
@@ -32,7 +53,7 @@ read_val(Env env, Str cmd)
 
 	strf = str.d;
 	ret = tisp_read(env, &str);
-	efree(strf);
+	free(strf);
 	return ret;
 }
 
@@ -68,7 +89,7 @@ main(int argc, char *argv[])
 		if (!(fp = fopen(*argv, "r")))
 			die(1, "%s: %s:", argv[0], *argv);
 		while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) ;
-		str.d = estrdup(buf);
+		str.d = strdup(buf);
 	}
 
 	while ((v = read_val(env, &str))) {

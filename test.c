@@ -5,7 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "util.h"
 #include "tisp.h"
 #include "tib/math.h"
 

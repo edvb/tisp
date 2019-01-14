@@ -36,27 +36,6 @@ static void hash_add(Hash ht, char *key, Val val);
 static Hash hash_extend(Hash ht, Val args, Val vals);
 static void hash_merge(Hash ht, Hash ht2);
 
-char *
-type_str(Type t)
-{
-	switch (t) {
-	case NONE:      return "none";
-	case NIL:       return "nil";
-	case INTEGER:   return "integer";
-	case DOUBLE:    return "double";
-	case RATIO:     return "ratio";
-	case STRING:    return "string";
-	case SYMBOL:    return "symbol";
-	case PRIMITIVE: return "primitive";
-	case FUNCTION:  return "function";
-	case PAIR:      return "pair";
-	default:
-		if (t & NUMBER)
-			return "number";
-		return "invalid";
-	}
-}
-
 static void
 die(const char *fmt, ...)
 {
@@ -100,6 +79,27 @@ erealloc(void *p, size_t size)
 	if (!(p = realloc(p, size)))
 		die("realloc:");
 	return p;
+}
+
+char *
+type_str(Type t)
+{
+	switch (t) {
+	case NONE:      return "void";
+	case NIL:       return "nil";
+	case INTEGER:   return "integer";
+	case DOUBLE:    return "double";
+	case RATIO:     return "ratio";
+	case STRING:    return "string";
+	case SYMBOL:    return "symbol";
+	case PRIMITIVE: return "primitive";
+	case FUNCTION:  return "function";
+	case PAIR:      return "pair";
+	default:
+		if (t & NUMBER)
+			return "number";
+		return "invalid";
+	}
 }
 
 static int
