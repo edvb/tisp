@@ -80,12 +80,12 @@ char *tests[][2] = {
 	{ "-6/-3",      "2" },
 
 	{ "comments",                  NULL },
-	{ "; commment",                "()" },
-	{ "; (+ 1 1)",                 "()" },
-	{ "(+ 1 ; more comments\n1)",  "2" },
+	{ "; commment",                ""   },
+	{ "; (+ 1 1)",                 ""   },
+	{ "(+ 1 ; more comments\n1)",  "2"  },
 
 	{ "whitespace",                      NULL },
-	{ "\t \n  \n\n\t\n \t\n",            "()" },
+	{ "\t \n  \n\n\t\n \t\n",            ""   },
 	{ "\t  \t(+   \t\t5 \n \n5  \n\t)",  "10" },
 
 	{ "quote",                   NULL },
