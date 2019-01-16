@@ -102,15 +102,14 @@ typedef enum {
 static Type const NUMBER = INTEGER | DOUBLE | RATIO;
 
 struct Val {
-	Type t;
+	Type t; /* NONE, NIL */
 	union {
-		int i;
-		Ratio r;
-		double d;
-		char *s;
-		Prim pr;
-		Func f;
-		Pair p;
+		double n; /* INTEGER, DOUBLE */
+		Ratio r;  /* RATIO */
+		char *s;  /* STRING, SYMBOL */
+		Prim pr;  /* PRIMITIVE */
+		Func f;   /* FUNCTION */
+		Pair p;   /* PAIR */
 	} v;
 };
 

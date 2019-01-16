@@ -149,11 +149,8 @@ vals_eq(Val a, Val b)
 		return 0;
 	switch (a->t) {
 	case INTEGER:
-		if (a->v.i != b->v.i)
-			return 0;
-		break;
 	case DOUBLE:
-		if (a->v.d != b->v.d)
+		if (a->v.n != b->v.n)
 			return 0;
 		break;
 	case RATIO:
@@ -308,7 +305,7 @@ mk_int(int i)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = INTEGER;
-	ret->v.i = i;
+	ret->v.n = i;
 	return ret;
 }
 
@@ -317,7 +314,7 @@ mk_dub(double d)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = DOUBLE;
-	ret->v.d = d;
+	ret->v.n = d;
 	return ret;
 }
 
@@ -620,11 +617,11 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "()");
 		break;
 	case INTEGER:
-		fprintf(f, "%d", v->v.i);
+		fprintf(f, "%d", (int)v->v.n);
 		break;
 	case DOUBLE:
-		fprintf(f, "%.16g", v->v.d);
-		if (v->v.d == (int)v->v.d)
+		fprintf(f, "%.16g", v->v.n);
+		if (v->v.n == (int)v->v.n)
 			fprintf(f, ".0");
 		break;
 	case RATIO:

@@ -19,26 +19,54 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "../tisp.h"
 
-#define PRIM_OP(NAME, OP, FUNC)                                                        \
-static Val                                                                             \
-prim_##NAME(Env env, Val args)                                                         \
-{                                                                                      \
-	Val a, b;                                                                      \
-	tsp_arg_num(args, FUNC, 2);                                                    \
-	if (!(a = tisp_eval(env, car(args))) ||                                        \
-	    !(b = tisp_eval(env, car(cdr(args)))))                                     \
-		return NULL;                                                           \
-	tsp_arg_type(a, FUNC, INTEGER);                                                \
-	tsp_arg_type(b, FUNC, INTEGER);                                                \
-	return mk_int(a->v.i OP b->v.i);                                               \
-}
+#define EVAL_CHECK(A, V, NAME, TYPE) do { \
+	if (!(A = tisp_eval(env, V)))     \
+		return NULL;              \
+	tsp_arg_type(A, NAME, TYPE);      \
+} while(0)
 
-PRIM_OP(add, +, "+")
-PRIM_OP(mul, *, "*")
-PRIM_OP(mod, %, "mod")
+#define RATIO_DUB(A, OP, B) return mk_dub(((double)A->v.r.num/A->v.r.den) OP B->v.n)
+#define RATIO_INT(A, OP, B) return mk_rat(A->v.r.num OP (B->v.n * A->v.r.den), A->v.r.den)
+#define RATIO_INT2(A, OP, B) return mk_rat(A->v.r.num OP B->v.n, A->v.r.den)
+#define COMBINE_FIN(A, OP, B) do {               \
+	if (A->t & DOUBLE || B->t & DOUBLE)      \
+		return mk_dub(A->v.n OP B->v.n); \
+	return mk_int(A->v.n OP B->v.n);         \
+} while(0)
+
+static Val
+prim_add(Env env, Val args)
+{
+	Val a, b;
+	tsp_arg_num(args, "+", 2);
+	EVAL_CHECK(a, car(args), "+", NUMBER);
+	EVAL_CHECK(b, car(cdr(args)), "+", NUMBER);
+	switch (a->t) {
+	case RATIO:
+		switch (b->t) {
+		case RATIO:
+			return mk_rat(a->v.r.num * b->v.r.den + a->v.r.den * b->v.r.num,
+			              a->v.r.den * b->v.r.den);
+		case INTEGER:
+			RATIO_INT(a, +, b);
+		case DOUBLE:
+			RATIO_DUB(a, +, b);
+		default: break;
+		}
+	case INTEGER:
+		if (b->t & RATIO)
+			RATIO_INT(b, +, a);
+	case DOUBLE:
+		if (b->t & RATIO)
+			RATIO_DUB(b, +, a);
+	default: break;
+	}
+	COMBINE_FIN(a, +, b);
+}
 
 static Val
 prim_sub(Env env, Val args)
@@ -47,15 +75,63 @@ prim_sub(Env env, Val args)
 	int len = list_len(args);
 	if (len != 2 && len != 1)
 		tsp_warnf("-: expected 1 or 2 arguments, recieved %d", len);
-	if (!(a = tisp_eval(env, car(args))))
-		return NULL;
-	tsp_arg_type(a, "-", INTEGER);
-	if (len == 1)
-		return mk_int(-a->v.i);
-	if (!(b = tisp_eval(env, car(cdr(args)))))
-		return NULL;
-	tsp_arg_type(b, "-", INTEGER);
-	return mk_int(a->v.i - b->v.i);
+	EVAL_CHECK(a, car(args), "-", NUMBER);
+	if (len == 1) {
+		b = a;
+		a = mk_int(0);
+	} else {
+		EVAL_CHECK(b, car(cdr(args)), "-", NUMBER);
+	}
+	switch (a->t) {
+	case RATIO:
+		switch (b->t) {
+		case RATIO:
+			return mk_rat(a->v.r.num * b->v.r.den - a->v.r.den * b->v.r.num,
+			              a->v.r.den * b->v.r.den);
+		case INTEGER:
+			RATIO_INT(a, -, b);
+		case DOUBLE:
+			RATIO_DUB(a, -, b);
+		default: break;
+		}
+	case INTEGER:
+		if (b->t & RATIO)
+			return mk_rat((a->v.n * b->v.r.den) - b->v.r.num, b->v.r.den);
+	case DOUBLE:
+		if (b->t & RATIO)
+			return mk_dub(a->v.n - ((double)b->v.r.num/b->v.r.den));
+	default: break;
+	}
+	COMBINE_FIN(a, -, b);
+}
+
+static Val
+prim_mul(Env env, Val args)
+{
+	Val a, b;
+	tsp_arg_num(args, "*", 2);
+	EVAL_CHECK(a, car(args), "*", NUMBER);
+	EVAL_CHECK(b, car(cdr(args)), "*", NUMBER);
+	switch (a->t) {
+	case RATIO:
+		switch (b->t) {
+		case RATIO:
+			return mk_rat(a->v.r.num * b->v.r.num, a->v.r.den * b->v.r.den);
+		case INTEGER:
+			RATIO_INT2(a, *, b);
+		case DOUBLE:
+			RATIO_DUB(a, *, b);
+		default: break;
+		}
+	case INTEGER:
+		if (b->t & RATIO)
+			RATIO_INT2(b, *, a);
+	case DOUBLE:
+		if (b->t & RATIO)
+			RATIO_DUB(b, *, a);
+	default: break;
+	}
+	COMBINE_FIN(a, *, b);
 }
 
 static Val
@@ -63,11 +139,42 @@ prim_div(Env env, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "/", 2);
-	if (!(a = tisp_eval(env, car(args))) || !(b = tisp_eval(env, car(cdr(args)))))
-		return NULL;
-	tsp_arg_type(a, "/", INTEGER);
-	tsp_arg_type(b, "/", INTEGER);
-	return mk_rat(a->v.i, b->v.i);
+	EVAL_CHECK(a, car(args), "/", NUMBER);
+	EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
+	switch (a->t) {
+	case RATIO:
+		switch (b->t) {
+		case RATIO:
+			return mk_rat(a->v.r.num * b->v.r.den, a->v.r.den * b->v.r.num);
+		case INTEGER:
+			return mk_rat(a->v.r.num, a->v.r.den * b->v.n);
+		case DOUBLE:
+			RATIO_DUB(a, /, b);
+		default: break;
+		}
+	case INTEGER:
+		if (b->t & RATIO)
+			return mk_rat(b->v.r.den * a->v.n, b->v.r.num);
+	case DOUBLE:
+		if (b->t & RATIO)
+			return mk_dub(a->v.n / ((double)b->v.r.num/b->v.r.den));
+	default: break;
+	}
+	if (a->t & DOUBLE || b->t & DOUBLE)
+		return mk_dub(a->v.n / b->v.n);
+	return mk_rat(a->v.n, b->v.n);
+}
+
+static Val
+prim_mod(Env env, Val args)
+{
+	Val a, b;
+	tsp_arg_num(args, "mod", 2);
+	EVAL_CHECK(a, car(args), "mod", INTEGER);
+	EVAL_CHECK(b, car(cdr(args)), "mod", INTEGER);
+	if (b->v.n == 0)
+		tsp_warn("division by zero");
+	return mk_int((int)a->v.n % abs((int)b->v.n));
 }
 
 #define PRIM_COMPARE(NAME, OP, FUNC)                                  \
@@ -81,7 +188,7 @@ prim_##NAME(Env env, Val args)                                        \
 		return env->t;                                        \
 	tsp_arg_type(car(v), FUNC, INTEGER);                          \
 	tsp_arg_type(car(cdr(v)), FUNC, INTEGER);                     \
-	return (car(v)->v.i OP car(cdr(v))->v.i) ? env->t : env->nil; \
+	return (car(v)->v.n OP car(cdr(v))->v.n) ? env->t : env->nil; \
 }
 
 PRIM_COMPARE(lt,  <,  "<")
