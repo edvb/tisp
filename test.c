@@ -8,27 +8,9 @@
 #include "tisp.h"
 #include "tib/math.h"
 
-int
-tisp_test(Env env, const char *input, const char *expect)
-{
-	struct Str str;
-	Val v;
-	FILE *f = fopen("test.out", "w");
-	size_t nread;
-	char buf[BUFSIZ] = {0};
+#define LEN(X) (sizeof(X) / sizeof((X)[0]))
 
-	str.d = strdup(input);
-	v = tisp_read(env, &str);
-	if (!(v = tisp_eval(env, v)))
-		return 0;
 
-	tisp_print(f, v);
-	fclose(f);
-	f = fopen("test.out", "r");
-	while ((nread = fread(buf, 1, sizeof(buf), f)) > 0) ;
-
-	return strcmp(buf, expect) == 0;
-}
 
 /* TODO mark and show which lines error-ed */
 char *tests[][2] = {
@@ -61,22 +43,22 @@ char *tests[][2] = {
 	{ "-1.e6",       "-1000000.0"  },
 	{ "\"foo\"",     "\"foo\""     },
 	{ "\"foo bar\"", "\"foo bar\"" },
-	{ "t",           "t" },
-	{ "()",          "()" },
+	{ "t",           "t"           },
+	{ "()",          "()"          },
 
-	{ "frac",       NULL },
-	{ "3/4",        "3/4" },
-	{ "4/3",        "4/3" },
-	{ "+1/2",       "1/2" },
-	{ "2/1",        "2" },
-	{ "8/+1",       "8" },
-	{ "8/4",        "2" },
-	{ "4/8",        "1/2" },
+	{ "frac",       NULL        },
+	{ "3/4",        "3/4"       },
+	{ "4/3",        "4/3"       },
+	{ "+1/2",       "1/2"       },
+	{ "2/1",        "2"         },
+	{ "8/+1",       "8"         },
+	{ "8/4",        "2"         },
+	{ "4/8",        "1/2"       },
 	{ "02384/7238", "1192/3619" },
-	{ "-1/2",       "-1/2" },
-	{ "1/-2",       "-1/2" },
-	{ "-6/3",       "-2" },
-	{ "-6/-3",      "2" },
+	{ "-1/2",       "-1/2"      },
+	{ "1/-2",       "-1/2"      },
+	{ "-6/3",       "-2"        },
+	{ "-6/-3",      "2"         },
 
 	{ "comments",                  NULL },
 	{ "; commment",                ""   },
@@ -87,79 +69,79 @@ char *tests[][2] = {
 	{ "\t \n  \n\n\t\n \t\n",            ""   },
 	{ "\t  \t(+   \t\t5 \n \n5  \n\t)",  "10" },
 
-	{ "quote",                   NULL },
-	{ "(quote 1)",               "1" },
-	{ "(quote 9234)",            "9234" },
-	{ "(quote \"foo\")",         "\"foo\"" },
-	{ "(quote bar)",             "bar" },
+	{ "quote",                   NULL        },
+	{ "(quote 1)",               "1"         },
+	{ "(quote 9234)",            "9234"      },
+	{ "(quote \"foo\")",         "\"foo\""   },
+	{ "(quote bar)",             "bar"       },
 	{ "(quote (1 2 3 4))",       "(1 2 3 4)" },
 	{ "(quote (quote 1))",       "(quote 1)" },
-	{ "(quote (+ 2 2))",         "(+ 2 2)" },
-	{ "'12",                     "12" },
-	{ "'foo",                    "foo" },
+	{ "(quote (+ 2 2))",         "(+ 2 2)"   },
+	{ "'12",                     "12"        },
+	{ "'foo",                    "foo"       },
 	{ "'(1 2 3 4)",              "(1 2 3 4)" },
 
-	{ "cons",                         NULL },
-	{ "(cons 1 2)",                   "(1 . 2)" },
-	{ "(cons 1 (cons 2 3))",          "(1 2 . 3)" },
-	{ "(cons 1 (cons 2 (cons 3 4)))", "(1 2 3 . 4)" },
+	{ "cons",                         NULL                  },
+	{ "(cons 1 2)",                   "(1 . 2)"             },
+	{ "(cons 1 (cons 2 3))",          "(1 2 . 3)"           },
+	{ "(cons 1 (cons 2 (cons 3 4)))", "(1 2 3 . 4)"         },
 	{ "(cons \"foo\" \"bar\")",       "(\"foo\" . \"bar\")" },
-	{ "(cons (+ 1 2) 3)",             "(3 . 3)" },
-	{ "(cons (cons 1 2) (cons 3 4))", "((1 . 2) 3 . 4)" },
+	{ "(cons (+ 1 2) 3)",             "(3 . 3)"             },
+	{ "(cons (cons 1 2) (cons 3 4))", "((1 . 2) 3 . 4)"     },
 
-	{ "cxr",                                       NULL },
-	{ "(car (cons 1 2))",                          "1" },
-	{ "(cdr (cons 1 2))",                          "2" },
-	{ "(car (quote (1 2 3 4)))",                   "1" },
-	{ "(car (cdr (quote (1 2 3 4))))",             "2" },
-	{ "(car (cdr (cdr (quote (1 2 3 4)))))",       "3" },
-	{ "(car (cdr (cdr (cdr (quote (1 2 3 4))))))", "4" },
+	{ "cxr",                                       NULL      },
+	{ "(car (cons 1 2))",                          "1"       },
+	{ "(cdr (cons 1 2))",                          "2"       },
+	{ "(car (quote (1 2 3 4)))",                   "1"       },
+	{ "(car (cdr (quote (1 2 3 4))))",             "2"       },
+	{ "(car (cdr (cdr (quote (1 2 3 4)))))",       "3"       },
+	{ "(car (cdr (cdr (cdr (quote (1 2 3 4))))))", "4"       },
 	{ "(cdr (quote (1 2 3 4)))",                   "(2 3 4)" },
-	{ "(cdr (cdr (quote (1 2 3 4))))",             "(3 4)" },
-	{ "(car (cons 1 (cons 2 3)))",                 "1" },
+	{ "(cdr (cdr (quote (1 2 3 4))))",             "(3 4)"   },
+	{ "(car (cons 1 (cons 2 3)))",                 "1"       },
 	{ "(cdr (cons 1 (cons 2 3)))",                 "(2 . 3)" },
-	{ "(cdr (cdr (cons 1 (cons 2 3))))",           "3" },
+	{ "(cdr (cdr (cons 1 (cons 2 3))))",           "3"       },
 
 	{ "cond",                                       NULL },
 	{ "(cond)",                                     "()" },
-	{ "(cond (t 1))",                               "1" },
-	{ "(cond ((= 1 1) 1) ((= 1 2) 2) (t 3))",       "1" },
-	{ "(cond ((= 1 2) 1) ((= 1 2) 2) (t (+ 1 2)))", "3" },
-	{ "(cond ((= 1 2) 1) ((= 1 1) 2) (t 3))",       "2" },
+	{ "(cond (t 1))",                               "1"  },
+	{ "(cond ((= 1 1) 1) ((= 1 2) 2) (t 3))",       "1"  },
+	{ "(cond ((= 1 2) 1) ((= 1 2) 2) (t (+ 1 2)))", "3"  },
+	{ "(cond ((= 1 2) 1) ((= 1 1) 2) (t 3))",       "2"  },
 	{ "(cond ((= 1 2) 1) ((= 1 3) 2))",             "()" },
-	{ "(cond ((= 1 2) 1) (\"foo\" 2) (t 3))",       "2" },
+	{ "(cond ((= 1 2) 1) (\"foo\" 2) (t 3))",       "2"  },
 	{ "(cond (() (+ 1 2)))",                        "()" },
 
 	{ "eq",                                          NULL },
-	{ "(=)",                                         "t" },
-	{ "(= 1)",                                       "t" },
-	{ "(= \"foo\")",                                 "t" },
-	{ "(= 1 1)",                                     "t" },
-	{ "(= 1 1 1 1 1 1)",                             "t" },
+	{ "(=)",                                         "t"  },
+	{ "(= 1)",                                       "t"  },
+	{ "(= \"foo\")",                                 "t"  },
+	{ "(= 1 1)",                                     "t"  },
+	{ "(= 1 1 1 1 1 1)",                             "t"  },
 	{ "(= 1 2)",                                     "()" },
 	{ "(= 1 1 2 1 1 1)",                             "()" },
 	{ "(= 1 1 1 1 1 2)",                             "()" },
 	{ "(= 2 1 1 1 1 1)",                             "()" },
-	{ "(= 4/5 4/5)",                                 "t" },
-	{ "(= 2/1 2)",                                   "t" },
-	{ "(= 2/4 1/2)",                                 "t" },
-	{ "(= 2/4 1/2 4/8 3/6)",                         "t" },
+	{ "(= 4/5 4/5)",                                 "t"  },
+	{ "(= 2/1 2)",                                   "t"  },
+	{ "(= 2/4 1/2)",                                 "t"  },
+	{ "(= 2/4 1/2 4/8 3/6)",                         "t"  },
 	{ "(= 1/2 4/5)",                                 "()" },
 	{ "(= 5/4 4/5)",                                 "()" },
 	{ "(= 3 3/2)",                                   "()" },
 	{ "(= 3 3/2 3 3 3)",                             "()" },
-	{ "(= (+ 1 1) (+ 2 0))",                         "t" },
-	{ "(= \"foo\" \"foo\")",                         "t" },
+	{ "(= (+ 1 1) (+ 2 0))",                         "t"  },
+	{ "(= \"foo\" \"foo\")",                         "t"  },
 	{ "(= \"foo\" \"bar\")",                         "()" },
-	{ "(= \"foo\" \"foo\" \"foo\" \"foo\" \"foo\")", "t" },
+	{ "(= \"foo\" \"foo\" \"foo\" \"foo\" \"foo\")", "t"  },
 	{ "(= \"foo\" \"bar\" \"foo\" \"foo\" \"foo\")", "()" },
 	{ "(= \"foo\" 3)",                               "()" },
 	{ "(= \"foo\" \"foo\" 4 \"foo\" \"foo\")",       "()" },
 	{ "(= \"foo\" \"FOO\")",                         "()" },
-	{ "(= t t)",                                     "t" },
-	{ "(= car car)",                                 "t" },
+	{ "(= t t)",                                     "t"  },
+	{ "(= car car)",                                 "t"  },
 	{ "(= car cdr)",                                 "()" },
-	{ "(= quote quote quote)",                       "t" },
+	{ "(= quote quote quote)",                       "t"  },
 
 	{ "define",                      NULL },
 	{ "(define foo 4)",              ""   },
@@ -198,42 +180,83 @@ char *tests[][2] = {
 	{ "(- 53 88)", "-35" },
 
 	{ "compare",      NULL },
-	{ "(< 2 3)",      "t" },
+	{ "(< 2 3)",      "t"  },
 	{ "(< 3 3)",      "()" },
 	{ "(< 4 3)",      "()" },
-	{ "(<= -2 +4)",   "t" },
-	{ "(<= -2 -2)",   "t" },
+	{ "(<= -2 +4)",   "t"  },
+	{ "(<= -2 -2)",   "t"  },
 	{ "(<= 4 -2)",    "()" },
-	{ "(> 89 34)",    "t" },
+	{ "(> 89 34)",    "t"  },
 	{ "(> 48 48)",    "()" },
 	{ "(> 98 183)",   "()" },
-	{ "(>= +4 -282)", "t" },
-	{ "(>= 39 39)",   "t" },
+	{ "(>= +4 -282)", "t"  },
+	{ "(>= 39 39)",   "t"  },
 	{ "(>= -32 -30)", "()" },
 
 	{ NULL,          NULL },
 };
 
 int
+tisp_test(Env env, const char *input, const char *expect, int output)
+{
+	struct Str str;
+	Val v;
+	FILE *f = fopen("test.out", "w");
+	size_t nread;
+	char buf[BUFSIZ] = {0};
+
+	str.d = strdup(input);
+	v = tisp_read(env, &str);
+	if (!(v = tisp_eval(env, v))) {
+		if (output)
+			putchar('\n');
+		return 0;
+	}
+
+	tisp_print(f, v);
+	fclose(f);
+	f = fopen("test.out", "r");
+	while ((nread = fread(buf, 1, sizeof(buf), f)) > 0) ;
+
+	if (output)
+		printf("%s\n", buf);
+	return strcmp(buf, expect) == 0;
+}
+
+int
 main(void)
 {
-	int correct = 0, total = 0, seccorrect = 0, sectotal = 0;
+	int correct = 0, total = 0, seccorrect = 0, sectotal = 0, last = 1;
+	int errors[LEN(tests)] = {0};
 	Env env = tisp_env_init(64);
 	tib_env_math(env);
 
 	for (int i = 0; ; i++) {
 		if (!tests[i][1]) {
-			if (i != 0)
+			if (i != 0) {
 				printf("%d/%d\n", seccorrect, sectotal);
+				for (int j = last; j < i; j++)
+					if (!tests[j][1]) {
+						printf("%-10s\n", tests[j][0]);
+					} else if (errors[j]) {
+						printf("  input: %s\n"
+						       "    expect: %s\n"
+						       "    output: ", tests[j][0], tests[j][1]);
+						tisp_test(env, tests[j][0], tests[j][1], 1);
+					}
+				last = i + 1;
+			}
 			if (!tests[i][0])
 				break;
 			printf("%-10s ", tests[i][0]);
 			seccorrect = 0;
 			sectotal = 0;
 		} else {
-			if (tisp_test(env, tests[i][0], tests[i][1])) {
+			if (tisp_test(env, tests[i][0], tests[i][1], 0)) {
 				correct++;
 				seccorrect++;
+			} else {
+				errors[i] = 1;
 			}
 			total++;
 			sectotal++;

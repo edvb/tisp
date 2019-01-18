@@ -606,7 +606,6 @@ list_print(FILE *f, Val v)
 		tisp_print(f, v);
 }
 
-/* TODO return str for error msgs? */
 void
 tisp_print(FILE *f, Val v)
 {
@@ -620,7 +619,7 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "%d", (int)v->v.n);
 		break;
 	case DOUBLE:
-		fprintf(f, "%.16g", v->v.n);
+		fprintf(f, "%.15g", v->v.n);
 		if (v->v.n == (int)v->v.n)
 			fprintf(f, ".0");
 		break;
