@@ -314,6 +314,6 @@ main(void)
 	}
 	printf("%-10s %d/%d\n", "total", correct, total);
 
-	tisp_env_free(env);
+	/* tisp_env_free(env); */
 	return correct != total;
 }
