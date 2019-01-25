@@ -12,7 +12,7 @@
 
 #include "tisp.h"
 #if TIB_STATIC
-#  include "tib/math.h"
+#  include "tibs/math.h"
 #endif
 
 char *argv0;

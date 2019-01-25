@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "tisp.h"
-#include "tib/math.h"
+#include "tibs/math.h"
 
 #define LEN(X) (sizeof(X) / sizeof((X)[0]))
 
