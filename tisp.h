@@ -59,7 +59,7 @@ typedef enum {
 
 /* fraction */
 typedef struct {
-	int num, den;
+	double num, den;
 } Ratio;
 
 typedef struct Entry *Entry;
@@ -104,12 +104,11 @@ static Type const NUMBER = INTEGER | DOUBLE | RATIO;
 struct Val {
 	Type t; /* NONE, NIL */
 	union {
-		double n; /* INTEGER, DOUBLE */
-		Ratio r;  /* RATIO */
-		char *s;  /* STRING, SYMBOL */
-		Prim pr;  /* PRIMITIVE */
-		Func f;   /* FUNCTION */
-		Pair p;   /* PAIR */
+		Ratio n; /* INTEGER, DOUBLE, RATIO */
+		char *s; /* STRING, SYMBOL */
+		Prim pr; /* PRIMITIVE */
+		Func f;  /* FUNCTION */
+		Pair p;  /* PAIR */
 	} v;
 };
 

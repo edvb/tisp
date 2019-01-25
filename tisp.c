@@ -150,11 +150,8 @@ vals_eq(Val a, Val b)
 	switch (a->t) {
 	case INTEGER:
 	case DOUBLE:
-		if (a->v.n != b->v.n)
-			return 0;
-		break;
 	case RATIO:
-		if (a->v.r.num != b->v.r.num || a->v.r.den != b->v.r.den)
+		if (a->v.n.num != b->v.n.num || a->v.n.den != b->v.n.den)
 			return 0;
 		break;
 	default: /* PRIMITIVE, STRING, SYMBOL */
@@ -305,7 +302,8 @@ mk_int(int i)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = INTEGER;
-	ret->v.n = i;
+	ret->v.n.num = i;
+	ret->v.n.den = 1;
 	return ret;
 }
 
@@ -314,7 +312,8 @@ mk_dub(double d)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = DOUBLE;
-	ret->v.n = d;
+	ret->v.n.num = d;
+	ret->v.n.den = 1;
 	return ret;
 }
 
@@ -332,7 +331,7 @@ mk_rat(int num, int den)
 		return mk_int(num);
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = RATIO;
-	ret->v.r = (Ratio){ num, den };
+	ret->v.n = (Ratio){ num, den };
 	return ret;
 }
 
@@ -616,15 +615,15 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "()");
 		break;
 	case INTEGER:
-		fprintf(f, "%d", (int)v->v.n);
+		fprintf(f, "%d", (int)v->v.n.num);
 		break;
 	case DOUBLE:
-		fprintf(f, "%.15g", v->v.n);
-		if (v->v.n == (int)v->v.n)
+		fprintf(f, "%.15g", v->v.n.num);
+		if (v->v.n.num == (int)v->v.n.num)
 			fprintf(f, ".0");
 		break;
 	case RATIO:
-		fprintf(f, "%d/%d", v->v.r.num, v->v.r.den);
+		fprintf(f, "%d/%d", (int)v->v.n.num, (int)v->v.n.den);
 		break;
 	case STRING:
 		fprintf(f, "\"%s\"", v->v.s);

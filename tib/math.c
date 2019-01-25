@@ -29,14 +29,38 @@
 	tsp_arg_type(A, NAME, TYPE);      \
 } while(0)
 
-#define RATIO_DUB(A, OP, B) return mk_dub(((double)A->v.r.num/A->v.r.den) OP B->v.n)
-#define RATIO_INT(A, OP, B) return mk_rat(A->v.r.num OP (B->v.n * A->v.r.den), A->v.r.den)
-#define RATIO_INT2(A, OP, B) return mk_rat(A->v.r.num OP B->v.n, A->v.r.den)
-#define COMBINE_FIN(A, OP, B) do {               \
-	if (A->t & DOUBLE || B->t & DOUBLE)      \
-		return mk_dub(A->v.n OP B->v.n); \
-	return mk_int(A->v.n OP B->v.n);         \
-} while(0)
+/* Wrapper functions to be returned by mk_num, all need same arguments */
+static Val
+create_int(double num, double den)
+{
+	assert(den == 1);
+	return mk_int(num);
+}
+
+static Val
+create_dub(double num, double den)
+{
+	assert(den == 1);
+	return mk_dub(num);
+}
+
+static Val
+create_rat(double num, double den)
+{
+	return mk_rat(num, den);
+}
+
+/* Return pointer to one of the preceding functions depending on what sort
+ * number should be created by the following arithmetic functions */
+static Val
+(*mk_num(Type a, Type b, int isfrac))(double, double)
+{
+	if (a & DOUBLE || b & DOUBLE)
+		return &create_dub;
+	if (isfrac || a & RATIO || b & RATIO)
+		return &create_rat;
+	return &create_int;
+}
 
 static Val
 prim_add(Env env, Val args)
@@ -45,27 +69,10 @@ prim_add(Env env, Val args)
 	tsp_arg_num(args, "+", 2);
 	EVAL_CHECK(a, car(args), "+", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "+", NUMBER);
-	switch (a->t) {
-	case RATIO:
-		switch (b->t) {
-		case RATIO:
-			return mk_rat(a->v.r.num * b->v.r.den + a->v.r.den * b->v.r.num,
-			              a->v.r.den * b->v.r.den);
-		case INTEGER:
-			RATIO_INT(a, +, b);
-		case DOUBLE:
-			RATIO_DUB(a, +, b);
-		default: break;
-		}
-	case INTEGER:
-		if (b->t & RATIO)
-			RATIO_INT(b, +, a);
-	case DOUBLE:
-		if (b->t & RATIO)
-			RATIO_DUB(b, +, a);
-	default: break;
-	}
-	COMBINE_FIN(a, +, b);
+	if (a->t & DOUBLE || b->t & DOUBLE)
+		return mk_dub((a->v.n.num/a->v.n.den) + (b->v.n.num/b->v.n.den));
+	return (mk_num(a->t, b->t, 0))
+		(a->v.n.num * b->v.n.den + a->v.n.den * b->v.n.num, a->v.n.den * b->v.n.den);
 }
 
 static Val
@@ -82,27 +89,9 @@ prim_sub(Env env, Val args)
 	} else {
 		EVAL_CHECK(b, car(cdr(args)), "-", NUMBER);
 	}
-	switch (a->t) {
-	case RATIO:
-		switch (b->t) {
-		case RATIO:
-			return mk_rat(a->v.r.num * b->v.r.den - a->v.r.den * b->v.r.num,
-			              a->v.r.den * b->v.r.den);
-		case INTEGER:
-			RATIO_INT(a, -, b);
-		case DOUBLE:
-			RATIO_DUB(a, -, b);
-		default: break;
-		}
-	case INTEGER:
-		if (b->t & RATIO)
-			return mk_rat((a->v.n * b->v.r.den) - b->v.r.num, b->v.r.den);
-	case DOUBLE:
-		if (b->t & RATIO)
-			return mk_dub(a->v.n - ((double)b->v.r.num/b->v.r.den));
-	default: break;
-	}
-	COMBINE_FIN(a, -, b);
+	if (a->t & DOUBLE || b->t & DOUBLE)
+		return mk_dub((a->v.n.num/a->v.n.den) - (b->v.n.num/b->v.n.den));
+	return (mk_num(a->t, b->t, 0))(a->v.n.num * b->v.n.den - a->v.n.den * b->v.n.num, a->v.n.den * b->v.n.den);
 }
 
 static Val
@@ -112,26 +101,10 @@ prim_mul(Env env, Val args)
 	tsp_arg_num(args, "*", 2);
 	EVAL_CHECK(a, car(args), "*", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "*", NUMBER);
-	switch (a->t) {
-	case RATIO:
-		switch (b->t) {
-		case RATIO:
-			return mk_rat(a->v.r.num * b->v.r.num, a->v.r.den * b->v.r.den);
-		case INTEGER:
-			RATIO_INT2(a, *, b);
-		case DOUBLE:
-			RATIO_DUB(a, *, b);
-		default: break;
-		}
-	case INTEGER:
-		if (b->t & RATIO)
-			RATIO_INT2(b, *, a);
-	case DOUBLE:
-		if (b->t & RATIO)
-			RATIO_DUB(b, *, a);
-	default: break;
-	}
-	COMBINE_FIN(a, *, b);
+	if (a->t & DOUBLE || b->t & DOUBLE)
+		return mk_dub((a->v.n.num/a->v.n.den) * (b->v.n.num/b->v.n.den));
+	return (mk_num(a->t, b->t, 0))(a->v.n.num * b->v.n.num, a->v.n.den * b->v.n.den);
+
 }
 
 static Val
@@ -141,28 +114,9 @@ prim_div(Env env, Val args)
 	tsp_arg_num(args, "/", 2);
 	EVAL_CHECK(a, car(args), "/", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
-	switch (a->t) {
-	case RATIO:
-		switch (b->t) {
-		case RATIO:
-			return mk_rat(a->v.r.num * b->v.r.den, a->v.r.den * b->v.r.num);
-		case INTEGER:
-			return mk_rat(a->v.r.num, a->v.r.den * b->v.n);
-		case DOUBLE:
-			RATIO_DUB(a, /, b);
-		default: break;
-		}
-	case INTEGER:
-		if (b->t & RATIO)
-			return mk_rat(b->v.r.den * a->v.n, b->v.r.num);
-	case DOUBLE:
-		if (b->t & RATIO)
-			return mk_dub(a->v.n / ((double)b->v.r.num/b->v.r.den));
-	default: break;
-	}
 	if (a->t & DOUBLE || b->t & DOUBLE)
-		return mk_dub(a->v.n / b->v.n);
-	return mk_rat(a->v.n, b->v.n);
+		return mk_dub((a->v.n.num/a->v.n.den) / (b->v.n.num/b->v.n.den));
+	return (mk_num(a->t, b->t, 1))(a->v.n.num * b->v.n.den, a->v.n.den * b->v.n.num);
 }
 
 static Val
@@ -172,23 +126,23 @@ prim_mod(Env env, Val args)
 	tsp_arg_num(args, "mod", 2);
 	EVAL_CHECK(a, car(args), "mod", INTEGER);
 	EVAL_CHECK(b, car(cdr(args)), "mod", INTEGER);
-	if (b->v.n == 0)
+	if (b->v.n.num == 0)
 		tsp_warn("division by zero");
-	return mk_int((int)a->v.n % abs((int)b->v.n));
+	return mk_int((int)a->v.n.num % abs((int)b->v.n.num));
 }
 
-#define PRIM_COMPARE(NAME, OP, FUNC)                                  \
-static Val                                                            \
-prim_##NAME(Env env, Val args)                                        \
-{                                                                     \
-	Val v;                                                        \
-	if (!(v = tisp_eval_list(env, args)))                         \
-		return NULL;                                          \
-	if (list_len(v) != 2)                                         \
-		return env->t;                                        \
-	tsp_arg_type(car(v), FUNC, INTEGER);                          \
-	tsp_arg_type(car(cdr(v)), FUNC, INTEGER);                     \
-	return (car(v)->v.n OP car(cdr(v))->v.n) ? env->t : env->nil; \
+#define PRIM_COMPARE(NAME, OP, FUNC)                                          \
+static Val                                                                    \
+prim_##NAME(Env env, Val args)                                                \
+{                                                                             \
+	Val v;                                                                \
+	if (!(v = tisp_eval_list(env, args)))                                 \
+		return NULL;                                                  \
+	if (list_len(v) != 2)                                                 \
+		return env->t;                                                \
+	tsp_arg_type(car(v), FUNC, INTEGER);                                  \
+	tsp_arg_type(car(cdr(v)), FUNC, INTEGER);                             \
+	return (car(v)->v.n.num OP car(cdr(v))->v.n.num) ? env->t : env->nil; \
 }
 
 PRIM_COMPARE(lt,  <,  "<")
