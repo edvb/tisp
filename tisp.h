@@ -114,7 +114,7 @@ struct Val {
 
 struct Env {
 	Val none, nil, t;
-	Hash h, strs;
+	Hash h, strs, syms;
 	void **libh;
 	size_t libhc;
 };

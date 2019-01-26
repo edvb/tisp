@@ -338,10 +338,8 @@ mk_rat(int num, int den)
 Val
 mk_str(Env env, char *s) {
 	Val ret;
-	if ((ret = hash_get(env->strs, s))) {
-		ret->t = STRING;
+	if ((ret = hash_get(env->strs, s)))
 		return ret;
-	}
 	ret = emalloc(sizeof(struct Val));
 	ret->t = STRING;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
@@ -350,19 +348,16 @@ mk_str(Env env, char *s) {
 	return ret;
 }
 
-/* TODO return existing symbol */
 Val
 mk_sym(Env env, char *s)
 {
 	Val ret;
-	if ((ret = hash_get(env->strs, s))) {
-		ret->t = SYMBOL;
+	if ((ret = hash_get(env->syms, s)))
 		return ret;
-	}
 	ret = emalloc(sizeof(struct Val));
 	ret->t = SYMBOL;
 	ret->v.s = s;
-	hash_add(env->strs, s, ret);
+	hash_add(env->syms, s, ret);
 	return ret;
 }
 
@@ -827,6 +822,7 @@ tisp_env_init(size_t cap)
 	hash_add(e->h, "load",   mk_prim(prim_load));
 
 	e->strs = hash_new(cap);
+	e->syms = hash_new(cap);
 
 	e->libh = NULL;
 	e->libhc = 0;
@@ -840,6 +836,7 @@ tisp_env_free(Env env)
 
 	hash_free(env->h);
 	hash_free(env->strs);
+	hash_free(env->syms);
 	for (i = 0; i < env->libhc; i++)
 		dlclose(env->libh[i]);
 	free(env->nil);
