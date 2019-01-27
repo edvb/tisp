@@ -56,7 +56,7 @@ create_rat(double num, double den)
 static Val
 (*mk_num(Type a, Type b, int isfrac))(double, double)
 {
-	if (a & DOUBLE || b & DOUBLE)
+	if (a & DECIMAL || b & DECIMAL)
 		return &create_dub;
 	if (isfrac || a & RATIO || b & RATIO)
 		return &create_rat;
@@ -70,10 +70,11 @@ prim_add(Env env, Val args)
 	tsp_arg_num(args, "+", 2);
 	EVAL_CHECK(a, car(args), "+", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "+", NUMBER);
-	if (a->t & DOUBLE || b->t & DOUBLE)
+	if (a->t & DECIMAL || b->t & DECIMAL)
 		return mk_dub((a->v.n.num/a->v.n.den) + (b->v.n.num/b->v.n.den));
 	return (mk_num(a->t, b->t, 0))
-		(a->v.n.num * b->v.n.den + a->v.n.den * b->v.n.num, a->v.n.den * b->v.n.den);
+		(a->v.n.num * b->v.n.den + a->v.n.den * b->v.n.num,
+		 a->v.n.den * b->v.n.den);
 }
 
 static Val
@@ -90,9 +91,11 @@ prim_sub(Env env, Val args)
 	} else {
 		EVAL_CHECK(b, car(cdr(args)), "-", NUMBER);
 	}
-	if (a->t & DOUBLE || b->t & DOUBLE)
+	if (a->t & DECIMAL || b->t & DECIMAL)
 		return mk_dub((a->v.n.num/a->v.n.den) - (b->v.n.num/b->v.n.den));
-	return (mk_num(a->t, b->t, 0))(a->v.n.num * b->v.n.den - a->v.n.den * b->v.n.num, a->v.n.den * b->v.n.den);
+	return (mk_num(a->t, b->t, 0))
+		(a->v.n.num * b->v.n.den - a->v.n.den * b->v.n.num,
+		 a->v.n.den * b->v.n.den);
 }
 
 static Val
@@ -102,9 +105,10 @@ prim_mul(Env env, Val args)
 	tsp_arg_num(args, "*", 2);
 	EVAL_CHECK(a, car(args), "*", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "*", NUMBER);
-	if (a->t & DOUBLE || b->t & DOUBLE)
+	if (a->t & DECIMAL || b->t & DECIMAL)
 		return mk_dub((a->v.n.num/a->v.n.den) * (b->v.n.num/b->v.n.den));
-	return (mk_num(a->t, b->t, 0))(a->v.n.num * b->v.n.num, a->v.n.den * b->v.n.den);
+	return (mk_num(a->t, b->t, 0))
+		(a->v.n.num * b->v.n.num, a->v.n.den * b->v.n.den);
 
 }
 
@@ -115,9 +119,10 @@ prim_div(Env env, Val args)
 	tsp_arg_num(args, "/", 2);
 	EVAL_CHECK(a, car(args), "/", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
-	if (a->t & DOUBLE || b->t & DOUBLE)
+	if (a->t & DECIMAL || b->t & DECIMAL)
 		return mk_dub((a->v.n.num/a->v.n.den) / (b->v.n.num/b->v.n.den));
-	return (mk_num(a->t, b->t, 1))(a->v.n.num * b->v.n.den, a->v.n.den * b->v.n.num);
+	return (mk_num(a->t, b->t, 1))
+		(a->v.n.num * b->v.n.den, a->v.n.den * b->v.n.num);
 }
 
 static Val

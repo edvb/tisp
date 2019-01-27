@@ -88,7 +88,7 @@ type_str(Type t)
 	case NONE:      return "void";
 	case NIL:       return "nil";
 	case INTEGER:   return "integer";
-	case DOUBLE:    return "double";
+	case DECIMAL:   return "decimal";
 	case RATIO:     return "ratio";
 	case STRING:    return "string";
 	case SYMBOL:    return "symbol";
@@ -149,7 +149,7 @@ vals_eq(Val a, Val b)
 		return 0;
 	switch (a->t) {
 	case INTEGER:
-	case DOUBLE:
+	case DECIMAL:
 	case RATIO:
 		if (a->v.n.num != b->v.n.num || a->v.n.den != b->v.n.den)
 			return 0;
@@ -311,7 +311,7 @@ Val
 mk_dub(double d)
 {
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = DOUBLE;
+	ret->t = DECIMAL;
 	ret->v.n.num = d;
 	ret->v.n.den = 1;
 	return ret;
@@ -560,7 +560,7 @@ tisp_eval(Env env, Val v)
 	case NONE:
 	case NIL:
 	case INTEGER:
-	case DOUBLE:
+	case DECIMAL:
 	case RATIO:
 	case STRING:
 		return v;
@@ -612,7 +612,7 @@ tisp_print(FILE *f, Val v)
 	case INTEGER:
 		fprintf(f, "%d", (int)v->v.n.num);
 		break;
-	case DOUBLE:
+	case DECIMAL:
 		fprintf(f, "%.15g", v->v.n.num);
 		if (v->v.n.num == (int)v->v.n.num)
 			fprintf(f, ".0");

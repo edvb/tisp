@@ -91,20 +91,20 @@ typedef enum {
 	NONE      = 1 << 0,
 	NIL       = 1 << 1,
 	INTEGER   = 1 << 2,
-	RATIO     = 1 << 3,
-	DOUBLE    = 1 << 4,
+	DECIMAL   = 1 << 3,
+	RATIO     = 1 << 4,
 	STRING    = 1 << 5,
 	SYMBOL    = 1 << 6,
 	PRIMITIVE = 1 << 7,
 	FUNCTION  = 1 << 8,
 	PAIR      = 1 << 9,
 } Type;
-static Type const NUMBER = INTEGER | DOUBLE | RATIO;
+static Type const NUMBER = INTEGER | DECIMAL | RATIO;
 
 struct Val {
 	Type t; /* NONE, NIL */
 	union {
-		Ratio n; /* INTEGER, DOUBLE, RATIO */
+		Ratio n; /* INTEGER, DECIMAL, RATIO */
 		char *s; /* STRING, SYMBOL */
 		Prim pr; /* PRIMITIVE */
 		Func f;  /* FUNCTION */
