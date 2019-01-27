@@ -700,6 +700,26 @@ prim_void(Env env, Val args)
 }
 
 static Val
+prim_begin(Env env, Val args)
+{
+	Val v;
+	if (!(v = tisp_eval_list(env, args)))
+		return NULL;
+	if (nilp(v))
+		return env->none;
+	return list_last(v);
+}
+
+static Val
+prim_eval(Env env, Val args)
+{
+	Val v;
+	if (!(v = tisp_eval(env, car(args))))
+		return NULL;
+	return tisp_eval(env, v);
+}
+
+static Val
 prim_eq(Env env, Val args)
 {
 	Val v;
@@ -723,6 +743,16 @@ prim_cond(Env env, Val args)
 		else if (!nilp(cond))
 			return tisp_eval(env, car(cdr(car(v))));
 	return env->nil;
+}
+
+static Val
+prim_type(Env env, Val args)
+{
+	Val v;
+	tsp_arg_num(args, "type", 1);
+	if (!(v = tisp_eval(env, car(args))))
+		return NULL;
+	return mk_str(env, type_str(v->t));
 }
 
 static Val
@@ -815,8 +845,11 @@ tisp_env_init(size_t cap)
 	hash_add(e->h, "cons",   mk_prim(prim_cons));
 	hash_add(e->h, "quote",  mk_prim(prim_quote));
 	hash_add(e->h, "void",   mk_prim(prim_void));
+	hash_add(e->h, "begin",  mk_prim(prim_begin));
+	hash_add(e->h, "eval",   mk_prim(prim_eval));
 	hash_add(e->h, "=",      mk_prim(prim_eq));
 	hash_add(e->h, "cond",   mk_prim(prim_cond));
+	hash_add(e->h, "type",   mk_prim(prim_type));
 	hash_add(e->h, "lambda", mk_prim(prim_lambda));
 	hash_add(e->h, "define", mk_prim(prim_define));
 	hash_add(e->h, "load",   mk_prim(prim_load));
