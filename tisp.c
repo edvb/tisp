@@ -538,16 +538,16 @@ Val
 tisp_eval_list(Env env, Val v)
 {
 	int cap = 1, size = 0;
-	Val *new = emalloc(sizeof(Val));
+	Val ret, *new = emalloc(sizeof(Val));
 	for (; !nilp(v); v = cdr(v)) {
-		if (!(new[size++] = tisp_eval(env, car(v))))
-			return NULL;
-		if (size == cap) {
+		if (!(new[size] = tisp_eval(env, car(v))))
+			new[size] = env->none;
+		if (++size == cap) {
 			cap *= 2;
 			new = erealloc(new, cap*sizeof(Val));
 		}
 	}
-	Val ret = mk_list(env, size, new);
+	ret = mk_list(env, size, new);
 	free(new);
 	return ret;
 }
