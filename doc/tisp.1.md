@@ -149,6 +149,14 @@ Returns the given argument unevaluated.
 Returns nothing. Used to insert a void type in a list or force a function not
 to return anything.
 
+#### begin
+
+Executes all of its arguments and returns the value of the last expression.
+
+#### eval
+
+Evaluates the expression given.
+
 #### =
 
 Tests if multiple values equal. Returns nil if any are not, and `t` otherwise.
@@ -159,6 +167,10 @@ Evaluates each expression if the given condition corresponding to it is true.
 Runs through any arguments, each is a list with the first element as the
 condition which needs to be `t` after evaluated, and the second element is the
 expression to be run if and only if the condition is met.
+
+#### type
+
+Returns a string stating the given argument's type.
 
 #### lambda
 

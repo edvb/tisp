@@ -4,7 +4,7 @@
 tisp \- tiny lisp
 .PP
 .SH SYNOPSIS
-tisp [-hv] [FILENAME]
+tisp [-hv] [FILE ...]
 .PP
 .SH DESCRIPTION
 .PP
@@ -120,16 +120,32 @@ Return rest of the given list, either just the second element if it is of size 2
 Creates a new pair with the two given arguments, first one as the car, second as the cdr.
 .PP
 .TP
-\fB=\fP
-Tests if multiple values equal. Returns nil if any are not, and 't' otherwise.
-.PP
-.TP
 \fBquote\fP
 Returns the given argument unevaluated.
 .PP
 .TP
+\fBvoid\fP
+Returns nothing. Used to insert a void type in a list or force a function not to return anything.
+.PP
+.TP
+\fBbegin\fP
+Executes all of its arguments and returns the value of the last expression.
+.PP
+.TP
+\fBeval\fP
+Evaluates the expression given.
+.PP
+.TP
+\fB=\fP
+Tests if multiple values equal. Returns nil if any are not, and 't' otherwise.
+.PP
+.TP
 \fBcond\fP
 Evaluates each expression if the given condition corresponding to it is true. Runs through any arguments, each is a list with the first element as the condition which needs to be 't' after evaluated, and the second element is the expression to be run if and only if the condition is met.
+.PP
+.TP
+\fBtype\fP
+Returns a string stating the given argument's type.
 .PP
 .TP
 \fBlambda\fP
