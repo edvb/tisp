@@ -13,6 +13,7 @@
 #include "tisp.h"
 #if TIB_STATIC
 #  include "tibs/math.h"
+#  include "tibs/io.h"
 #endif
 
 char *argv0;
@@ -83,6 +84,7 @@ main(int argc, char *argv[])
 	Env env = tisp_env_init(64);
 #if TIB_STATIC
 	tib_env_math(env);
+	tib_env_io(env);
 #endif
 
 	if (argc > 0) {

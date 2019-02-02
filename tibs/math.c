@@ -162,14 +162,14 @@ tib_env_math(Env env)
 	tisp_env_add(env, "pi",  mk_dub(3.141592653589793));
 	tisp_env_add(env, "e",   mk_dub(2.718281828459045));
 
-	tisp_env_add(env, "+",   mk_prim(prim_add));
-	tisp_env_add(env, "-",   mk_prim(prim_sub));
-	tisp_env_add(env, "*",   mk_prim(prim_mul));
-	tisp_env_add(env, "/",   mk_prim(prim_div));
-	tisp_env_add(env, "mod", mk_prim(prim_mod));
+	tsp_env_name_fn(+,   add);
+	tsp_env_name_fn(-,   sub);
+	tsp_env_name_fn(*,   mul);
+	tsp_env_name_fn(/,   div);
+	tsp_env_fn(mod);
 
-	tisp_env_add(env, "<",   mk_prim(prim_lt));
-	tisp_env_add(env, ">",   mk_prim(prim_gt));
-	tisp_env_add(env, "<=",  mk_prim(prim_lte));
-	tisp_env_add(env, ">=",  mk_prim(prim_gte));
+	tsp_env_name_fn(<,   lt);
+	tsp_env_name_fn(>,   gt);
+	tsp_env_name_fn(<=,  lte);
+	tsp_env_name_fn(>=,  gte);
 }

@@ -39,6 +39,9 @@
 		tsp_warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
 } while(0)
 
+#define tsp_env_name_fn(NAME, FN) tisp_env_add(env, #NAME, mk_prim(prim_##FN))
+#define tsp_env_fn(NAME)          tsp_env_name_fn(NAME, NAME)
+
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
