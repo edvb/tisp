@@ -116,9 +116,16 @@ static Val
 prim_div(Env env, Val args)
 {
 	Val a, b;
-	tsp_arg_num(args, "/", 2);
+	int len = list_len(args);
+	if (len != 2 && len != 1)
+		tsp_warnf("/: expected 1 or 2 arguments, recieved %d", len);
 	EVAL_CHECK(a, car(args), "/", NUMBER);
-	EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
+	if (len == 1) {
+		b = a;
+		a = mk_int(1);
+	} else {
+		EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
+	}
 	if (a->t & DECIMAL || b->t & DECIMAL)
 		return mk_dub((a->v.n.num/a->v.n.den) / (b->v.n.num/b->v.n.den));
 	return (mk_num(a->t, b->t, 1))
