@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "extern/arg.h"
 #include "extern/linenoise.h"
 
 #include "config.h"
@@ -15,8 +14,6 @@
 #  include "tibs/math.h"
 #  include "tibs/io.h"
 #endif
-
-char *argv0;
 
 void
 die(int eval, const char *fmt, ...)
@@ -58,23 +55,19 @@ read_val(Env env, Str cmd)
 	return ret;
 }
 
-static void
-usage(const int eval)
-{
-	die(eval, "usage: %s [-hv] [FILENAME]", argv0);
-}
-
 int
 main(int argc, char *argv[])
 {
-	ARGBEGIN {
-	case 'h':
-		usage(0);
-	case 'v':
-		die(0, "%s v%s (c) 2017-2019 Ed van Bruggen", argv0, VERSION);
-	default:
-		usage(1);
-	} ARGEND;
+	int i;
+
+	for (i = 1; i < argc; i++)
+		if (!strcmp(argv[i], "-v")) {
+			fprintf(stderr, "tisp v%s (c) 2017-2019 Ed van Bruggen\n", VERSION);
+			exit(0);
+		} else if (argv[i][0] == '-') {
+			fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
+			exit(argv[i][1] == 'h' ? 0 : 1);
+		}
 
 	size_t nread;
 	char buf[BUFSIZ];
@@ -87,7 +80,7 @@ main(int argc, char *argv[])
 	tib_env_io(env);
 #endif
 
-	if (argc > 0) {
+	if (argc > 1) {
 		if (!(fp = fopen(*argv, "r")))
 			die(1, "%s: %s:", argv[0], *argv);
 		while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) ;
