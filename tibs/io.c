@@ -42,6 +42,20 @@ prim_print(Env env, Val args)
 }
 
 static Val
+prim_read(Env env, Val args)
+{
+	char *file;
+	Val v;
+	struct Str str = { NULL };
+	if (!(file = tisp_read_file(NULL)))
+		return mk_sym(env, "quit");
+	str.d = file;
+	v = tisp_read(env, &str);
+	free(file);
+	return v;
+}
+
+static Val
 prim_newline(Env env, Val args)
 {
 	return mk_str(env, "\n");
@@ -51,5 +65,6 @@ void
 tib_env_io(Env env)
 {
 	tsp_env_fn(print);
+	tsp_env_fn(read);
 	tsp_env_fn(newline);
 }
