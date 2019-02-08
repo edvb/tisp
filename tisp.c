@@ -20,12 +20,14 @@
  */
 #include <ctype.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "tisp.h"
 
@@ -122,6 +124,18 @@ skip_ws(Str str)
 	str->d += strspn(str->d, " \t\n"); /* skip white space */
 	for (; *str->d == ';'; str->d++) /* skip comments until newline */
 		str->d += strcspn(str->d, "\n");
+}
+
+static int
+count_parens(char *s, int len)
+{
+	int count = 0;
+	for (int i = 0; i < len && s[i]; i++)
+		if (s[i] == '(')
+			count++;
+		else if (s[i] == ')')
+			count--;
+	return count;
 }
 
 int
@@ -532,6 +546,30 @@ tisp_read(Env env, Str str)
 	if (*str->d == '(')
 		return read_list(env, str);
 	tsp_warn("could not read given input");
+}
+
+char *
+tisp_read_file(char *fname)
+{
+	char buf[BUFSIZ], *file = NULL;
+	int len = 0, n, fd, parens = 0;
+	if (!fname)
+		fd = 0;
+	else if ((fd = open(fname, O_RDONLY)) < 0)
+		tsp_warnf("could not load file '%s'", fname);
+	while ((n = read(fd, buf, sizeof(buf))) > 0) {
+		file = erealloc(file, len + n + 1);
+		memcpy(file + len, buf, n);
+		len += n;
+		file[len] = '\0';
+		if (fd == 0 && !(parens += count_parens(buf, n)))
+			break;
+	}
+	if (fd)
+		close(fd);
+	if (n < 0)
+		die("read:");
+	return file;
 }
 
 Val
