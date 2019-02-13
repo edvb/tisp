@@ -151,7 +151,7 @@ list_len(Val v)
 static Val
 list_last(Val v)
 {
-	while (!(cdr(v)->t & NIL))
+	while (!nilp(cdr(v)))
 		v = cdr(v);
 	return car(v);
 }
@@ -570,6 +570,21 @@ tisp_read_file(char *fname)
 	if (n < 0)
 		die("read:");
 	return file;
+}
+
+Val
+tisp_parse_file(Env env, char *fname)
+{
+	struct Str str = { NULL };
+	Val ret = mk_pair(mk_sym(env, "begin"), env->nil);
+	Val v, last = ret;
+	char *file;
+	if (!(file = tisp_read_file(fname)))
+		return ret;
+	for (str.d = file; *str.d && (v = tisp_read(env, &str)); last = cdr(last))
+		cdr(last) = mk_pair(v, env->nil);
+	free(file);
+	return ret;
 }
 
 Val
