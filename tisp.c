@@ -843,31 +843,54 @@ prim_load(Env env, Val args)
 {
 	Val v;
 	void (*tibenv)(Env);
-	char *lib, *func;
+	char *name;
+	const char *paths[] = {
+#ifdef DEBUG
+		"./", /* check working directory first when in debug mode */
+#endif
+		"/usr/local/share/tisp/", "/usr/share/tisp/", "./", NULL
+	};
+
 	tsp_arg_num(args, "load", 1);
 	if (!(v = tisp_eval(env, car(args))))
 		return NULL;
 	tsp_arg_type(v, "load", STRING);
 
+	name = emalloc(PATH_MAX * sizeof(char));
+	for (int i = 0; paths[i]; i++) {
+		strcpy(name, paths[i]);
+		strcat(name, v->v.s);
+		strcat(name, ".tsp");
+		if (access(name, R_OK) != -1) {
+			tisp_eval(env, tisp_parse_file(env, name));
+			free(name);
+			return env->none;
+		}
+	}
+
+	/* If not tisp file, try loading shared object library */
 	env->libh = erealloc(env->libh, (env->libhc+1)*sizeof(void*));
 
-	lib = emalloc((strlen(v->v.s)+10) * sizeof(char));
-	strcat(lib, "libtib");
-	strcat(lib, v->v.s);
-	strcat(lib, ".so");
-	if (!(env->libh[env->libhc] = dlopen(lib, RTLD_LAZY)))
+	name = erealloc(name, (strlen(v->v.s)+10) * sizeof(char));
+	strcpy(name, "libtib");
+	strcat(name, v->v.s);
+	strcat(name, ".so");
+	if (!(env->libh[env->libhc] = dlopen(name, RTLD_LAZY))) {
+		free(name);
 		tsp_warnf("load: could not load '%s':\n%s", v->v.s, dlerror());
+	}
 	dlerror();
-	free(lib);
 
-	func = emalloc((strlen(v->v.s)+9) * sizeof(char));
-	strcat(func, "tib_env_");
-	strcat(func, v->v.s);
-	tibenv = dlsym(env->libh[env->libhc], func);
-	if (dlerror())
+	name = erealloc(name, (strlen(v->v.s)+9) * sizeof(char));
+	strcpy(name, "tib_env_");
+	strcat(name, v->v.s);
+	tibenv = dlsym(env->libh[env->libhc], name);
+	if (dlerror()) {
+		free(name);
 		tsp_warnf("load: could not run '%s':\n%s", v->v.s, dlerror());
+	}
 	(*tibenv)(env);
-	free(func);
+	free(name);
 
 	env->libhc++;
 	return env->none;
