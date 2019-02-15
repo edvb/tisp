@@ -4,7 +4,7 @@
 include config.mk
 
 EXE = tisp
-SRC = tisp.c main.c extern/linenoise.c
+SRC = tisp.c main.c
 TIB = tibs/math.c tibs/io.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
 LIB = tibs/libtibmath.so tibs/libtibio.so
