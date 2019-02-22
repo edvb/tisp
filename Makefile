@@ -8,6 +8,7 @@ SRC = tisp.c main.c
 TIB = tibs/math.c tibs/io.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
 LIB = tibs/libtibmath.so tibs/libtibio.so
+TSP = tibs/lib.tsp tibs/repl.tsp
 
 all: options $(EXE)
 
@@ -47,20 +48,28 @@ install: all
 	@mkdir -p $(DESTDIR)$(PREFIX)/bin
 	@cp -f $(EXE) $(DESTDIR)$(PREFIX)/bin
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)
+	@echo installing tsp to $(DESTDIR)$(PREFIX)/bin
+	@sed -e "s@\./@@g" -e "s@tibs/@$(DESTDIR)$(PREFIX)/share/tisp/@g" < tsp > $(DESTDIR)$(PREFIX)/bin/tsp
+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/tsp
 	@echo installing manual page to $(DESTDIR)$(MANPREFIX)/man1
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@echo installing libraries to $(DESTDIR)$(PREFIX)/lib/tisp
+	@echo installing shared libraries to $(DESTDIR)$(PREFIX)/lib/tisp
 	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp
 	@cp -f $(LIB) $(DESTDIR)$(PREFIX)/lib/tisp
+	@echo installing tisp libraries to $(DESTDIR)$(PREFIX)/share/tisp
+	@mkdir -p $(DESTDIR)$(PREFIX)/share/tisp
+	@cp -f $(TSP) $(DESTDIR)$(PREFIX)/share/tisp
 
 uninstall:
 	@echo removing $(EXE) from $(DESTDIR)$(PREFIX)/bin
 	@rm -f $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man1
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@echo removing libraries from $(DESTDIR)$(PREFIX)/lib/tisp
+	@echo removing shared libraries from $(DESTDIR)$(PREFIX)/lib/tisp
 	@rm -rf $(DESTDIR)$(PREFIX)/lib/tisp/
+	@echo removing tisp libraries from $(DESTDIR)$(PREFIX)/share/tisp
+	@rm -rf $(DESTDIR)$(PREFIX)/share/tisp/
 
 test: $(OBJ) $(LIB) test.o
 	@echo running tests
