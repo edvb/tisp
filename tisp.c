@@ -905,37 +905,38 @@ tisp_env_add(Env e, char *key, Val v)
 Env
 tisp_env_init(size_t cap)
 {
-	Env e = emalloc(sizeof(struct Env));
-	e->nil = emalloc(sizeof(struct Val));
-	e->nil->t = NIL;
-	e->none = emalloc(sizeof(struct Val));
-	e->none->t = NONE;
-	e->t = emalloc(sizeof(struct Val));
-	e->t->t = SYMBOL;
-	e->t->v.s = "t";
+	Env env = emalloc(sizeof(struct Env));
 
-	e->h = hash_new(cap);
-	hash_add(e->h, "t", e->t);
-	hash_add(e->h, "car",    mk_prim(prim_car));
-	hash_add(e->h, "cdr",    mk_prim(prim_cdr));
-	hash_add(e->h, "cons",   mk_prim(prim_cons));
-	hash_add(e->h, "quote",  mk_prim(prim_quote));
-	hash_add(e->h, "void",   mk_prim(prim_void));
-	hash_add(e->h, "begin",  mk_prim(prim_begin));
-	hash_add(e->h, "eval",   mk_prim(prim_eval));
-	hash_add(e->h, "=",      mk_prim(prim_eq));
-	hash_add(e->h, "cond",   mk_prim(prim_cond));
-	hash_add(e->h, "type",   mk_prim(prim_type));
-	hash_add(e->h, "lambda", mk_prim(prim_lambda));
-	hash_add(e->h, "define", mk_prim(prim_define));
-	hash_add(e->h, "load",   mk_prim(prim_load));
+	env->nil = emalloc(sizeof(struct Val));
+	env->nil->t = NIL;
+	env->none = emalloc(sizeof(struct Val));
+	env->none->t = NONE;
+	env->t = emalloc(sizeof(struct Val));
+	env->t->t = SYMBOL;
+	env->t->v.s = "t";
 
-	e->strs = hash_new(cap);
-	e->syms = hash_new(cap);
+	env->h = hash_new(cap);
+	tisp_env_add(env, "t", env->t);
+	tsp_env_fn(car);
+	tsp_env_fn(cdr);
+	tsp_env_fn(cons);
+	tsp_env_fn(quote);
+	tsp_env_fn(void);
+	tsp_env_fn(begin);
+	tsp_env_fn(eval);
+	tsp_env_name_fn(=, eq);
+	tsp_env_fn(cond);
+	tsp_env_fn(type);
+	tsp_env_fn(lambda);
+	tsp_env_fn(define);
+	tsp_env_fn(load);
 
-	e->libh = NULL;
-	e->libhc = 0;
-	return e;
+	env->strs = hash_new(cap);
+	env->syms = hash_new(cap);
+
+	env->libh = NULL;
+	env->libhc = 0;
+	return env;
 }
 
 void
