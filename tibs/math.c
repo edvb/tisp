@@ -30,7 +30,7 @@
 	tsp_arg_type(A, NAME, TYPE);      \
 } while(0)
 
-/* Wrapper functions to be returned by mk_num, all need same arguments */
+/* wrapper functions to be returned by mk_num, all need same arguments */
 static Val
 create_int(double num, double den)
 {
@@ -42,7 +42,7 @@ static Val
 create_dub(double num, double den)
 {
 	assert(den == 1);
-	return mk_dub(num);
+	return mk_dec(num);
 }
 
 static Val
@@ -51,7 +51,7 @@ create_rat(double num, double den)
 	return mk_rat(num, den);
 }
 
-/* Return pointer to one of the preceding functions depending on what sort
+/* return pointer to one of the preceding functions depending on what sort
  * number should be created by the following arithmetic functions */
 static Val
 (*mk_num(Type a, Type b, int isfrac))(double, double)
@@ -71,7 +71,7 @@ prim_add(Env env, Val args)
 	EVAL_CHECK(a, car(args), "+", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "+", NUMBER);
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dub((a->v.n.num/a->v.n.den) + (b->v.n.num/b->v.n.den));
+		return mk_dec((a->v.n.num/a->v.n.den) + (b->v.n.num/b->v.n.den));
 	return (mk_num(a->t, b->t, 0))
 		(a->v.n.num * b->v.n.den + a->v.n.den * b->v.n.num,
 		 a->v.n.den * b->v.n.den);
@@ -92,7 +92,7 @@ prim_sub(Env env, Val args)
 		EVAL_CHECK(b, car(cdr(args)), "-", NUMBER);
 	}
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dub((a->v.n.num/a->v.n.den) - (b->v.n.num/b->v.n.den));
+		return mk_dec((a->v.n.num/a->v.n.den) - (b->v.n.num/b->v.n.den));
 	return (mk_num(a->t, b->t, 0))
 		(a->v.n.num * b->v.n.den - a->v.n.den * b->v.n.num,
 		 a->v.n.den * b->v.n.den);
@@ -106,7 +106,7 @@ prim_mul(Env env, Val args)
 	EVAL_CHECK(a, car(args), "*", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "*", NUMBER);
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dub((a->v.n.num/a->v.n.den) * (b->v.n.num/b->v.n.den));
+		return mk_dec((a->v.n.num/a->v.n.den) * (b->v.n.num/b->v.n.den));
 	return (mk_num(a->t, b->t, 0))
 		(a->v.n.num * b->v.n.num, a->v.n.den * b->v.n.den);
 
@@ -127,7 +127,7 @@ prim_div(Env env, Val args)
 		EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
 	}
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dub((a->v.n.num/a->v.n.den) / (b->v.n.num/b->v.n.den));
+		return mk_dec((a->v.n.num/a->v.n.den) / (b->v.n.num/b->v.n.den));
 	return (mk_num(a->t, b->t, 1))
 		(a->v.n.num * b->v.n.den, a->v.n.den * b->v.n.num);
 }
@@ -166,8 +166,8 @@ PRIM_COMPARE(gte, >=, ">=")
 void
 tib_env_math(Env env)
 {
-	tisp_env_add(env, "pi",  mk_dub(3.141592653589793));
-	tisp_env_add(env, "e",   mk_dub(2.718281828459045));
+	tisp_env_add(env, "pi",  mk_dec(3.141592653589793));
+	tisp_env_add(env, "e",   mk_dec(2.718281828459045));
 
 	tsp_env_name_fn(+,   add);
 	tsp_env_name_fn(-,   sub);

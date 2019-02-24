@@ -322,7 +322,7 @@ mk_int(int i)
 }
 
 Val
-mk_dub(double d)
+mk_dec(double d)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = DECIMAL;
@@ -446,7 +446,7 @@ read_sci(Str str, double val, int isint) {
 finish:
 	if (isint)
 		return mk_int(val);
-	return mk_dub(val);
+	return mk_dec(val);
 }
 
 static Val
