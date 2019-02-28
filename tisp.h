@@ -45,6 +45,8 @@
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
+#define num(P) ((P)->v.n.num)
+#define den(P) ((P)->v.n.den)
 
 struct Val;
 typedef struct Val *Val;

@@ -165,7 +165,7 @@ vals_eq(Val a, Val b)
 	case INTEGER:
 	case DECIMAL:
 	case RATIO:
-		if (a->v.n.num != b->v.n.num || a->v.n.den != b->v.n.den)
+		if (num(a) != num(b) || den(a) != den(b))
 			return 0;
 		break;
 	default: /* PRIMITIVE, STRING, SYMBOL */
@@ -316,8 +316,8 @@ mk_int(int i)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = INTEGER;
-	ret->v.n.num = i;
-	ret->v.n.den = 1;
+	num(ret) = i;
+	den(ret) = 1;
 	return ret;
 }
 
@@ -326,8 +326,8 @@ mk_dec(double d)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = DECIMAL;
-	ret->v.n.num = d;
-	ret->v.n.den = 1;
+	num(ret) = d;
+	den(ret) = 1;
 	return ret;
 }
 
@@ -663,15 +663,15 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "()");
 		break;
 	case INTEGER:
-		fprintf(f, "%d", (int)v->v.n.num);
+		fprintf(f, "%d", (int)num(v));
 		break;
 	case DECIMAL:
-		fprintf(f, "%.15g", v->v.n.num);
-		if (v->v.n.num == (int)v->v.n.num)
+		fprintf(f, "%.15g", num(v));
+		if (num(v) == (int)num(v))
 			fprintf(f, ".0");
 		break;
 	case RATIO:
-		fprintf(f, "%d/%d", (int)v->v.n.num, (int)v->v.n.den);
+		fprintf(f, "%d/%d", (int)num(v), (int)den(v));
 		break;
 	case STRING:
 		fprintf(f, "\"%s\"", v->v.s);

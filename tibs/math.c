@@ -30,6 +30,24 @@
 	tsp_arg_type(A, NAME, TYPE);      \
 } while(0)
 
+static Val
+prim_numerator(Env env, Val args)
+{
+	Val a;
+	tsp_arg_num(args, "num", 1);
+	EVAL_CHECK(a, car(args), "num", RATIONAL);
+	return mk_int(num(a));
+}
+
+static Val
+prim_denominator(Env env, Val args)
+{
+	Val a;
+	tsp_arg_num(args, "den", 1);
+	EVAL_CHECK(a, car(args), "den", RATIONAL);
+	return mk_int(den(a));
+}
+
 /* wrapper functions to be returned by mk_num, all need same arguments */
 static Val
 create_int(double num, double den)
@@ -71,10 +89,10 @@ prim_add(Env env, Val args)
 	EVAL_CHECK(a, car(args), "+", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "+", NUMBER);
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dec((a->v.n.num/a->v.n.den) + (b->v.n.num/b->v.n.den));
+		return mk_dec((num(a)/den(a)) + (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 0))
-		(a->v.n.num * b->v.n.den + a->v.n.den * b->v.n.num,
-		 a->v.n.den * b->v.n.den);
+		(num(a) * den(b) + den(a) * num(b),
+		 den(a) * den(b));
 }
 
 static Val
@@ -92,10 +110,10 @@ prim_sub(Env env, Val args)
 		EVAL_CHECK(b, car(cdr(args)), "-", NUMBER);
 	}
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dec((a->v.n.num/a->v.n.den) - (b->v.n.num/b->v.n.den));
+		return mk_dec((num(a)/den(a)) - (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 0))
-		(a->v.n.num * b->v.n.den - a->v.n.den * b->v.n.num,
-		 a->v.n.den * b->v.n.den);
+		(num(a) * den(b) - den(a) * num(b),
+		 den(a) * den(b));
 }
 
 static Val
@@ -106,9 +124,8 @@ prim_mul(Env env, Val args)
 	EVAL_CHECK(a, car(args), "*", NUMBER);
 	EVAL_CHECK(b, car(cdr(args)), "*", NUMBER);
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dec((a->v.n.num/a->v.n.den) * (b->v.n.num/b->v.n.den));
-	return (mk_num(a->t, b->t, 0))
-		(a->v.n.num * b->v.n.num, a->v.n.den * b->v.n.den);
+		return mk_dec((num(a)/den(a)) * (num(b)/den(b)));
+	return (mk_num(a->t, b->t, 0))(num(a) * num(b), den(a) * den(b));
 
 }
 
@@ -127,9 +144,8 @@ prim_div(Env env, Val args)
 		EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
 	}
 	if (a->t & DECIMAL || b->t & DECIMAL)
-		return mk_dec((a->v.n.num/a->v.n.den) / (b->v.n.num/b->v.n.den));
-	return (mk_num(a->t, b->t, 1))
-		(a->v.n.num * b->v.n.den, a->v.n.den * b->v.n.num);
+		return mk_dec((num(a)/den(a)) / (num(b)/den(b)));
+	return (mk_num(a->t, b->t, 1))(num(a) * den(b), den(a) * num(b));
 }
 
 static Val
@@ -139,9 +155,9 @@ prim_mod(Env env, Val args)
 	tsp_arg_num(args, "mod", 2);
 	EVAL_CHECK(a, car(args), "mod", INTEGER);
 	EVAL_CHECK(b, car(cdr(args)), "mod", INTEGER);
-	if (b->v.n.num == 0)
+	if (num(b) == 0)
 		tsp_warn("division by zero");
-	return mk_int((int)a->v.n.num % abs((int)b->v.n.num));
+	return mk_int((int)num(a) % abs((int)num(b)));
 }
 
 #define PRIM_COMPARE(NAME, OP, FUNC)                                          \
@@ -155,7 +171,7 @@ prim_##NAME(Env env, Val args)                                                \
 		return env->t;                                                \
 	tsp_arg_type(car(v), FUNC, INTEGER);                                  \
 	tsp_arg_type(car(cdr(v)), FUNC, INTEGER);                             \
-	return (car(v)->v.n.num OP car(cdr(v))->v.n.num) ? env->t : env->nil; \
+	return (num(car(v)) OP num(car(cdr(v)))) ? env->t : env->nil; \
 }
 
 PRIM_COMPARE(lt,  <,  "<")
@@ -168,6 +184,9 @@ tib_env_math(Env env)
 {
 	tisp_env_add(env, "pi",  mk_dec(3.141592653589793));
 	tisp_env_add(env, "e",   mk_dec(2.718281828459045));
+
+	tsp_env_fn(numerator);
+	tsp_env_fn(denominator);
 
 	tsp_env_name_fn(+,   add);
 	tsp_env_name_fn(-,   sub);
