@@ -34,8 +34,8 @@ static Val
 prim_numerator(Env env, Val args)
 {
 	Val a;
-	tsp_arg_num(args, "num", 1);
-	EVAL_CHECK(a, car(args), "num", RATIONAL);
+	tsp_arg_num(args, "numerator", 1);
+	EVAL_CHECK(a, car(args), "numerator", RATIONAL);
 	return mk_int(num(a));
 }
 
@@ -43,8 +43,8 @@ static Val
 prim_denominator(Env env, Val args)
 {
 	Val a;
-	tsp_arg_num(args, "den", 1);
-	EVAL_CHECK(a, car(args), "den", RATIONAL);
+	tsp_arg_num(args, "denominator", 1);
+	EVAL_CHECK(a, car(args), "denominator", RATIONAL);
 	return mk_int(den(a));
 }
 
