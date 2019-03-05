@@ -160,7 +160,7 @@ prim_mod(Env env, Val args)
 	return mk_int((int)num(a) % abs((int)num(b)));
 }
 
-#define PRIM_COMPARE(NAME, OP, FUNC)                                          \
+#define PRIM_COMPARE(NAME, OP)                                                \
 static Val                                                                    \
 prim_##NAME(Env env, Val args)                                                \
 {                                                                             \
@@ -169,15 +169,15 @@ prim_##NAME(Env env, Val args)                                                \
 		return NULL;                                                  \
 	if (list_len(v) != 2)                                                 \
 		return env->t;                                                \
-	tsp_arg_type(car(v), FUNC, INTEGER);                                  \
-	tsp_arg_type(car(cdr(v)), FUNC, INTEGER);                             \
+	tsp_arg_type(car(v), #OP, INTEGER);                                   \
+	tsp_arg_type(car(cdr(v)), #OP, INTEGER);                              \
 	return (num(car(v)) OP num(car(cdr(v)))) ? env->t : env->nil; \
 }
 
-PRIM_COMPARE(lt,  <,  "<")
-PRIM_COMPARE(gt,  >,  ">")
-PRIM_COMPARE(lte, <=, "<=")
-PRIM_COMPARE(gte, >=, ">=")
+PRIM_COMPARE(lt,  <)
+PRIM_COMPARE(gt,  >)
+PRIM_COMPARE(lte, <=)
+PRIM_COMPARE(gte, >=)
 
 void
 tib_env_math(Env env)
