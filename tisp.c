@@ -98,6 +98,8 @@ type_str(Type t)
 	case FUNCTION:  return "function";
 	case PAIR:      return "pair";
 	default:
+		if (t == RATIONAL)
+			return "rational";
 		if (t & NUMBER)
 			return "number";
 		return "invalid";

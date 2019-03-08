@@ -35,7 +35,7 @@
 		            NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
 } while(0)
 #define tsp_arg_type(ARG, NAME, TYPE) do {                                                      \
-	if (!(ARG->t & TYPE))                                                                   \
+	if (!(ARG->t & (TYPE)))                                                                   \
 		tsp_warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
 } while(0)
 
@@ -104,7 +104,8 @@ typedef enum {
 	FUNCTION  = 1 << 8,
 	PAIR      = 1 << 9,
 } Type;
-static Type const NUMBER = INTEGER | DECIMAL | RATIO;
+static Type const RATIONAL = INTEGER | RATIO;
+static Type const NUMBER   = INTEGER | RATIO | DECIMAL;
 
 struct Val {
 	Type t; /* NONE, NIL */
