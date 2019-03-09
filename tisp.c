@@ -478,16 +478,44 @@ read_num(Str str)
 	}
 }
 
+static char
+esc_char(char c) {
+	switch (c) {
+	case 'n':  return '\n';
+	case 't':  return '\t';
+	case '\\':
+	case '"':
+	default:
+		return c;
+	}
+}
+
+static char *
+esc_str(char *s)
+{
+	char *c, *ret = emalloc((strlen(s)+1) * sizeof(char));
+	for (c = ret; *s != '\0'; c++, s++)
+		if (*s == '\\')
+			*c = esc_char(*(++s));
+		else
+			*c = *s;
+	*c = '\0';
+	return ret;
+}
+
 static Val
 read_str(Env env, Str str)
 {
 	int len = 0;
-	char *s = ++str->d;
-	for (; *str->d++ != '"'; len++)
+	char *s = ++str->d; /* skip starting open quote */
+	for (; *str->d != '"'; str->d++, len++)
 		if (!*str->d)
 			tsp_warn("reached end before closing double quote");
+		else if (*str->d == '\\' && str->d[1] == '"')
+			str->d++, len++;
+	str->d++; /* skip last closing quote */
 	s[len] = '\0';
-	return mk_str(env, s);
+	return mk_str(env, esc_str(s));
 }
 
 static Val
