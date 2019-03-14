@@ -19,6 +19,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -169,17 +170,17 @@ prim_mod(Env env, Val args)
 	return mk_int((int)num(a) % abs((int)num(b)));
 }
 
-#define PRIM_COMPARE(NAME, OP)                                                \
-static Val                                                                    \
-prim_##NAME(Env env, Val args)                                                \
-{                                                                             \
-	Val v;                                                                \
-	if (!(v = tisp_eval_list(env, args)))                                 \
-		return NULL;                                                  \
-	if (list_len(v) != 2)                                                 \
-		return env->t;                                                \
-	tsp_arg_type(car(v), #OP, INTEGER);                                   \
-	tsp_arg_type(car(cdr(v)), #OP, INTEGER);                              \
+#define PRIM_COMPARE(NAME, OP)                                        \
+static Val                                                            \
+prim_##NAME(Env env, Val args)                                        \
+{                                                                     \
+	Val v;                                                        \
+	if (!(v = tisp_eval_list(env, args)))                         \
+		return NULL;                                          \
+	if (list_len(v) != 2)                                         \
+		return env->t;                                        \
+	tsp_arg_type(car(v), #OP, INTEGER);                           \
+	tsp_arg_type(car(cdr(v)), #OP, INTEGER);                      \
 	return (num(car(v)) OP num(car(cdr(v)))) ? env->t : env->nil; \
 }
 
@@ -187,6 +188,23 @@ PRIM_COMPARE(lt,  <)
 PRIM_COMPARE(gt,  >)
 PRIM_COMPARE(lte, <=)
 PRIM_COMPARE(gte, >=)
+
+static Val
+prim_pow(Env env, Val args)
+{
+	double bnum, bden;
+	Val b, p;
+	tsp_arg_num(args, "pow", 2);
+	EVAL_CHECK(b, car(args), "pow", EXPRESSION);
+	EVAL_CHECK(p, car(cdr(args)), "pow", EXPRESSION);
+	bnum = pow(num(b), num(p)/den(p));
+	bden = pow(den(b), num(p)/den(p));
+	if (bnum == (int)bnum && bden == (int)bden &&
+	    b->t & NUMBER && p->t & NUMBER)
+		return mk_num(b->t, p->t, 0)(bnum, bden);
+	return mk_pair(mk_sym(env, "pow"), mk_pair(b, mk_pair(p, env->nil)));
+}
+
 
 void
 tib_env_math(Env env)
@@ -205,8 +223,10 @@ tib_env_math(Env env)
 	tsp_env_name_fn(/, div);
 	tsp_env_fn(mod);
 
-	tsp_env_name_fn(<,   lt);
-	tsp_env_name_fn(>,   gt);
-	tsp_env_name_fn(<=,  lte);
-	tsp_env_name_fn(>=,  gte);
+	tsp_env_name_fn(<,  lt);
+	tsp_env_name_fn(>,  gt);
+	tsp_env_name_fn(<=, lte);
+	tsp_env_name_fn(>=, gte);
+
+	tsp_env_fn(pow);
 }

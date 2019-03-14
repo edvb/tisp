@@ -104,8 +104,9 @@ typedef enum {
 	FUNCTION  = 1 << 8,
 	PAIR      = 1 << 9,
 } Type;
-static Type const RATIONAL = INTEGER | RATIO;
-static Type const NUMBER   = INTEGER | RATIO | DECIMAL;
+#define RATIONAL   (INTEGER | RATIO)
+#define NUMBER     (RATIONAL | DECIMAL)
+#define EXPRESSION (NUMBER | SYMBOL | PAIR)
 
 struct Val {
 	Type t; /* NONE, NIL */
