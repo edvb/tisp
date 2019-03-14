@@ -48,6 +48,15 @@ prim_denominator(Env env, Val args)
 	return mk_int(den(a));
 }
 
+static Val
+prim_dec(Env env, Val args)
+{
+	Val a;
+	tsp_arg_num(args, "den", 1);
+	EVAL_CHECK(a, car(args), "den", NUMBER);
+	return mk_dec(num(a)/den(a));
+}
+
 /* wrapper functions to be returned by mk_num, all need same arguments */
 static Val
 create_int(double num, double den)
@@ -188,10 +197,12 @@ tib_env_math(Env env)
 	tsp_env_fn(numerator);
 	tsp_env_fn(denominator);
 
-	tsp_env_name_fn(+,   add);
-	tsp_env_name_fn(-,   sub);
-	tsp_env_name_fn(*,   mul);
-	tsp_env_name_fn(/,   div);
+	tsp_env_fn(dec);
+
+	tsp_env_name_fn(+, add);
+	tsp_env_name_fn(-, sub);
+	tsp_env_name_fn(*, mul);
+	tsp_env_name_fn(/, div);
 	tsp_env_fn(mod);
 
 	tsp_env_name_fn(<,   lt);
