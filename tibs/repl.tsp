@@ -1,12 +1,12 @@
 (define (repl)
   (print "> ")
-  ((lambda (exp)
-     (cond ((= exp 'quit) (print (newline)))
+  ((lambda (expr)
+     (cond ((= expr 'quit) (print (newline)))
            (t (begin
-                ((lambda (eval-exp)
-                   (cond ((not (void? eval-exp))
-                          (disp eval-exp))))
-                 (eval exp))
+                ((lambda (eval-expr)
+                   (cond ((not (void? eval-expr))
+                          (disp eval-expr))))
+                 (eval expr))
                 (repl)))))
    (read)))
 

@@ -282,6 +282,7 @@ main(void)
 	int errors[LEN(tests)] = {0};
 	Env env = tisp_env_init(64);
 	tib_env_math(env);
+	tisp_eval(env, tisp_parse_file(env, "tibs/lib.tsp"));
 
 	for (int i = 0; ; i++) {
 		if (!tests[i][1]) {

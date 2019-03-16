@@ -61,4 +61,17 @@
 (define (not x)
   (cond (x ()) (t t)))
 
+(define e (exp 1.))
+(define (root b p) (pow b (/ 1 p)))
+(define (sqrt x) (root x 2))
+(define (cbrt x) (root x 3))
+(define (logb b x) (/  (log x) (log b)))
+(define (log10 x) (logb 10. x))
+(define (positive? x) (cond ((> x 0) t) (t ())))
+(define (negative? x) (cond ((< x 0) t) (t ())))
+
+(define (! n)
+  (cond ((= n 1) 1)
+        (t (* n (! (- n 1))))))
+
 (define (disp x) (print x (newline)))

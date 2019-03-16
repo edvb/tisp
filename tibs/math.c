@@ -229,12 +229,13 @@ PRIM_TRIG(atan)
 PRIM_TRIG(asinh)
 PRIM_TRIG(acosh)
 PRIM_TRIG(atanh)
+PRIM_TRIG(exp)
+PRIM_TRIG(log)
 
 void
 tib_env_math(Env env)
 {
-	tisp_env_add(env, "pi",  mk_dec(3.141592653589793));
-	tisp_env_add(env, "e",   mk_dec(2.718281828459045));
+	tisp_env_add(env, "pi", mk_dec(3.141592653589793));
 
 	tsp_env_fn(numerator);
 	tsp_env_fn(denominator);
@@ -266,4 +267,6 @@ tib_env_math(Env env)
 	tsp_env_name_fn(arcsinh, asinh);
 	tsp_env_name_fn(arccosh, acosh);
 	tsp_env_name_fn(arctanh, atanh);
+	tsp_env_fn(exp);
+	tsp_env_fn(log);
 }
