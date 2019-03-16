@@ -205,6 +205,30 @@ prim_pow(Env env, Val args)
 	return mk_pair(mk_sym(env, "pow"), mk_pair(b, mk_pair(p, env->nil)));
 }
 
+#define PRIM_TRIG(NAME)                                           \
+static Val                                                        \
+prim_##NAME(Env env, Val args)                                    \
+{                                                                 \
+	Val v;                                                    \
+	tsp_arg_num(args, #NAME, 1);                              \
+	EVAL_CHECK(v, car(args), #NAME, EXPRESSION);              \
+	if (v->t & DECIMAL)                                       \
+		return mk_dec(NAME(num(v)));                      \
+	return mk_pair(mk_sym(env, #NAME), mk_pair(v, env->nil)); \
+}
+
+PRIM_TRIG(sin)
+PRIM_TRIG(cos)
+PRIM_TRIG(tan)
+PRIM_TRIG(sinh)
+PRIM_TRIG(cosh)
+PRIM_TRIG(tanh)
+PRIM_TRIG(asin)
+PRIM_TRIG(acos)
+PRIM_TRIG(atan)
+PRIM_TRIG(asinh)
+PRIM_TRIG(acosh)
+PRIM_TRIG(atanh)
 
 void
 tib_env_math(Env env)
@@ -229,4 +253,17 @@ tib_env_math(Env env)
 	tsp_env_name_fn(>=, gte);
 
 	tsp_env_fn(pow);
+
+	tsp_env_fn(sin);
+	tsp_env_fn(cos);
+	tsp_env_fn(tan);
+	tsp_env_fn(sinh);
+	tsp_env_fn(cosh);
+	tsp_env_fn(tanh);
+	tsp_env_name_fn(arcsin,  asin);
+	tsp_env_name_fn(arccos,  acos);
+	tsp_env_name_fn(arctan,  atan);
+	tsp_env_name_fn(arcsinh, asinh);
+	tsp_env_name_fn(arccosh, acosh);
+	tsp_env_name_fn(arctanh, atanh);
 }
