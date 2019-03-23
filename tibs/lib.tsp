@@ -74,4 +74,5 @@
   (cond ((= n 1) 1)
         (t (* n (! (- n 1))))))
 
-(define (disp x) (print x (newline)))
+(define (newline) (print "\n"))
+(define (disp x) (print x) (newline))

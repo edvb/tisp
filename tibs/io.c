@@ -55,16 +55,9 @@ prim_read(Env env, Val args)
 	return v;
 }
 
-static Val
-prim_newline(Env env, Val args)
-{
-	return mk_str(env, "\n");
-}
-
 void
 tib_env_io(Env env)
 {
 	tsp_env_fn(print);
 	tsp_env_fn(read);
-	tsp_env_fn(newline);
 }
