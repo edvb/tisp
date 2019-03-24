@@ -799,6 +799,7 @@ static Val
 prim_eval(Env env, Val args)
 {
 	Val v;
+	tsp_arg_num(args, "eval", 1);
 	if (!(v = tisp_eval(env, car(args))))
 		return NULL;
 	return tisp_eval(env, v);
