@@ -2,7 +2,7 @@
   (print "> ")
   ((lambda (expr)
      (cond ((= expr 'quit) (newline))
-           (t (begin
+           (t (do
                 ((lambda (eval-expr)
                    (cond ((not (void? eval-expr))
                           (disp eval-expr))))

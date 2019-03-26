@@ -608,7 +608,7 @@ Val
 tisp_parse_file(Env env, char *fname)
 {
 	struct Str str = { NULL };
-	Val ret = mk_pair(mk_sym(env, "begin"), env->nil);
+	Val ret = mk_pair(mk_sym(env, "do"), env->nil);
 	Val v, last = ret;
 	char *file;
 	if (!(file = tisp_read_file(fname)))
@@ -785,7 +785,7 @@ prim_void(Env env, Val args)
 }
 
 static Val
-prim_begin(Env env, Val args)
+prim_do(Env env, Val args)
 {
 	Val v;
 	if (!(v = tisp_eval_list(env, args)))
@@ -955,7 +955,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(cons);
 	tsp_env_fn(quote);
 	tsp_env_fn(void);
-	tsp_env_fn(begin);
+	tsp_env_fn(do);
 	tsp_env_fn(eval);
 	tsp_env_name_fn(=, eq);
 	tsp_env_fn(cond);
