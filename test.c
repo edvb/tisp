@@ -253,7 +253,7 @@ tisp_test(Env env, const char *input, const char *expect, int output)
 {
 	struct Str str;
 	Val v;
-	FILE *f = fopen("test.out", "w");
+	FILE *f;
 	size_t nread;
 	char buf[BUFSIZ] = {0};
 
@@ -265,10 +265,14 @@ tisp_test(Env env, const char *input, const char *expect, int output)
 		return 0;
 	}
 
+	f = fopen("test.out", "w");
 	tisp_print(f, v);
 	fclose(f);
+
 	f = fopen("test.out", "r");
 	while ((nread = fread(buf, 1, sizeof(buf), f)) > 0) ;
+	fclose(f);
+	remove("test.out");
 
 	if (output)
 		printf("%s\n", buf);
