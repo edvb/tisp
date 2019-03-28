@@ -102,6 +102,22 @@ char *tests[][2] = {
 	{ "(cdr (cons 1 (cons 2 3)))",                 "(2 . 3)" },
 	{ "(cdr (cdr (cons 1 (cons 2 3))))",           "3"       },
 
+	{ "void",   NULL },
+	{ "(void)", ""  },
+
+	{ "do",                                       NULL },
+	{ "(do (+ 1 2) (+ 2 2))",                     "4"  },
+	{ "(do (+ -4 8) (- 1 2) (* 80 0) (+ 39 -3))", "36" },
+	{ "(do (mod 80 2) (/ 4 2) (void))",           ""   },
+
+	{ "eval",                                   NULL        },
+	{ "(eval ''hey)",                           "hey"       },
+	{ "(eval \"sup\")",                         "\"sup\""   },
+	{ "(eval (+ 1 2))",                         "3"         },
+	{ "(eval '(- 4 3))",                        "1"         },
+	{ "(eval ''(mod 9 3))",                     "(mod 9 3)" },
+	{ "(do (define bar '(/ 25 5)) (eval bar))", "5"         },
+
 	{ "cond",                                       NULL },
 	{ "(cond)",                                     "()" },
 	{ "(cond (t 1))",                               "1"  },
@@ -166,6 +182,25 @@ char *tests[][2] = {
 	{ "((lambda (x) (+ x 1)) 8)",     "9"  },
 	{ "((lambda (a b) (+ a b)) 2 2)", "4"  },
 	{ "((lambda () 5))",              "5"  },
+
+	{ "numerator",        NULL },
+	{ "(numerator 3/2)",  "3"  },
+	{ "(numerator 1/2)",  "1"  },
+	{ "(numerator -4/2)", "-2" },
+	{ "(numerator 24)",   "24" },
+
+	{ "denominator",        NULL },
+	{ "(denominator 1/4)",  "4"  },
+	{ "(denominator 4/3)",  "3"  },
+	{ "(denominator 4/2)",  "1"  },
+	{ "(denominator 14/8)", "4"  },
+	{ "(denominator -4)",   "1"  },
+
+	{ "dec",        NULL   },
+	{ "(dec 1/2)",  "0.5"  },
+	{ "(dec 3/-2)", "-1.5" },
+	{ "(dec 1)",    "1.0"  },
+	{ "(dec 3.14)", "3.14" },
 
 	{ "add",           NULL               },
 	{ "(+ 1 1)",       "2"                },
