@@ -664,6 +664,7 @@ tisp_eval(Env env, Val v)
 			/* tail call into the function body with the extended env */
 			if (!(args = tisp_eval_list(env, args)))
 				return NULL;
+			tsp_arg_num(args, car(v)->v.s, list_len(f->v.f.args));
 			if (!(hash_extend(env->h, f->v.f.args, args)))
 				return NULL;
 			hash_merge(env->h, f->v.f.env->h);
