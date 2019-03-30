@@ -30,7 +30,7 @@ prim_print(Env env, Val args)
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	for (; !nilp(v); v = cdr(v)) {
-		if (car(v)->t & STRING) /* don't print quotes arond string */
+		if (car(v)->t & STRING) /* don't print quotes around string */
 			fprintf(stdout, "%s", car(v)->v.s);
 		else
 			tisp_print(stdout, car(v));

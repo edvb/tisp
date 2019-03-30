@@ -38,6 +38,8 @@ static void hash_add(Hash ht, char *key, Val val);
 static Hash hash_extend(Hash ht, Val args, Val vals);
 static void hash_merge(Hash ht, Hash ht2);
 
+/* general utility wrappers */
+
 static void
 die(const char *fmt, ...)
 {
@@ -83,6 +85,9 @@ erealloc(void *p, size_t size)
 	return p;
 }
 
+/* utility functions */
+
+/* return named string for each type */
 char *
 type_str(Type t)
 {
@@ -108,6 +113,7 @@ type_str(Type t)
 	}
 }
 
+/* check if character can be a part of a symbol */
 static int
 issym(char c)
 {
@@ -115,6 +121,7 @@ issym(char c)
 	       BETWEEN(c, '0', '9') || strchr("_+-*/=<>!?$&^#@:~", c);
 }
 
+/* check if character is start of a number */
 static int
 isnum(char *str)
 {
@@ -122,6 +129,7 @@ isnum(char *str)
 	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
 }
 
+/* skip over comments and white space */
 void
 skip_ws(Str str)
 {
@@ -130,6 +138,7 @@ skip_ws(Str str)
 		str->d += strcspn(str->d, "\n");
 }
 
+/* count number of parenthesis */
 static int
 count_parens(char *s, int len)
 {
@@ -142,6 +151,7 @@ count_parens(char *s, int len)
 	return count;
 }
 
+/* get length of list */
 int
 list_len(Val v)
 {
@@ -152,6 +162,7 @@ list_len(Val v)
 	return a->t == NIL ? len : -1;
 }
 
+/* return last element in list */
 static Val
 list_last(Val v)
 {
@@ -160,6 +171,7 @@ list_last(Val v)
 	return car(v);
 }
 
+/* check if two values are equal */
 static int
 vals_eq(Val a, Val b)
 {
@@ -193,6 +205,8 @@ frac_reduce(int *num, int *den)
 	*den = *den / b;
 }
 
+/* hash map */
+
 /* return hashed number based on key */
 static uint32_t
 hash(char *key)
@@ -217,6 +231,7 @@ hash_new(size_t cap)
 	return ht;
 }
 
+/* get entry in one hash table for the key */
 static Entry
 entry_get(Hash ht, char *key)
 {
@@ -231,7 +246,7 @@ entry_get(Hash ht, char *key)
 	return &ht->items[i];
 }
 
-/* get value of given key in hash table */
+/* get value of given key in each hash table */
 static Val
 hash_get(Hash ht, char *key)
 {
@@ -275,12 +290,11 @@ hash_add(Hash ht, char *key, Val val)
 }
 
 /* add each binding args[i] -> vals[i] */
-/* args and vals are both scheme lists */
+/* args and vals are both lists */
 static Hash
 hash_extend(Hash ht, Val args, Val vals)
 {
 	Val arg, val;
-
 	for (; !nilp(args) && !nilp(vals); args = cdr(args), vals = cdr(vals)) {
 		arg = car(args);
 		val = car(vals);
@@ -296,13 +310,13 @@ static void
 hash_merge(Hash ht, Hash ht2)
 {
 	int i;
-
 	for (; ht2; ht2 = ht2->next)
 		for (i = 0; i < ht2->cap; i++)
 			if (ht2->items[i].key)
 				hash_add(ht, ht2->items[i].key, ht2->items[i].val);
 }
 
+/* clean up hash table */
 static void
 hash_free(Hash ht)
 {
@@ -314,6 +328,8 @@ hash_free(Hash ht)
 	}
 	free(ht);
 }
+
+/* make types */
 
 Val
 mk_int(int i)
@@ -419,6 +435,9 @@ mk_list(Env env, int n, Val *a)
 	return b;
 }
 
+/* read */
+
+/* read first character of number to determine sign */
 static int
 read_sign(Str str)
 {
@@ -429,6 +448,7 @@ read_sign(Str str)
 	}
 }
 
+/* return read integer */
 static int
 read_int(Str str)
 {
@@ -438,6 +458,7 @@ read_int(Str str)
 	return ret;
 }
 
+/* return read scientific notation */
 static Val
 read_sci(Str str, double val, int isint) {
 	if (tolower(*str->d) != 'e')
@@ -453,6 +474,7 @@ finish:
 	return mk_dec(val);
 }
 
+/* return read number */
 static Val
 read_num(Str str)
 {
@@ -480,6 +502,7 @@ read_num(Str str)
 	}
 }
 
+/* return character for escape */
 static char
 esc_char(char c) {
 	switch (c) {
@@ -492,6 +515,7 @@ esc_char(char c) {
 	}
 }
 
+/* replace all encoded escape characters in string with their actual character */
 static char *
 esc_str(char *s)
 {
@@ -505,6 +529,7 @@ esc_str(char *s)
 	return ret;
 }
 
+/* return read string */
 static Val
 read_str(Env env, Str str)
 {
@@ -520,6 +545,7 @@ read_str(Env env, Str str)
 	return mk_str(env, esc_str(s));
 }
 
+/* return read symbol */
 static Val
 read_sym(Env env, Str str)
 {
@@ -537,6 +563,7 @@ read_sym(Env env, Str str)
 	return mk_sym(env, sym);
 }
 
+/* return read string containing list */
 static Val
 read_list(Env env, Str str)
 {
@@ -559,6 +586,7 @@ read_list(Env env, Str str)
 	return b;
 }
 
+/* reads given string returning its tisp value */
 Val
 tisp_read(Env env, Str str)
 {
@@ -580,6 +608,7 @@ tisp_read(Env env, Str str)
 	tsp_warn("could not read given input");
 }
 
+/* return string containing contents of file name */
 char *
 tisp_read_file(char *fname)
 {
@@ -604,6 +633,7 @@ tisp_read_file(char *fname)
 	return file;
 }
 
+/* read given file name returning its tisp value */
 Val
 tisp_parse_file(Env env, char *fname)
 {
@@ -619,6 +649,9 @@ tisp_parse_file(Env env, char *fname)
 	return ret;
 }
 
+/* eval */
+
+/* evaluate each element of list */
 Val
 tisp_eval_list(Env env, Val v)
 {
@@ -637,6 +670,7 @@ tisp_eval_list(Env env, Val v)
 	return ret;
 }
 
+/* evaluate given value */
 Val
 tisp_eval(Env env, Val v)
 {
@@ -677,6 +711,9 @@ tisp_eval(Env env, Val v)
 	return v;
 }
 
+/* print */
+
+/* print value of a list, display it as #<void> if element inside returns void */
 static void
 list_print(FILE *f, Val v)
 {
@@ -686,6 +723,7 @@ list_print(FILE *f, Val v)
 		tisp_print(f, v);
 }
 
+/* main print function */
 void
 tisp_print(FILE *f, Val v)
 {
@@ -740,6 +778,9 @@ tisp_print(FILE *f, Val v)
 	}
 }
 
+/* primitives */
+
+/* return first element of list */
 static Val
 prim_car(Env env, Val args)
 {
@@ -751,6 +792,7 @@ prim_car(Env env, Val args)
 	return car(car(v));
 }
 
+/* return elements of a list after the first */
 static Val
 prim_cdr(Env env, Val args)
 {
@@ -762,6 +804,7 @@ prim_cdr(Env env, Val args)
 	return cdr(car(v));
 }
 
+/* return new pair */
 static Val
 prim_cons(Env env, Val args)
 {
@@ -772,6 +815,7 @@ prim_cons(Env env, Val args)
 	return mk_pair(car(v), car(cdr(v)));
 }
 
+/* do not evaluate argument */
 static Val
 prim_quote(Env env, Val args)
 {
@@ -779,12 +823,14 @@ prim_quote(Env env, Val args)
 	return car(args);
 }
 
+/* returns nothing */
 static Val
 prim_void(Env env, Val args)
 {
 	return env->none;
 }
 
+/* evaluate all functions given, returning the value of the last one */
 static Val
 prim_do(Env env, Val args)
 {
@@ -796,6 +842,7 @@ prim_do(Env env, Val args)
 	return list_last(v);
 }
 
+/* evaluate argument given */
 static Val
 prim_eval(Env env, Val args)
 {
@@ -806,6 +853,7 @@ prim_eval(Env env, Val args)
 	return tisp_eval(env, v);
 }
 
+/* test equality of all values given */
 static Val
 prim_eq(Env env, Val args)
 {
@@ -820,6 +868,7 @@ prim_eq(Env env, Val args)
 	return env->t;
 }
 
+/* evaluates all expressions if their conditions are met */
 static Val
 prim_cond(Env env, Val args)
 {
@@ -832,6 +881,7 @@ prim_cond(Env env, Val args)
 	return env->nil;
 }
 
+/* return type of tisp value */
 static Val
 prim_type(Env env, Val args)
 {
@@ -842,6 +892,7 @@ prim_type(Env env, Val args)
 	return mk_str(env, type_str(v->t));
 }
 
+/* creates new tisp lambda function */
 static Val
 prim_lambda(Env env, Val args)
 {
@@ -853,6 +904,9 @@ prim_lambda(Env env, Val args)
 }
 
 static Val
+/* creates new variable of given name and value
+ * if pair is given as name of variable, creates function with the car as the
+ * function name and the cdr the function arguments */
 prim_define(Env env, Val args)
 {
 	Val sym, val;
@@ -872,6 +926,7 @@ prim_define(Env env, Val args)
 	return env->none;
 }
 
+/* loads tisp file or C dynamic library */
 static Val
 prim_load(Env env, Val args)
 {
@@ -930,12 +985,16 @@ prim_load(Env env, Val args)
 	return env->none;
 }
 
+/* environment */
+
+/* add new variable of name key and value v to the given environment */
 void
 tisp_env_add(Env e, char *key, Val v)
 {
 	hash_add(e->h, key, v);
 }
 
+/* initialise tisp's environment */
 Env
 tisp_env_init(size_t cap)
 {

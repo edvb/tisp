@@ -29,13 +29,13 @@
 	                 __LINE__);                 \
 	return NULL;                                \
 } while(0)
-#define tsp_arg_num(ARGS, NAME, NARGS) do {                               \
-	if (list_len(ARGS) != NARGS)                                      \
-		tsp_warnf(NAME ": expected %d argument%s, received %d",   \
-		            NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
+#define tsp_arg_num(ARGS, NAME, NARGS) do {                                    \
+	if (list_len(ARGS) != NARGS)                                           \
+		tsp_warnf("%s: expected %d argument%s, received %d",           \
+		           NAME, NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
 } while(0)
 #define tsp_arg_type(ARG, NAME, TYPE) do {                                                      \
-	if (!(ARG->t & (TYPE)))                                                                   \
+	if (!(ARG->t & (TYPE)))                                                                 \
 		tsp_warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
 } while(0)
 
@@ -45,8 +45,8 @@
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
 #define nilp(P) ((P)->t == NIL)
-#define num(P) ((P)->v.n.num)
-#define den(P) ((P)->v.n.den)
+#define num(P)  ((P)->v.n.num)
+#define den(P)  ((P)->v.n.den)
 
 struct Val;
 typedef struct Val *Val;
