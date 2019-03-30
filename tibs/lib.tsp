@@ -76,3 +76,8 @@
 
 (define (newline) (print "\n"))
 (define (disp x) (print x) (newline))
+(define (disp-string str)
+  (cond
+    ((string? str) (print "\"" str "\""))
+    (t (print str)))
+  (newline))

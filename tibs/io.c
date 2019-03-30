@@ -34,8 +34,6 @@ prim_print(Env env, Val args)
 			fprintf(stdout, "%s", car(v)->v.s);
 		else
 			tisp_print(stdout, car(v));
-		if (!nilp(cdr(v)))
-			putchar(' ');
 	}
 	fflush(stdout);
 	return env->none;

@@ -5,7 +5,7 @@
            (t (do
                 ((lambda (ans)
                    (cond ((not (void? ans))
-                          (disp ans))))
+                          (disp-string ans))))
                  (eval expr))
                 (repl)))))
    (read)))
