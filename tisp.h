@@ -102,7 +102,8 @@ typedef enum {
 	SYMBOL    = 1 << 6,
 	PRIMITIVE = 1 << 7,
 	FUNCTION  = 1 << 8,
-	PAIR      = 1 << 9,
+	MACRO     = 1 << 9,
+	PAIR      = 1 << 10,
 } Type;
 #define RATIONAL   (INTEGER | RATIO)
 #define NUMBER     (RATIONAL | DECIMAL)
@@ -136,7 +137,7 @@ Val mk_prim(Prim prim);
 Val mk_dec(double d);
 Val mk_rat(int num, int den);
 Val mk_sym(Env env, char *s);
-Val mk_func(Val args, Val body, Env env);
+Val mk_func(Type t, Val args, Val body, Env env);
 Val mk_pair(Val a, Val b);
 Val mk_list(Env env, int n, Val *a);
 

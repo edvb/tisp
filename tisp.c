@@ -101,6 +101,7 @@ type_str(Type t)
 	case SYMBOL:    return "symbol";
 	case PRIMITIVE: return "primitive";
 	case FUNCTION:  return "function";
+	case MACRO:     return "macro";
 	case PAIR:      return "pair";
 	default:
 		if (t == EXPRESSION)
@@ -405,10 +406,10 @@ mk_prim(Prim pr)
 }
 
 Val
-mk_func(Val args, Val body, Env env)
+mk_func(Type t, Val args, Val body, Env env)
 {
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = FUNCTION;
+	ret->t = t;
 	ret->v.f.args = args;
 	ret->v.f.body = body;
 	ret->v.f.env  = env;
@@ -676,13 +677,6 @@ tisp_eval(Env env, Val v)
 {
 	Val f, args;
 	switch (v->t) {
-	case NONE:
-	case NIL:
-	case INTEGER:
-	case DECIMAL:
-	case RATIO:
-	case STRING:
-		return v;
 	case SYMBOL:
 		if (!(f = hash_get(env->h, v->v.s)))
 			tsp_warnf("could not find symbol %s", v->v.s);
@@ -698,22 +692,25 @@ tisp_eval(Env env, Val v)
 			/* tail call into the function body with the extended env */
 			if (!(args = tisp_eval_list(env, args)))
 				return NULL;
+		case MACRO:
 			tsp_arg_num(args, car(v)->v.s, list_len(f->v.f.args));
 			if (!(hash_extend(env->h, f->v.f.args, args)))
 				return NULL;
 			hash_merge(env->h, f->v.f.env->h);
+			if (f->t == MACRO)
+				f->v.f.body = tisp_eval_list(env, f->v.f.body);
 			return list_last(tisp_eval_list(env, f->v.f.body));
 		default:
 			tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
 		}
-	default: break;
+	default:
+		return v;
 	}
-	return v;
 }
 
 /* print */
 
-/* print value of a list, display it as #<void> if element inside returns void */
+/* print value of a list, display as #<void> if element inside returns void */
 static void
 list_print(FILE *f, Val v)
 {
@@ -755,6 +752,9 @@ tisp_print(FILE *f, Val v)
 		break;
 	case FUNCTION:
 		fprintf(f, "#<function>");
+		break;
+	case MACRO:
+		fprintf(f, "#<macro>");
 		break;
 	case PAIR:
 		putc('(', f);
@@ -900,13 +900,23 @@ prim_lambda(Env env, Val args)
 		tsp_warnf("lambda: expected 2 or more arguments, received %d", list_len(args));
 	if (car(args)->t != PAIR && !nilp(car(args)))
 		tsp_warn("lambda: incorrect format, no argument list found");
-	return mk_func(car(args), cdr(args), env);
+	return mk_func(FUNCTION, car(args), cdr(args), env);
 }
 
 static Val
+prim_macro(Env env, Val args)
+{
+	if (list_len(args) < 2)
+		tsp_warnf("macro: expected 2 or more arguments, received %d", list_len(args));
+	if (car(args)->t != PAIR && !nilp(car(args)))
+		tsp_warn("macro: incorrect format, no argument list found");
+	return mk_func(MACRO, car(args), cdr(args), env);
+}
+
 /* creates new variable of given name and value
  * if pair is given as name of variable, creates function with the car as the
  * function name and the cdr the function arguments */
+static Val
 prim_define(Env env, Val args)
 {
 	Val sym, val;
@@ -914,7 +924,7 @@ prim_define(Env env, Val args)
 		tsp_warnf("define: expected 2 or more arguments, received %d", list_len(args));
 	if (car(args)->t == PAIR) {
 		sym = car(car(args));
-		val = mk_func(cdr(car(args)), cdr(args), env);
+		val = mk_func(FUNCTION, cdr(car(args)), cdr(args), env);
 	} else if (car(args)->t == SYMBOL) {
 		sym = car(args);
 		val = tisp_eval(env, car(cdr(args)));
@@ -1021,6 +1031,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(cond);
 	tsp_env_fn(type);
 	tsp_env_fn(lambda);
+	tsp_env_fn(macro);
 	tsp_env_fn(define);
 	tsp_env_fn(load);
 
