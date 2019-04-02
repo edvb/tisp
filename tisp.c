@@ -130,6 +130,13 @@ isnum(char *str)
 	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
 }
 
+/* check if character is a symbol delimiter */
+static char
+isdelim(int c)
+{
+	return isspace(c) || c == '(' || c == ')' || c == '"' || c == ';';
+}
+
 /* skip over comments and white space */
 void
 skip_ws(Str str)
@@ -564,27 +571,34 @@ read_sym(Env env, Str str)
 	return mk_sym(env, sym);
 }
 
-/* return read string containing list */
+/* return read string containing a list */
 static Val
-read_list(Env env, Str str)
+read_pair(Env env, Str str)
 {
-	int n = 0;
-	Val *a = emalloc(sizeof(Val)), b;
-	str->d++;
+	Val a, b;
 	skip_ws(str);
-	while (*str->d != ')') {
-		if (!str->d[1])
-			tsp_warn("reached end before closing ')'");
-		a = erealloc(a, (n+1) * sizeof(Val)); /* TODO realloc less */
-		if (!(a[n++] = tisp_read(env, str)))
+	if (*str->d == ')') {
+		str->d++;
+		skip_ws(str);
+		return env->nil;
+	}
+	if (!(a = tisp_read(env, str)))
+		return NULL;
+	skip_ws(str);
+	if (*str->d == '.' && isdelim(str->d[1])) {
+		str->d++;
+		if (!(b = tisp_read(env, str)))
 			return NULL;
 		skip_ws(str);
+		if (*str->d != ')')
+			tsp_warn("did not find closing ')'");
+		str->d++;
+		skip_ws(str);
+	} else {
+		if (!(b = read_pair(env, str)))
+			return NULL;
 	}
-	b = mk_list(env, n, a);
-	free(a);
-	str->d++;
-	skip_ws(str);
-	return b;
+	return mk_pair(a, b);
 }
 
 /* reads given string returning its tisp value */
@@ -604,9 +618,11 @@ tisp_read(Env env, Str str)
 	}
 	if (issym(*str->d))
 		return read_sym(env, str);
-	if (*str->d == '(')
-		return read_list(env, str);
-	tsp_warn("could not read given input");
+	if (*str->d == '(') {
+		str->d++;
+		return read_pair(env, str);
+	}
+	tsp_warnf("could not read given input '%s'", str->d);
 }
 
 /* return string containing contents of file name */
