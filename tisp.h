@@ -30,7 +30,7 @@
 	return NULL;                                \
 } while(0)
 #define tsp_arg_num(ARGS, NAME, NARGS) do {                                    \
-	if (list_len(ARGS) != NARGS)                                           \
+	if (list_len(ARGS) != NARGS && NARGS != -1)                            \
 		tsp_warnf("%s: expected %d argument%s, received %d",           \
 		           NAME, NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
 } while(0)

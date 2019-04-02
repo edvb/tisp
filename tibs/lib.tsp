@@ -60,6 +60,7 @@
 
 (define (not x)
   (cond (x ()) (t t)))
+(define (list . rest) rest)
 
 (define e (exp 1.))
 (define (root b p) (pow b (/ 1 p)))

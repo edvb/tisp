@@ -304,11 +304,18 @@ hash_extend(Hash ht, Val args, Val vals)
 {
 	Val arg, val;
 	for (; !nilp(args) && !nilp(vals); args = cdr(args), vals = cdr(vals)) {
-		arg = car(args);
-		val = car(vals);
+		if (args->t == PAIR) {
+			arg = car(args);
+			val = car(vals);
+		} else {
+			arg = args;
+			val = vals;
+		}
 		if (arg->t != SYMBOL)
 			tsp_warn("hash_extend: argument not a symbol");
 		hash_add(ht, arg->v.s, val);
+		if (args->t != PAIR)
+			break;
 	}
 	return ht;
 }
