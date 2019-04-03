@@ -1018,6 +1018,13 @@ prim_load(Env env, Val args)
 	return env->none;
 }
 
+/* list tisp version */
+static Val
+prim_version(Env env, Val args)
+{
+	return mk_str(env, "0.0");
+}
+
 /* environment */
 
 /* add new variable of name key and value v to the given environment */
@@ -1057,6 +1064,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(macro);
 	tsp_env_fn(define);
 	tsp_env_fn(load);
+	tsp_env_fn(version);
 
 	env->strs = hash_new(cap);
 	env->syms = hash_new(cap);
