@@ -20,7 +20,7 @@ main(int argc, char *argv[])
 		if (!strcmp(argv[i], "-v")) {
 			fprintf(stderr, "tisp v%s (c) 2017-2019 Ed van Bruggen\n", VERSION);
 			exit(0);
-		} else if (argv[i][0] == '-') {
+		} else if (argv[i][0] == '-' && argv[i][1]) {
 			fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
 			exit(argv[i][1] == 'h' ? 0 : 1);
 		}
@@ -31,13 +31,16 @@ main(int argc, char *argv[])
 	tib_env_io(env);
 #endif
 
-	if (argc == 1) {
+	if (argc == 1)
 		tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, NULL)));
-		puts("");
-	}
 
 	for (i = 1; i < argc; i++)
-		tisp_eval(env, tisp_parse_file(env, argv[i]));
+		if (argv[i][0] == '-')
+			tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, NULL)));
+		else
+			tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, argv[i])));
+
+	puts("");
 
 	/* tisp_env_free(env); */
 
