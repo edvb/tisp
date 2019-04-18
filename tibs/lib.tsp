@@ -61,6 +61,8 @@
 (define (not x)
   (cond (x ()) (t t)))
 (define (list . rest) rest)
+(define (apply fn args)
+  (eval (cons fn args)))
 
 (define e (exp 1.))
 (define (root b p) (pow b (/ 1 p)))
@@ -76,7 +78,7 @@
         (t (* n (! (- n 1))))))
 
 (define (newline) (print "\n"))
-(define (disp x) (print x) (newline))
+(define (disp . x) (apply print x) (newline))
 (define (disp-string str)
   (cond
     ((string? str) (print "\"" str "\""))
