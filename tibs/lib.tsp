@@ -64,6 +64,9 @@
 (define (apply fn args)
   (eval (cons fn args)))
 
+(define if (macro (condition true false)
+                  (list 'cond (list condition true) (list else false))))
+
 (define e (exp 1.))
 (define (root b p) (pow b (/ 1 p)))
 (define (sqrt x) (root x 2))
@@ -74,13 +77,14 @@
 (define (negative? x) (cond ((< x 0) t) (t ())))
 
 (define (! n)
-  (cond ((= n 1) 1)
-        (t (* n (! (- n 1))))))
+  (if (= n 1)
+    1
+    (* n (! (- n 1)))))
 
 (define (newline) (print "\n"))
 (define (disp . x) (apply print x) (newline))
 (define (disp-string str)
-  (cond
-    ((string? str) (print "\"" str "\""))
-    (t (print str)))
+  (if (string? str)
+    (print "\"" str "\"")
+    (print str))
   (newline))
