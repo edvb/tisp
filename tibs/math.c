@@ -235,8 +235,6 @@ PRIM_TRIG(log)
 void
 tib_env_math(Env env)
 {
-	tisp_env_add(env, "pi", mk_dec(3.141592653589793));
-
 	tsp_env_fn(numerator);
 	tsp_env_fn(denominator);
 

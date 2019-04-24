@@ -67,6 +67,7 @@
 (define if (macro (condition true false)
                   (list 'cond (list condition true) (list else false))))
 
+(define pi (* 4 (arctan 1.)))
 (define e (exp 1.))
 (define (root b p) (pow b (/ 1 p)))
 (define (sqrt x) (root x 2))
