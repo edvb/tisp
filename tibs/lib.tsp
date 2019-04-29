@@ -68,14 +68,23 @@
                   (list 'cond (list condition true) (list else false))))
 
 (define pi (* 4 (arctan 1.)))
+(define tau (* 2 pi))
 (define e (exp 1.))
+
+(define (sqr x) (* x x))
 (define (root b p) (pow b (/ 1 p)))
 (define (sqrt x) (root x 2))
 (define (cbrt x) (root x 3))
-(define (logb b x) (/  (log x) (log b)))
+(define (logb b x) (/ (log x) (log b)))
 (define (log10 x) (logb 10. x))
-(define (positive? x) (cond ((> x 0) t) (t ())))
-(define (negative? x) (cond ((< x 0) t) (t ())))
+
+(define (abs x) (if (>= x 0) x (- x)))
+(define (sgn x) (if (>= x 0) 1 -1))
+(define (max a b) (if (> a b) a b))
+(define (min a b) (if (< a b) a b))
+
+(define (positive? x) (if (> x 0) t ()))
+(define (negative? x) (if (< x 0) t ()))
 
 (define (! n)
   (if (= n 1)
