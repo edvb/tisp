@@ -58,14 +58,27 @@
   (cond ((= (type x) "pair") t)
         (t ())))
 
+;;; Control Flow
+(define if
+  (macro (con a b)
+         (list 'cond (list con a) (list t b))))
+(define else t)
+(define when
+  (macro (con . body)
+         (list 'cond (list con (cons 'do body)) (list t (void)))))
+(define unless
+  (macro (con . body)
+         (list 'cond (list con (void)) (list t (cons 'do body)))))
+(define let
+  (macro (vars body)
+         (cons (list 'lambda (map car vars) body) (map cadr vars))))
+
 (define (not x)
   (cond (x ()) (t t)))
 (define (list . rest) rest)
 (define (apply fn args)
   (eval (cons fn args)))
 
-(define if (macro (condition true false)
-                  (list 'cond (list condition true) (list else false))))
 
 (define pi (* 4 (arctan 1.)))
 (define tau (* 2 pi))
