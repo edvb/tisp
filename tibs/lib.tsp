@@ -73,9 +73,22 @@
   (macro (vars body)
          (cons (list 'lambda (map car vars) body) (map cadr vars))))
 
+;;; Logic
 (define (not x)
-  (cond (x ()) (t t)))
-(define (list . rest) rest)
+  (if x () t))
+(define and ; Use a macro so arguments aren't evaluated all at once
+  (macro (a b)
+         (list 'if a (list 'if b t ()) ())))
+(define nand
+  (macro (a b)
+         (list 'not (list 'and a b))))
+(define (or a b) ; De Morgan's theorem
+  (nand (not a) (not b)))
+(define (nor a b)
+  (and (not a) (not b)))
+
+;;; Lists
+(define (list . lst) lst)
 (define (apply fn args)
   (eval (cons fn args)))
 
