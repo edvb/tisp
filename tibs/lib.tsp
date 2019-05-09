@@ -1,3 +1,4 @@
+;;; CXR
 (define (caar x) (car (car x)))
 (define (cadr x) (car (cdr x)))
 (define (cdar x) (cdr (car x)))
@@ -27,6 +28,7 @@
 (define (cdddar x) (cdr (cdr (cdr (car x)))))
 (define (cddddr x) (cdr (cdr (cdr (cdr x)))))
 
+;;; Types
 (define (void? x)
   (cond ((= (type x) "void") t)
         (t ())))
@@ -88,11 +90,23 @@
   (and (not a) (not b)))
 
 ;;; Lists
+(define first car)
+(define rest cdr)
 (define (list . lst) lst)
+(define (last lst)
+  (cond
+    ((cdr lst) (last (cdr lst)))
+    (else (car lst))))
 (define (apply fn args)
   (eval (cons fn args)))
+(define (map fn lst)
+  (cond
+    (lst (cons (fn (car lst))
+               (map fn (cdr lst))))
+    (else ())))
 
 
+;;; Math
 (define pi (* 4 (arctan 1.)))
 (define tau (* 2 pi))
 (define e (exp 1.))
@@ -117,6 +131,7 @@
     1
     (* n (! (- n 1)))))
 
+;;; Printing
 (define (newline) (print "\n"))
 (define (disp . x) (apply print x) (newline))
 (define (disp-string str)
