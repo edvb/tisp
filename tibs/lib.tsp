@@ -112,7 +112,7 @@
 (define e (exp 1.))
 
 (define (sqr x) (* x x))
-(define (root b p) (pow b (/ 1 p)))
+(define (root b p) (^ b (/ 1 p)))
 (define (sqrt x) (root x 2))
 (define (cbrt x) (root x 3))
 (define (logb b x) (/ (log x) (log b)))
