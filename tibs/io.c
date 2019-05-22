@@ -47,7 +47,7 @@ prim_read(Env env, Val args)
 	struct Str str = { NULL };
 	if (!(file = tisp_read_file(NULL))) {
 		putchar('\n');
-		return mk_sym(env, "quit");
+		return mk_pair(mk_sym(env, "quit"), env->nil);
 	}
 	str.d = file;
 	v = tisp_read(env, &str);

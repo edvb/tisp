@@ -1,7 +1,7 @@
 (define (repl)
   (print "> ")
   (let ((expr (read)))
-    (unless (= expr 'quit)
+    (unless (and (pair? expr) (= (car expr) 'quit))
       (let ((ans (eval expr)))
         (unless (void? ans)
           (disp-string ans)))
