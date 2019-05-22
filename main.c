@@ -40,8 +40,6 @@ main(int argc, char *argv[])
 		else
 			tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, argv[i])));
 
-	puts("");
-
 	/* tisp_env_free(env); */
 
 	return 0;
