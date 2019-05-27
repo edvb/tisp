@@ -183,7 +183,7 @@ prim_pow(Env env, Val args)
 	if (bnum == (int)bnum && bden == (int)bden &&
 	    b->t & NUMBER && p->t & NUMBER)
 		return mk_num(b->t, p->t, 0)(bnum, bden);
-	return mk_pair(mk_sym(env, "pow"), mk_pair(b, mk_pair(p, env->nil)));
+	return mk_pair(mk_sym(env, "^"), mk_pair(b, mk_pair(p, env->nil)));
 }
 
 #define PRIM_COMPARE(NAME, OP)                                        \
