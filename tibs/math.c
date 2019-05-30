@@ -186,18 +186,20 @@ prim_pow(Env env, Val args)
 	return mk_pair(mk_sym(env, "^"), mk_pair(b, mk_pair(p, env->nil)));
 }
 
-#define PRIM_COMPARE(NAME, OP)                                        \
-static Val                                                            \
-prim_##NAME(Env env, Val args)                                        \
-{                                                                     \
-	Val v;                                                        \
-	if (!(v = tisp_eval_list(env, args)))                         \
-		return NULL;                                          \
-	if (list_len(v) != 2)                                         \
-		return env->t;                                        \
-	tsp_arg_type(car(v), #OP, INTEGER);                           \
-	tsp_arg_type(car(cdr(v)), #OP, INTEGER);                      \
-	return (num(car(v)) OP num(car(cdr(v)))) ? env->t : env->nil; \
+#define PRIM_COMPARE(NAME, OP)                    \
+static Val                                        \
+prim_##NAME(Env env, Val args)                    \
+{                                                 \
+	Val v;                                    \
+	if (!(v = tisp_eval_list(env, args)))     \
+		return NULL;                      \
+	if (list_len(v) != 2)                     \
+		return env->t;                    \
+	tsp_arg_type(car(v), #OP, NUMBER);        \
+	tsp_arg_type(car(cdr(v)), #OP, NUMBER);   \
+	return ((num(car(v))*den(car(cdr(v)))) OP \
+		(num(car(cdr(v)))*den(car(v)))) ? \
+		env->t : env->nil;                \
 }
 
 PRIM_COMPARE(lt,  <)
