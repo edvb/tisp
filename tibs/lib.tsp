@@ -62,8 +62,8 @@
 
 ;;; Control Flow
 (define if
-  (macro (con a b)
-         (list 'cond (list con a) (list t b))))
+  (macro (con c d)
+         (list 'cond (list con c) (list t d))))
 (define else t)
 (define when
   (macro (con . body)
@@ -84,10 +84,10 @@
 (define nand
   (macro (a b)
          (list 'not (list 'and a b))))
-(define (or a b) ; De Morgan's theorem
-  (nand (not a) (not b)))
+(define (or a b)
+  (if a t (if b t ())))
 (define (nor a b)
-  (and (not a) (not b)))
+  (not (or a b)))
 
 ;;; Lists
 (define first car)
