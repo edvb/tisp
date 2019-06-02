@@ -183,19 +183,15 @@ list_last(Val v)
 static int
 vals_eq(Val a, Val b)
 {
-	if (a->t != b->t)
-		return 0;
-	switch (a->t) {
-	case INTEGER:
-	case DECIMAL:
-	case RATIO:
+	if (a->t & NUMBER && b->t & NUMBER) {
 		if (num(a) != num(b) || den(a) != den(b))
 			return 0;
-		break;
-	default: /* PRIMITIVE, STRING, SYMBOL */
-		if (a != b)
-			return 0;
+		return 1;
 	}
+	if (a->t != b->t)
+		return 0;
+	if (a != b) /* PRIMITIVE, STRING, SYMBOL */
+		return 0;
 	return 1;
 }
 
