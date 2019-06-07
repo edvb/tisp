@@ -713,12 +713,12 @@ tisp_eval(Env env, Val v)
 				return NULL;
 		case MACRO:
 			tsp_arg_num(args, car(v)->v.s, list_len(f->v.f.args));
-			if (!(hash_extend(env->h, f->v.f.args, args)))
+			if (!(hash_extend(f->v.f.env->h, f->v.f.args, args)))
 				return NULL;
-			hash_merge(env->h, f->v.f.env->h);
+			hash_merge(f->v.f.env->h, env->h);
 			if (f->t == MACRO)
-				f->v.f.body = tisp_eval_list(env, f->v.f.body);
-			return list_last(tisp_eval_list(env, f->v.f.body));
+				return tisp_eval(env, list_last(tisp_eval_list(f->v.f.env, f->v.f.body)));
+			return list_last(tisp_eval_list(f->v.f.env, f->v.f.body));
 		default:
 			tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
 		}
