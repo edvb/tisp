@@ -119,7 +119,7 @@
 (define (log10 x) (logb 10. x))
 
 (define (abs x) (if (>= x 0) x (- x)))
-(define (sgn x) (if (>= x 0) 1 -1))
+(define (sgn x) (cond ((= x 0) 0) ((> x 0) 1) (else -1)))
 (define (max a b) (if (> a b) a b))
 (define (min a b) (if (< a b) a b))
 
