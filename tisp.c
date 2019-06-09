@@ -808,7 +808,7 @@ prim_car(Env env, Val args)
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	tsp_arg_type(car(v), "car", PAIR);
-	return car(car(v));
+	return caar(v);
 }
 
 /* return elements of a list after the first */
@@ -820,7 +820,7 @@ prim_cdr(Env env, Val args)
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	tsp_arg_type(car(v), "cdr", PAIR);
-	return cdr(car(v));
+	return cdar(v);
 }
 
 /* return new pair */
@@ -831,7 +831,7 @@ prim_cons(Env env, Val args)
 	tsp_arg_num(args, "cons", 2);
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
-	return mk_pair(car(v), car(cdr(v)));
+	return mk_pair(car(v), cadr(v));
 }
 
 /* do not evaluate argument */
@@ -882,7 +882,7 @@ prim_eq(Env env, Val args)
 	if (nilp(v))
 		return env->t;
 	for (; !nilp(cdr(v)); v = cdr(v))
-		if (!vals_eq(car(v), car(cdr(v))))
+		if (!vals_eq(car(v), cadr(v)))
 			return env->nil;
 	return env->t;
 }
@@ -893,10 +893,10 @@ prim_cond(Env env, Val args)
 {
 	Val v, cond;
 	for (v = args; !nilp(v); v = cdr(v))
-		if (!(cond = tisp_eval(env, car(car(v)))))
+		if (!(cond = tisp_eval(env, caar(v))))
 			return NULL;
 		else if (!nilp(cond))
-			return tisp_eval(env, car(cdr(car(v))));
+			return tisp_eval(env, car(cdar(v)));
 	return env->nil;
 }
 
@@ -942,11 +942,11 @@ prim_define(Env env, Val args)
 	if (list_len(args) < 2)
 		tsp_warnf("define: expected 2 or more arguments, received %d", list_len(args));
 	if (car(args)->t == PAIR) {
-		sym = car(car(args));
-		val = mk_func(FUNCTION, cdr(car(args)), cdr(args), env);
+		sym = caar(args);
+		val = mk_func(FUNCTION, cdar(args), cdr(args), env);
 	} else if (car(args)->t == SYMBOL) {
 		sym = car(args);
-		val = tisp_eval(env, car(cdr(args)));
+		val = tisp_eval(env, cadr(args));
 	} else
 		tsp_warn("define: incorrect format, no variable name found");
 	if (!val)

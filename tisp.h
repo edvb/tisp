@@ -44,6 +44,10 @@
 
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
+#define caar(P) car(car(P))
+#define cadr(P) car(cdr(P))
+#define cdar(P) cdr(car(P))
+#define cddr(P) cdr(cdr(P))
 #define nilp(P) ((P)->t == NIL)
 #define num(P)  ((P)->v.n.num)
 #define den(P)  ((P)->v.n.den)
