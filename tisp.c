@@ -141,9 +141,11 @@ isdelim(int c)
 void
 skip_ws(Str str)
 {
-	str->d += strspn(str->d, " \t\n"); /* skip white space */
-	for (; *str->d == ';'; str->d++) /* skip comments until newline */
-		str->d += strcspn(str->d, "\n");
+	while (*str->d && strchr(" \t\n;", *str->d) != 0) {
+		str->d += strspn(str->d, " \t\n"); /* skip white space */
+		for (; *str->d == ';'; str->d++)   /* skip comments until newline */
+			str->d += strcspn(str->d, "\n");
+	}
 }
 
 /* count number of parenthesis */
