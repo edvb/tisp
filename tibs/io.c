@@ -43,15 +43,24 @@ static Val
 prim_read(Env env, Val args)
 {
 	char *file;
+	if (!(file = tisp_read_file(NULL)))
+		return env->nil;
+	return mk_str(env, file);
+}
+
+static Val
+prim_parse(Env env, Val args)
+{
 	Val v;
 	struct Str str = { NULL };
-	if (!(file = tisp_read_file(NULL))) {
-		putchar('\n');
+	tsp_arg_num(args, "parse", 1);
+	if (!(v = tisp_eval(env, car(args))))
+		return NULL;
+	if (nilp(v))
 		return mk_pair(mk_sym(env, "quit"), env->nil);
-	}
-	str.d = file;
+	tsp_arg_type(v, "parse", STRING);
+	str.d = v->v.s;
 	v = tisp_read(env, &str);
-	free(file);
 	return v;
 }
 
@@ -60,4 +69,5 @@ tib_env_io(Env env)
 {
 	tsp_env_fn(print);
 	tsp_env_fn(read);
+	tsp_env_fn(parse);
 }

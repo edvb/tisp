@@ -1,6 +1,6 @@
 (define (repl)
   (print "> ")
-  (let ((expr (read)))
+  (let ((expr (parse (read))))
     (unless (and (pair? expr) (= (car expr) 'quit))
       (let ((ans (eval expr)))
         (unless (void? ans)
