@@ -42,8 +42,17 @@ prim_print(Env env, Val args)
 static Val
 prim_read(Env env, Val args)
 {
-	char *file;
-	if (!(file = tisp_read_file(NULL)))
+	Val v;
+	char *file, *fname = NULL;
+	if (list_len(args) > 1)
+		tsp_warnf("read: expected 0 or 1 argument, received %d", list_len(args));
+	if (list_len(args) == 1) {
+		if (!(v = tisp_eval(env, car(args))))
+			return NULL;
+		tsp_arg_type(v, "read", STRING);
+		fname = v->v.s;
+	}
+	if (!(file = tisp_read_file(fname)))
 		return env->nil;
 	return mk_str(env, file);
 }
