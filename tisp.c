@@ -176,9 +176,9 @@ list_len(Val v)
 static Val
 list_last(Val v)
 {
-	while (!nilp(cdr(v)))
+	while (cdr(v)->t == PAIR)
 		v = cdr(v);
-	return car(v);
+	return nilp(cdr(v)) ? car(v) : cdr(v);
 }
 
 /* check if two values are equal */
@@ -677,19 +677,21 @@ tisp_parse_file(Env env, char *fname)
 Val
 tisp_eval_list(Env env, Val v)
 {
-	int cap = 1, size = 0;
-	Val ret, *new = emalloc(sizeof(Val));
+	Val cur = mk_pair(NULL, env->none);
+	Val ret = cur, ev;
 	for (; !nilp(v); v = cdr(v)) {
-		if (!(new[size] = tisp_eval(env, car(v))))
-			new[size] = env->none;
-		if (++size == cap) {
-			cap *= 2;
-			new = erealloc(new, cap*sizeof(Val));
+		if (v->t != PAIR) {
+			if ((ev = tisp_eval(env, v)))
+				cdr(cur) = ev;
+			return cdr(ret);
 		}
+		if ((ev = tisp_eval(env, car(v))))
+			cdr(cur) = ev;
+		cdr(cur) = mk_pair(cdr(cur), env->none);
+		cur = cdr(cur);
 	}
-	ret = mk_list(env, size, new);
-	free(new);
-	return ret;
+	cdr(cur) = env->nil;
+	return cdr(ret);
 }
 
 /* evaluate given value */
@@ -780,12 +782,10 @@ tisp_print(FILE *f, Val v)
 	case PAIR:
 		putc('(', f);
 		list_print(f, car(v));
-		v = cdr(v);
-		while (!nilp(v)) {
+		for (v = cdr(v); !nilp(v); v = cdr(v)) {
 			if (v->t == PAIR) {
 				putc(' ', f);
 				list_print(f, car(v));
-				v = cdr(v);
 			} else {
 				fprintf(f, " . ");
 				list_print(f, v);
@@ -858,9 +858,7 @@ prim_do(Env env, Val args)
 	Val v;
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
-	if (nilp(v))
-		return env->none;
-	return list_last(v);
+	return nilp(v) ? env->none : list_last(v);
 }
 
 /* evaluate argument given */
