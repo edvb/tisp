@@ -19,24 +19,35 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define tsp_warnf(M, ...) do {                      \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                  __LINE__, ##__VA_ARGS__); \
-	return NULL;                                \
+#ifdef DEBUG
+#  define tsp_warnf(M, ...) do {                              \
+	fprintf(stderr, "tisp:%s:%d: error: " M "\n",         \
+	                  __FILE__, __LINE__, ##__VA_ARGS__); \
+	return NULL;                                          \
 } while(0)
-#define tsp_warn(M) do {                            \
-	fprintf(stderr, "tisp:%d: error: " M "\n",  \
-	                 __LINE__);                 \
-	return NULL;                                \
+#  define tsp_warn(M) do {                                                 \
+	fprintf(stderr, "tisp:%s:%d: error: " M "\n", __FILE__, __LINE__); \
+	return NULL;                                                       \
 } while(0)
+#else
+#  define tsp_warnf(M, ...) do {                                \
+	fprintf(stderr, "tisp: error: " M "\n", ##__VA_ARGS__); \
+	return NULL;                                            \
+} while(0)
+#  define tsp_warn(M) do {                       \
+	fprintf(stderr, "tisp: error: " M "\n"); \
+	return NULL;                             \
+} while(0)
+#endif
 #define tsp_arg_num(ARGS, NAME, NARGS) do {                                    \
 	if (list_len(ARGS) != NARGS && NARGS != -1)                            \
 		tsp_warnf("%s: expected %d argument%s, received %d",           \
 		           NAME, NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
 } while(0)
-#define tsp_arg_type(ARG, NAME, TYPE) do {                                                      \
-	if (!(ARG->t & (TYPE)))                                                                 \
-		tsp_warnf(NAME ": expected %s, received %s", type_str(TYPE), type_str(ARG->t)); \
+#define tsp_arg_type(ARG, NAME, TYPE) do {                         \
+	if (!(ARG->t & (TYPE)))                                    \
+		tsp_warnf(NAME ": expected %s, received %s",       \
+		                type_str(TYPE), type_str(ARG->t)); \
 } while(0)
 
 #define tsp_env_name_fn(NAME, FN) tisp_env_add(env, #NAME, mk_prim(prim_##FN))

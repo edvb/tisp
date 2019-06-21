@@ -795,7 +795,7 @@ tisp_print(FILE *f, Val v)
 		putc(')', f);
 		break;
 	default:
-		fprintf(stderr, "tisp: could not print value type %s", type_str(v->t));
+		fprintf(stderr, "tisp: could not print value type %s\n", type_str(v->t));
 	}
 }
 
