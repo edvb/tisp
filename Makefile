@@ -3,6 +3,11 @@
 
 include config.mk
 
+ifeq ($(DEBUG), 1)
+CFLAGS += -g -DDEBUG
+LDFLAGS += -g
+endif
+
 EXE = tisp
 SRC = tisp.c main.c
 TIB = tibs/math.c tibs/io.c
