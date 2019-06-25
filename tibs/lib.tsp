@@ -66,10 +66,12 @@
 (define nand
   (macro (a b)
          (list 'not (list 'and a b))))
-(define (or a b)
-  (if a t (if b t ())))
-(define (nor a b)
-  (not (or a b)))
+(define or
+  (macro (a b)
+         (list 'if a t (list 'if b t ()))))
+(define nor
+  (macro (a b)
+         (list 'not (list 'or a b))))
 
 ;;; Lists
 (define first car)
