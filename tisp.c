@@ -166,10 +166,9 @@ int
 list_len(Val v)
 {
 	int len = 0;
-	Val a;
-	for (a = v; a->t == PAIR; a = cdr(a))
+	for (; v->t == PAIR; v = cdr(v))
 		len++;
-	return a->t == NIL ? len : -1;
+	return nilp(v) ? len : -1;
 }
 
 /* return last element in list */
@@ -185,14 +184,16 @@ list_last(Val v)
 static int
 vals_eq(Val a, Val b)
 {
-	if (a->t & NUMBER && b->t & NUMBER) {
+	if (a->t & NUMBER && b->t & NUMBER) { /* NUMBERs */
 		if (num(a) != num(b) || den(a) != den(b))
 			return 0;
 		return 1;
 	}
 	if (a->t != b->t)
 		return 0;
-	if (a != b) /* PRIMITIVE, STRING, SYMBOL */
+	if (a->t == PAIR) /* PAIR */
+		return vals_eq(car(a), car(b)) && vals_eq(cdr(a), cdr(b));
+	if (a != b) /* PROCEDUREs, STRING, SYMBOL, NIL, VOID */
 		return 0;
 	return 1;
 }
