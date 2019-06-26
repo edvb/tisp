@@ -39,6 +39,7 @@
 (define (primitive? x) (= (type x) "primitive"))
 (define (function? x)  (= (type x) "function"))
 (define (pair? x)      (= (type x) "pair"))
+(define (boolean? x)   (or (= x t) (nil? x)))
 (define (rational? x)  (or (integer? x) (ratio? x)))
 (define (number? x)    (or (rational? x) (decimal? x)))
 
@@ -109,6 +110,9 @@
 
 (define (positive? x) (> x 0))
 (define (negative? x) (< x 0))
+(define (zero? x) (= x 0))
+(define (even? x) (= (mod x 2) 0))
+(define (odd? x)  (= (mod x 2) 1))
 
 (define (! n)
   (if (= n 1)
