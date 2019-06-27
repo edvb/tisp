@@ -23,6 +23,14 @@
 
 #include "../tisp.h"
 
+static void
+print_str(Val v) {
+	if (v->t & STRING) /* don't print quotes around string */
+		fprintf(stdout, "%s", v->v.s);
+	else
+		tisp_print(stdout, v);
+}
+
 static Val
 prim_print(Env env, Val args)
 {
@@ -30,10 +38,12 @@ prim_print(Env env, Val args)
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
 	for (; !nilp(v); v = cdr(v)) {
-		if (car(v)->t & STRING) /* don't print quotes around string */
-			fprintf(stdout, "%s", car(v)->v.s);
-		else
-			tisp_print(stdout, car(v));
+		if (v->t == PAIR)
+			print_str(car(v));
+		else {
+			print_str(v);
+			break;
+		}
 	}
 	fflush(stdout);
 	return env->none;
