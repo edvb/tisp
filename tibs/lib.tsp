@@ -1,3 +1,5 @@
+(define nil ())
+
 ;;; CXR
 (define (caar x) (car (car x)))
 (define (cadr x) (car (cdr x)))
