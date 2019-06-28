@@ -65,13 +65,13 @@
   (if x () t))
 (define and ; Use a macro so arguments aren't evaluated all at once
   (macro (a b)
-         (list 'if a (list 'if b t ()) ())))
+         (list 'if a b ())))
 (define nand
   (macro (a b)
          (list 'not (list 'and a b))))
 (define or
   (macro (a b)
-         (list 'if a t (list 'if b t ()))))
+         (list 'if a a b)))
 (define nor
   (macro (a b)
          (list 'not (list 'or a b))))
