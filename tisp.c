@@ -1082,6 +1082,7 @@ tisp_env_free(Env env)
 	for (i = 0; i < env->libhc; i++)
 		dlclose(env->libh[i]);
 	free(env->nil);
+	free(env->none);
 	free(env);
 }
 
