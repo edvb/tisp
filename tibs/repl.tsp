@@ -7,4 +7,11 @@
           (disp-string ans)))
       (repl))))
 
+;; simple repl
+(define (repl-simple)
+  (print "> ")
+  (print (eval (parse (read))))
+  (newline)
+  (repl-simple))
+
 (repl)
