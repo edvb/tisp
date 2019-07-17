@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "tisp.h"
-#if !defined(TIB_DYNAMIC)
+#ifndef TIB_DYNAMIC
 #  include "tibs/math.h"
 #  include "tibs/io.h"
 #endif
@@ -26,7 +26,7 @@ main(int argc, char *argv[])
 		}
 
 	Env env = tisp_env_init(64);
-#if !defined(TIB_DYNAMIC)
+#ifndef TIB_DYNAMIC
 	tib_env_math(env);
 	tib_env_io(env);
 #endif

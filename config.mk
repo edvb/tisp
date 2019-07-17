@@ -17,5 +17,11 @@ LDFLAGS = -Wl,-rpath=$(DESTDIR)$(PREFIX)/lib/tisp $(LIBS)
 # turn off debug mode by default
 DEBUG ?= 0
 
+# self evaluate symbols if they are not defined, instead of throwing error
+# CFLAGS += -DTSP_SYM_RETURN
+
+# do not load tibs statically, use load procedure instead
+# CFLAGS += -DTIB_DYNAMIC
+
 # compiler and linker
 CC = cc
