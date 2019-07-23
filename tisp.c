@@ -40,31 +40,15 @@ static void hash_merge(Hash ht, Hash ht2);
 
 /* general utility wrappers */
 
-static void
-die(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-
-	if (fmt[0] && fmt[strlen(fmt)-1] == ':') {
-		fputc(' ', stderr);
-		perror(NULL);
-	} else {
-		fputc('\n', stderr);
-	}
-
-	exit(1);
-}
-
 static void *
 ecalloc(size_t nmemb, size_t size)
 {
 	void *p;
-	if (!(p = calloc(nmemb, size)))
-		die("calloc:");
+	if (!(p = calloc(nmemb, size))) {
+		fprintf(stderr, "calloc: ");
+		perror(NULL);
+		exit(1);
+	}
 	return p;
 }
 
@@ -72,16 +56,22 @@ static void *
 emalloc(size_t size)
 {
 	void *p;
-	if (!(p = malloc(size)))
-		die("malloc:");
+	if (!(p = malloc(size))) {
+		fprintf(stderr, "malloc: ");
+		perror(NULL);
+		exit(1);
+	}
 	return p;
 }
 
 static void *
 erealloc(void *p, size_t size)
 {
-	if (!(p = realloc(p, size)))
-		die("realloc:");
+	if (!(p = realloc(p, size))) {
+		fprintf(stderr, "realloc: ");
+		perror(NULL);
+		exit(1);
+	}
 	return p;
 }
 
@@ -652,7 +642,7 @@ tisp_read_file(char *fname)
 	if (fd)
 		close(fd);
 	if (n < 0)
-		die("read:");
+		tsp_warnf("could not read file '%s'", fname);
 	return file;
 }
 
