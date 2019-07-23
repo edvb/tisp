@@ -34,7 +34,7 @@ $(OBJ): config.mk
 
 $(LIB): $(TIB)
 	@echo $(CC) -o $@
-	@gcc -shared -o $@ $(OBJ)
+	@$(CC) -shared -o $@ $(OBJ)
 
 $(EXE): $(OBJ) $(LIB)
 	@echo $(CC) -o $@
