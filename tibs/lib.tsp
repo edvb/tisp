@@ -82,10 +82,18 @@
 (define first car)
 (define rest cdr)
 (define (list . lst) lst)
+
 (define (last lst)
   (cond
     ((cdr lst) (last (cdr lst)))
     (else (car lst))))
+
+(define (nth i l)
+  (when (pair? l)
+    (if (<= i 0)
+      (car l)
+      (nth (- i 1) (cdr l)))))
+
 (define (apply fn args)
   (eval (cons fn args)))
 (define (map fn lst)
