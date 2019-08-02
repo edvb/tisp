@@ -102,6 +102,19 @@
                (map fn (cdr lst))))
     (else ())))
 
+(define (append l1 l2)
+  (cond ((nil? l1) l2)
+        (else (cons (car l1) (append (cdr l1) l2)))))
+
+(define (assoc key table)
+  (cond ((nil? table) ())
+        ((= key (caar table)) (car table))
+        (else (assoc key (cdr table)))))
+
+(define (member? mem lst)
+  (cond ((nil? lst) ())
+        ((= mem (car lst)) t)
+        (else (member? mem (cdr lst)))))
 
 ;;; Math
 (define pi (* 4 (arctan 1.)))
