@@ -96,6 +96,11 @@
 
 (define (apply fn args)
   (eval (cons fn args)))
+(define (foreach fn args)
+  (unless (nil? args)
+    (fn (car args))
+    (foreach fn (cdr args))))
+
 (define (map fn lst)
   (cond
     (lst (cons (fn (car lst))
@@ -146,9 +151,11 @@
 
 ;;; Printing
 (define (newline) (print "\n"))
-(define (disp . x) (apply print x) (newline))
-(define (disp-string str)
-  (if (string? str)
-    (print "\"" str "\"")
-    (print str))
+(define (disp . str) (apply print str) (newline))
+(define (disp-string . str)
+  (foreach (lambda (s)
+             (if (string? s)
+               (print "\"" s "\"")
+               (print s)))
+           str)
   (newline))
