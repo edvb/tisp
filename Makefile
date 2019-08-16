@@ -4,8 +4,8 @@
 include config.mk
 
 ifeq ($(DEBUG), 1)
-CFLAGS += -g -DDEBUG
-LDFLAGS += -g
+CFLAGS += -g -Og -DDEBUG
+LDFLAGS += -g -Og
 endif
 
 EXE = tisp
