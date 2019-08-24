@@ -42,7 +42,7 @@
 (define (function? x)  (= (type x) "function"))
 (define (pair? x)      (= (type x) "pair"))
 (define (boolean? x)   (or (= x t) (nil? x)))
-(define (true? x)      (or (= x t) (nil? x)))
+(define (true? x)      (= x t))
 (define  false?         nil?)
 (define (rational? x)  (or (integer? x) (ratio? x)))
 (define (number? x)    (or (rational? x) (decimal? x)))
