@@ -67,7 +67,7 @@ create_int(double num, double den)
 }
 
 static Val
-create_dub(double num, double den)
+create_dec(double num, double den)
 {
 	assert(den == 1);
 	return mk_dec(num);
@@ -85,7 +85,7 @@ static Val
 (*mk_num(Type a, Type b, int isfrac))(double, double)
 {
 	if (a & DECIMAL || b & DECIMAL)
-		return &create_dub;
+		return &create_dec;
 	if (isfrac || a & RATIO || b & RATIO)
 		return &create_rat;
 	return &create_int;
