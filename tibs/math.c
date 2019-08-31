@@ -97,6 +97,20 @@ static Val
 	return &create_int;
 }
 
+#define PRIM_ROUND(NAME)                                         \
+static Val                                                       \
+prim_##NAME(Env env, Val args)                                   \
+{                                                                \
+	Val a;                                                   \
+	tsp_arg_num(args, #NAME, 1);                             \
+	EVAL_CHECK(a, car(args), #NAME, NUMBER);                 \
+	return (mk_num(a->t, a->t, 0))(NAME(num(a)/den(a)), 1.); \
+}
+
+PRIM_ROUND(round)
+PRIM_ROUND(floor)
+PRIM_ROUND(ceil)
+
 static Val
 prim_add(Env env, Val args)
 {
@@ -247,6 +261,9 @@ tib_env_math(Env env)
 	tsp_env_fn(denominator);
 
 	tsp_env_fn(dec);
+	tsp_env_fn(floor);
+	tsp_env_fn(ceil);
+	tsp_env_fn(round);
 
 	tsp_env_name_fn(+, add);
 	tsp_env_name_fn(-, sub);
