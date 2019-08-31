@@ -79,14 +79,20 @@ create_rat(double num, double den)
 	return mk_rat(num, den);
 }
 
-/* return pointer to one of the preceding functions depending on what sort
- * number should be created by the following arithmetic functions */
+/* return pointer to one of the preceding functions depending on what
+ * number should be created by the following arithmetic functions
+ * force arg is used to force number to one type:
+ *   0 -> no force, 1 -> force ratio/int, 2 -> force decimal */
 static Val
-(*mk_num(Type a, Type b, int isfrac))(double, double)
+(*mk_num(Type a, Type b, int force))(double, double)
 {
+	if (force == 1)
+		return &create_rat;
+	if (force == 2)
+		return &create_dec;
 	if (a & DECIMAL || b & DECIMAL)
 		return &create_dec;
-	if (isfrac || a & RATIO || b & RATIO)
+	if (a & RATIO || b & RATIO)
 		return &create_rat;
 	return &create_int;
 }
