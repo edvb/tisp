@@ -49,15 +49,6 @@ prim_denominator(Env env, Val args)
 	return mk_int(den(a));
 }
 
-static Val
-prim_dec(Env env, Val args)
-{
-	Val a;
-	tsp_arg_num(args, "den", 1);
-	EVAL_CHECK(a, car(args), "den", NUMBER);
-	return mk_dec(num(a)/den(a));
-}
-
 /* wrapper functions to be returned by mk_num, all need same arguments */
 static Val
 create_int(double num, double den)
@@ -97,19 +88,26 @@ static Val
 	return &create_int;
 }
 
-#define PRIM_ROUND(NAME)                                         \
-static Val                                                       \
-prim_##NAME(Env env, Val args)                                   \
-{                                                                \
-	Val a;                                                   \
-	tsp_arg_num(args, #NAME, 1);                             \
-	EVAL_CHECK(a, car(args), #NAME, NUMBER);                 \
-	return (mk_num(a->t, a->t, 0))(NAME(num(a)/den(a)), 1.); \
+#define PRIM_ROUND(NAME, FORCE)                                      \
+static Val                                                           \
+prim_##NAME(Env env, Val args)                                       \
+{                                                                    \
+	Val a;                                                       \
+	tsp_arg_num(args, #NAME, 1);                                 \
+	EVAL_CHECK(a, car(args), #NAME, NUMBER);                     \
+	return (mk_num(a->t, a->t, FORCE))(NAME(num(a)/den(a)), 1.); \
 }
 
-PRIM_ROUND(round)
-PRIM_ROUND(floor)
-PRIM_ROUND(ceil)
+/* define int and dec as identity functions to use them in the same macro */
+#define int(X) (X)
+#define dec(X) (X)
+PRIM_ROUND(int,   1)
+PRIM_ROUND(dec,   2)
+PRIM_ROUND(round, 0)
+PRIM_ROUND(floor, 0)
+PRIM_ROUND(ceil,  0)
+#undef int
+#undef dec
 
 static Val
 prim_add(Env env, Val args)
@@ -260,6 +258,7 @@ tib_env_math(Env env)
 	tsp_env_fn(numerator);
 	tsp_env_fn(denominator);
 
+	tsp_env_fn(int);
 	tsp_env_fn(dec);
 	tsp_env_fn(floor);
 	tsp_env_fn(ceil);
