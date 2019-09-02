@@ -126,6 +126,7 @@
 (define tau (* 2 pi))
 (define e (exp 1.))
 
+(define (truncate x) (* (floor (abs x)) (sgn x)))
 (define (sqr x) (* x x))
 (define (root b p) (^ b (/ 1 p)))
 (define (sqrt x) (root x 2))
