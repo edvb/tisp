@@ -33,6 +33,7 @@
 ;;; Types
 (define (void? x)      (= (type x) "void"))
 (define (nil? x)       (= (type x) "nil"))
+(define  empty?         nil?)
 (define (integer? x)   (= (type x) "integer"))
 (define (decimal? x)   (= (type x) "decimal"))
 (define (ratio? x)     (= (type x) "ratio"))
@@ -41,6 +42,8 @@
 (define (primitive? x) (= (type x) "primitive"))
 (define (function? x)  (= (type x) "function"))
 (define (pair? x)      (= (type x) "pair"))
+(define  cons?          pair?)
+(define (list? x)      (and (pair? x) (pair? (cdr x))))
 (define (boolean? x)   (or (= x t) (nil? x)))
 (define (true? x)      (= x t))
 (define  false?         nil?)
