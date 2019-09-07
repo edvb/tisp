@@ -41,6 +41,7 @@
 (define (symbol? x)    (= (type x) "symbol"))
 (define (primitive? x) (= (type x) "primitive"))
 (define (function? x)  (= (type x) "function"))
+(define (macro? x)     (= (type x) "macro"))
 (define (pair? x)      (= (type x) "pair"))
 (define  cons?          pair?)
 (define (list? x)      (and (pair? x) (pair? (cdr x))))
