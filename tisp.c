@@ -685,11 +685,35 @@ tisp_eval_list(Env env, Val v)
 	return cdr(ret);
 }
 
+static Val
+eval_proc(Env env, Val v, Val f, Val args)
+{
+	switch (f->t) {
+	case PRIMITIVE:
+		return (*f->v.pr)(env, args);
+	case FUNCTION:
+		/* tail call into the function body with the extended env */
+		if (!(args = tisp_eval_list(env, args)))
+			return NULL;
+		/* FALLTHROUGH */
+	case MACRO:
+		tsp_arg_num(args, v->v.s, list_len(f->v.f.args));
+		if (!(hash_extend(f->v.f.env->h, f->v.f.args, args)))
+			return NULL;
+		hash_merge(f->v.f.env->h, env->h);
+		if (f->t == MACRO)
+			return tisp_eval(env, list_last(tisp_eval_list(f->v.f.env, f->v.f.body)));
+		return list_last(tisp_eval_list(f->v.f.env, f->v.f.body));
+	default:
+		tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
+	}
+}
+
 /* evaluate given value */
 Val
 tisp_eval(Env env, Val v)
 {
-	Val f, args;
+	Val f;
 	switch (v->t) {
 	case SYMBOL:
 		if (!(f = hash_get(env->h, v->v.s)))
@@ -702,25 +726,7 @@ tisp_eval(Env env, Val v)
 	case PAIR:
 		if (!(f = tisp_eval(env, car(v))))
 			return NULL;
-		args = cdr(v);
-		switch (f->t) {
-		case PRIMITIVE:
-			return (*f->v.pr)(env, args);
-		case FUNCTION:
-			/* tail call into the function body with the extended env */
-			if (!(args = tisp_eval_list(env, args)))
-				return NULL;
-		case MACRO:
-			tsp_arg_num(args, car(v)->v.s, list_len(f->v.f.args));
-			if (!(hash_extend(f->v.f.env->h, f->v.f.args, args)))
-				return NULL;
-			hash_merge(f->v.f.env->h, env->h);
-			if (f->t == MACRO)
-				return tisp_eval(env, list_last(tisp_eval_list(f->v.f.env, f->v.f.body)));
-			return list_last(tisp_eval_list(f->v.f.env, f->v.f.body));
-		default:
-			tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
-		}
+		return eval_proc(env, car(v), f, cdr(v));
 	default:
 		return v;
 	}
