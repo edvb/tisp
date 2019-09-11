@@ -697,7 +697,7 @@ eval_proc(Env env, Val v, Val f, Val args)
 			return NULL;
 		/* FALLTHROUGH */
 	case MACRO:
-		tsp_arg_num(args, v->v.s, list_len(f->v.f.args));
+		tsp_arg_num(args, v->t == SYMBOL ? v->v.s : "lambda", list_len(f->v.f.args));
 		if (!(hash_extend(f->v.f.env->h, f->v.f.args, args)))
 			return NULL;
 		hash_merge(f->v.f.env->h, env->h);
