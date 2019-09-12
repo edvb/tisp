@@ -394,7 +394,8 @@ mk_sym(Env env, char *s)
 		return ret;
 	ret = emalloc(sizeof(struct Val));
 	ret->t = SYMBOL;
-	ret->v.s = s;
+	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
+	strcpy(ret->v.s, s);
 	hash_add(env->syms, s, ret);
 	return ret;
 }
