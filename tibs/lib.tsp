@@ -88,15 +88,15 @@
 (define (list . lst) lst)
 
 (define (last lst)
-  (cond
-    ((cdr lst) (last (cdr lst)))
-    (else (car lst))))
+  (if (cdr lst)
+    (last (cdr lst))
+    (car lst)))
 
-(define (nth i l)
-  (when (pair? l)
+(define (nth i lst)
+  (when (pair? lst)
     (if (<= i 0)
-      (car l)
-      (nth (- i 1) (cdr l)))))
+      (car lst)
+      (nth (- i 1) (cdr lst)))))
 
 (define (apply fn args)
   (eval (cons fn args)))

@@ -35,8 +35,6 @@
 
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
-static Hash hash_extend(Hash ht, Val args, Val vals);
-static void hash_merge(Hash ht, Hash ht2);
 
 /* general utility wrappers */
 
@@ -217,14 +215,14 @@ hash(char *key)
 
 /* create new empty hash table with given capacity */
 static Hash
-hash_new(size_t cap)
+hash_new(size_t cap, Hash next)
 {
 	if (cap < 1) return NULL;
 	Hash ht = emalloc(sizeof(struct Hash));
 	ht->size = 0;
 	ht->cap = cap;
 	ht->items = ecalloc(cap, sizeof(struct Entry));
-	ht->next = NULL;
+	ht->next = next;
 	return ht;
 }
 
@@ -307,17 +305,6 @@ hash_extend(Hash ht, Val args, Val vals)
 			break;
 	}
 	return ht;
-}
-
-/* add everything from ht2 into ht */
-static void
-hash_merge(Hash ht, Hash ht2)
-{
-	int i;
-	for (; ht2; ht2 = ht2->next)
-		for (i = 0; i < ht2->cap; i++)
-			if (ht2->items[i].key)
-				hash_add(ht, ht2->items[i].key, ht2->items[i].val);
 }
 
 /* clean up hash table */
@@ -689,6 +676,7 @@ tisp_eval_list(Env env, Val v)
 static Val
 eval_proc(Env env, Val v, Val f, Val args)
 {
+	Val ret;
 	switch (f->t) {
 	case PRIMITIVE:
 		return (*f->v.pr)(env, args);
@@ -699,12 +687,14 @@ eval_proc(Env env, Val v, Val f, Val args)
 		/* FALLTHROUGH */
 	case MACRO:
 		tsp_arg_num(args, v->t == SYMBOL ? v->v.s : "lambda", list_len(f->v.f.args));
-		if (!(hash_extend(f->v.f.env->h, f->v.f.args, args)))
+		env->h = hash_new(32, env->h);
+		if (!(hash_extend(env->h, f->v.f.args, args)))
 			return NULL;
-		hash_merge(f->v.f.env->h, env->h);
+		ret = list_last(tisp_eval_list(env, f->v.f.body));
 		if (f->t == MACRO)
-			return tisp_eval(env, list_last(tisp_eval_list(f->v.f.env, f->v.f.body)));
-		return list_last(tisp_eval_list(f->v.f.env, f->v.f.body));
+			ret = tisp_eval(env, ret);
+		env->h = env->h->next;
+		return ret;
 	default:
 		tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
 	}
@@ -941,6 +931,7 @@ static Val
 prim_define(Env env, Val args)
 {
 	Val sym, val;
+	Hash h;
 	if (list_len(args) < 2)
 		tsp_warnf("define: expected 2 or more arguments, received %d", list_len(args));
 	if (car(args)->t == PAIR) {
@@ -953,7 +944,9 @@ prim_define(Env env, Val args)
 		tsp_warn("define: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
-	hash_add(env->h, sym->v.s, val);
+	/* last linked hash is global namespace */
+	for (h = env->h; h->next; h = h->next) ;
+	hash_add(h, sym->v.s, val);
 	return env->none;
 }
 
@@ -1046,7 +1039,7 @@ tisp_env_init(size_t cap)
 	env->t->t = SYMBOL;
 	env->t->v.s = "t";
 
-	env->h = hash_new(cap);
+	env->h = hash_new(cap, NULL);
 	tisp_env_add(env, "t", env->t);
 	tsp_env_fn(car);
 	tsp_env_fn(cdr);
@@ -1064,11 +1057,12 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(load);
 	tsp_env_fn(version);
 
-	env->strs = hash_new(cap);
-	env->syms = hash_new(cap);
+	env->strs = hash_new(cap, NULL);
+	env->syms = hash_new(cap, NULL);
 
 	env->libh = NULL;
 	env->libhc = 0;
+
 	return env;
 }
 
