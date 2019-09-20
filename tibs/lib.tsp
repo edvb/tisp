@@ -100,16 +100,16 @@
 
 (define (apply fn args)
   (eval (cons fn args)))
-(define (foreach fn args)
+(define (foreach args fn)
   (unless (nil? args)
     (fn (car args))
-    (foreach fn (cdr args))))
+    (foreach (cdr args) fn)))
 
 (define (map fn lst)
-  (cond
-    (lst (cons (fn (car lst))
-               (map fn (cdr lst))))
-    (else ())))
+  (if lst
+    (cons (fn (car lst))
+          (map fn (cdr lst)))
+    nil))
 
 (define (append l1 l2)
   (cond ((nil? l1) l2)
@@ -132,7 +132,7 @@
 
 (define (truncate x) (* (floor (abs x)) (sgn x)))
 (define (sqr x) (* x x))
-(define (root b p) (^ b (/ 1 p)))
+(define (root b p) (^ b (/ p)))
 (define (sqrt x) (root x 2))
 (define (cbrt x) (root x 3))
 (define (logb b x) (/ (log x) (log b)))
@@ -158,9 +158,9 @@
 (define (newline) (print "\n"))
 (define (disp . str) (apply print str) (newline))
 (define (disp-string . str)
-  (foreach (lambda (s)
+  (foreach str
+           (lambda (s)
              (if (string? s)
                (print "\"" s "\"")
-               (print s)))
-           str)
+               (print s))))
   (newline))
