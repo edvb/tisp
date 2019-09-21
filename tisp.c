@@ -936,7 +936,11 @@ prim_define(Env env, Val args)
 		tsp_warnf("define: expected 2 or more arguments, received %d", list_len(args));
 	if (car(args)->t == PAIR) {
 		sym = caar(args);
-		val = mk_func(FUNCTION, cdar(args), cdr(args), env);
+		if (sym->t != SYMBOL)
+			tsp_warnf("define: incorrect format,"
+			          " expected symbol for function name, received %s",
+			          type_str(sym->t));
+		val = mk_func(FUNCTION, cdar(args), cdr(args), env); /* TODO copy env into new env */
 	} else if (car(args)->t == SYMBOL) {
 		sym = car(args);
 		val = tisp_eval(env, cadr(args));
