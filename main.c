@@ -15,15 +15,7 @@ int
 main(int argc, char *argv[])
 {
 	int i;
-
-	for (i = 1; i < argc; i++)
-		if (!strcmp(argv[i], "-v")) {
-			fprintf(stderr, "tisp v%s (c) 2017-2019 Ed van Bruggen\n", VERSION);
-			exit(0);
-		} else if (argv[i][0] == '-' && argv[i][1]) {
-			fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
-			exit(argv[i][1] == 'h' ? 0 : 1);
-		}
+	struct Str str = { NULL };
 
 	Env env = tisp_env_init(64);
 #ifndef TIB_DYNAMIC
@@ -34,11 +26,28 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, NULL)));
 
-	for (i = 1; i < argc; i++)
-		if (argv[i][0] == '-')
-			tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, NULL)));
-		else
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			if (argv[i][1] == 'c') { /* run next argument as tisp command */
+				if (!(str.d = argv[++i])) {
+					fputs("tisp: expected command after -c\n", stderr);
+					exit(2);
+				}
+				tisp_print(stdout, tisp_eval(env, tisp_read(env, &str)));
+			} else if (argv[i][1] == 'v') { /* version and copyright info */
+				fprintf(stderr, "tisp v%s (c) 2017-2019 Ed van Bruggen\n", VERSION);
+				exit(0);
+			} else if (argv[i][1]) { /* unsupported argument or help */
+				fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
+				exit(argv[i][1] == 'h' ? 0 : 1);
+			} else { /* single hypen read from stdin */
+				tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, NULL)));
+			}
+		} else { /* otherwise read as file */
 			tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, argv[i])));
+		}
+	}
+
 	puts("");
 
 	/* tisp_env_free(env); */
