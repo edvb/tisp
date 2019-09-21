@@ -52,6 +52,7 @@
 
 #define tsp_env_name_fn(NAME, FN) tisp_env_add(env, #NAME, mk_prim(prim_##FN))
 #define tsp_env_fn(NAME)          tsp_env_name_fn(NAME, NAME)
+#define tsp_include_tib(NAME)     void tib_env_##NAME(Env)
 
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)

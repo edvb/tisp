@@ -7,8 +7,8 @@
 
 #include "tisp.h"
 #ifndef TIB_DYNAMIC
-#  include "tibs/math.h"
-#  include "tibs/io.h"
+	tsp_include_tib(math);
+	tsp_include_tib(io);
 #endif
 
 int
