@@ -238,7 +238,7 @@ entry_get(Hash ht, char *key)
 		if (++i == ht->cap)
 			i = 0;
 	}
-	return &ht->items[i];
+	return &ht->items[i]; /* returns entry if found or empty one to be filled */
 }
 
 /* get value of given key in each hash table */
@@ -258,10 +258,7 @@ hash_get(Hash ht, char *key)
 static void
 hash_grow(Hash ht)
 {
-	if (ht->size < ht->cap / 2)
-		return; /* only need to grow table if it is more than half full */
-	int i;
-	int ocap = ht->cap;
+	int i, ocap = ht->cap;
 	Entry oitems = ht->items;
 	ht->cap *= 2;
 	ht->items = ecalloc(ht->cap, sizeof(struct Entry));
@@ -280,7 +277,8 @@ hash_add(Hash ht, char *key, Val val)
 	if (!e->key) {
 		e->key = key;
 		ht->size++;
-		hash_grow(ht);
+		if (ht->size > ht->cap / 2) /* grow table if it is more than half full */
+			hash_grow(ht);
 	}
 }
 
@@ -361,7 +359,8 @@ mk_rat(int num, int den)
 }
 
 Val
-mk_str(Env env, char *s) {
+mk_str(Env env, char *s)
+{
 	Val ret;
 	if ((ret = hash_get(env->strs, s)))
 		return ret;
@@ -452,7 +451,8 @@ read_int(Str str)
 
 /* return read scientific notation */
 static Val
-read_sci(Str str, double val, int isint) {
+read_sci(Str str, double val, int isint)
+{
 	if (tolower(*str->d) != 'e')
 		goto finish;
 
@@ -496,7 +496,8 @@ read_num(Str str)
 
 /* return character for escape */
 static char
-esc_char(char c) {
+esc_char(char c)
+{
 	switch (c) {
 	case 'n':  return '\n';
 	case 't':  return '\t';
