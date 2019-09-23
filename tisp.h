@@ -73,11 +73,6 @@ typedef struct Str {
 	char *d;
 } *Str;
 
-typedef enum {
-	ERROR_OK,
-	ERROR_SYNTAX
-} Error;
-
 /* fraction */
 typedef struct {
 	double num, den;

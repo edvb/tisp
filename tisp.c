@@ -480,7 +480,7 @@ read_num(Str str)
 			tsp_warn("incorrect ratio format, no denominator found");
 		return mk_rat(sign * num, read_sign(str) * read_int(str));
 	case '.':
-		s = emalloc(sizeof(str));
+		s = emalloc(sizeof(Str));
 		s->d = ++str->d;
 		double d = (double) read_int(s);
 		int size = s->d - str->d;
@@ -499,8 +499,8 @@ static char
 esc_char(char c)
 {
 	switch (c) {
-	case 'n':  return '\n';
-	case 't':  return '\t';
+	case 'n': return '\n';
+	case 't': return '\t';
 	case '\\':
 	case '"':
 	default:
