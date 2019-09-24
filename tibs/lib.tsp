@@ -86,6 +86,10 @@
 (define first car)
 (define rest cdr)
 (define (list . lst) lst)
+(define (list* . lst)
+  (if (cdr lst)
+    (cons (car lst) (apply list* (cdr lst)))
+    (car lst)))
 
 (define (last lst)
   (if (cdr lst)
