@@ -99,7 +99,9 @@
       (nth (- i 1) (cdr lst)))))
 
 (define (apply fn args)
-  (eval (cons fn args)))
+  (eval (map (lambda (x)
+               (list 'quote x))
+             (cons fn args))))
 (define (foreach args fn)
   (unless (nil? args)
     (fn (car args))
