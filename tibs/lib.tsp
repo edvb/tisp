@@ -126,6 +126,12 @@
         ((= key (caar table)) (car table))
         (else (assoc key (cdr table)))))
 
+(define (zip x y)
+  (cond ((and (nil? x) (nil? y)) nil)
+        ((and (pair? x) (pair? y))
+         (cons (cons (car x) (car y))
+               (zip (cdr x) (cdr y))))))
+
 (define (member? mem lst)
   (cond ((nil? lst) ())
         ((= mem (car lst)) t)
