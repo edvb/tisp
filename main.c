@@ -9,6 +9,7 @@
 #ifndef TIB_DYNAMIC
 	tsp_include_tib(math);
 	tsp_include_tib(io);
+	tsp_include_tib(time);
 #endif
 
 int
@@ -21,6 +22,7 @@ main(int argc, char *argv[])
 #ifndef TIB_DYNAMIC
 	tib_env_math(env);
 	tib_env_io(env);
+	tib_env_time(env);
 #endif
 
 	if (argc == 1)
