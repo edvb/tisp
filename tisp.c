@@ -545,7 +545,7 @@ read_sym(Env env, Str str)
 	int n = 1;
 	int i = 0;
 	char *sym = emalloc(n);
-	for (; issym(*str->d); str->d++) {
+	for (; *str->d && issym(*str->d); str->d++) {
 		sym[i++] = *str->d;
 		if (i == n) {
 			n *= 2;
