@@ -761,7 +761,7 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "\"%s\"", v->v.s);
 		break;
 	case SYMBOL:
-		fprintf(f, v->v.s);
+		fputs(v->v.s, f);
 		break;
 	case PRIMITIVE:
 		fprintf(f, "#<primitive>");
