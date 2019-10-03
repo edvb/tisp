@@ -288,7 +288,7 @@ static Hash
 hash_extend(Hash ht, Val args, Val vals)
 {
 	Val arg, val;
-	for (; !nilp(args) && !nilp(vals); args = cdr(args), vals = cdr(vals)) {
+	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
 		if (args->t == PAIR) {
 			arg = car(args);
 			val = car(vals);
