@@ -908,8 +908,7 @@ prim_type(Env env, Val args)
 static Val
 prim_lambda(Env env, Val args)
 {
-	if (list_len(args) < 2)
-		tsp_warnf("lambda: expected 2 or more arguments, received %d", list_len(args));
+	tsp_arg_min(args, "lambda", 2);
 	if (car(args)->t != PAIR && !nilp(car(args)))
 		tsp_warn("lambda: incorrect format, no argument list found");
 	return mk_func(FUNCTION, car(args), cdr(args), env);
@@ -918,8 +917,7 @@ prim_lambda(Env env, Val args)
 static Val
 prim_macro(Env env, Val args)
 {
-	if (list_len(args) < 2)
-		tsp_warnf("macro: expected 2 or more arguments, received %d", list_len(args));
+	tsp_arg_min(args, "macro", 2);
 	if (car(args)->t != PAIR && !nilp(car(args)))
 		tsp_warn("macro: incorrect format, no argument list found");
 	return mk_func(MACRO, car(args), cdr(args), env);
@@ -933,8 +931,7 @@ prim_define(Env env, Val args)
 {
 	Val sym, val;
 	Hash h;
-	if (list_len(args) < 2)
-		tsp_warnf("define: expected 2 or more arguments, received %d", list_len(args));
+	tsp_arg_min(args, "define", 2);
 	if (car(args)->t == PAIR) {
 		sym = caar(args);
 		if (sym->t != SYMBOL)
