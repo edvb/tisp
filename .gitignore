@@ -7,6 +7,7 @@
 # compiled files
 tisp
 test
+libs.tsp.h
 *.exe
 *.out
 *.app

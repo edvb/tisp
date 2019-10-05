@@ -168,4 +168,5 @@ Val tisp_parse_file(Env env, char *fname);
 
 void tisp_env_add(Env e, char *key, Val v);
 Env  tisp_env_init(size_t cap);
+void tisp_env_lib(Env env, char* lib);
 void tisp_env_free(Env env);

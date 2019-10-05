@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "tisp.h"
+#include "libs.tsp.h"
 
 tsp_include_tib(math);
 
@@ -441,7 +442,7 @@ main(void)
 	int errors[LEN(tests)] = {0};
 	Env env = tisp_env_init(1024);
 	tib_env_math(env);
-	tisp_eval(env, tisp_parse_file(env, "tibs/lib.tsp"));
+	tisp_env_lib(env, libs_tsp);
 
 	for (int i = 0; ; i++) {
 		if (!tests[i][1]) {

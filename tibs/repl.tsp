@@ -14,4 +14,3 @@
   (newline)
   (repl-simple))
 
-(repl)

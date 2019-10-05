@@ -1069,6 +1069,15 @@ tisp_env_init(size_t cap)
 }
 
 void
+tisp_env_lib(Env env, char* lib)
+{
+	struct Str s;
+	if (!(s.d = strndup(lib, strlen(lib))))
+		return;
+	tisp_eval(env, tisp_read(env, &s));
+}
+
+void
 tisp_env_free(Env env)
 {
 	int i;

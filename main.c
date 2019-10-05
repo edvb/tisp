@@ -23,6 +23,8 @@ main(int argc, char *argv[])
 	tib_env_math(env);
 	tib_env_io(env);
 	tib_env_time(env);
+#  include "libs.tsp.h"
+	tisp_env_lib(env, libs_tsp);
 #endif
 
 	if (argc == 1)

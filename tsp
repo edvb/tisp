@@ -1,10 +1,8 @@
 #!/bin/sh
 
-CMD="./tisp $@ tibs/lib.tsp tibs/repl.tsp"
-
 # if rlwrap is not installed, run without it
 command -v rlwrap >/dev/null 2>&1 || {
-  $CMD
+  ./tisp $@ -c "(repl)"
   exit 0
 }
-rlwrap -nAcr -M ".tsp" -pWhite -q"\"" $CMD
+rlwrap -ncr -M ".tsp" -pWhite -q"\"" ./tisp $@ -c "(repl)"

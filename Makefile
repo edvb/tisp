@@ -22,6 +22,12 @@ options:
 	@echo "CFLAGS  = $(CFLAGS)"
 	@echo "LDFLAGS = $(LDFLAGS)"
 
+libs.tsp.h: $(TSP)
+	@echo xxd $@
+	@echo "char libs_tsp[] = { 0x28, 0x64, 0x6f, 0x20," > $@
+	@cat $(TSP) | xxd -i - >> $@
+	@echo ", 0x29, 0x00};" >> $@
+
 .o:
 	@echo $(LD) $@
 	@$(LD) -o $@ $< $(LDFLAGS)
@@ -30,7 +36,7 @@ options:
 	@echo $(CC) $<
 	@$(CC) -c -o $@ $< $(CFLAGS)
 
-$(OBJ): config.mk
+$(OBJ): config.mk libs.tsp.h
 
 $(LIB): $(TIB)
 	@echo $(CC) -o $@
@@ -42,7 +48,7 @@ $(EXE): $(OBJ) $(LIB)
 
 clean:
 	@echo cleaning
-	@rm -f $(OBJ) $(LIB) $(EXE) test test.o test.out
+	@rm -f $(OBJ) $(LIB) $(EXE) test test.o test.out libs.tsp.h
 
 install: all
 	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
@@ -50,7 +56,7 @@ install: all
 	@cp -f $(EXE) $(DESTDIR)$(PREFIX)/bin
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@echo installing tsp to $(DESTDIR)$(PREFIX)/bin
-	@sed -e "s@\./@@g" -e "s@tibs/@$(DESTDIR)$(PREFIX)/share/tisp/@g" < tsp > $(DESTDIR)$(PREFIX)/bin/tsp
+	@sed -e "s@\./@@g" < tsp > $(DESTDIR)$(PREFIX)/bin/tsp
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/tsp
 	@echo installing manual page to $(DESTDIR)$(MANPREFIX)/man1
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
