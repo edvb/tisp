@@ -65,6 +65,9 @@
 (define let
   (macro (vars body)
          (cons (list 'lambda (map car vars) body) (map cadr vars))))
+(define recur
+  (macro (fn vars body)
+         (cons (list 'lambda (cons fn (map car vars)) body) (cons (list 'lambda (map car vars) body) (map cadr vars)))))
 
 ;;; Logic
 (define (not x)
