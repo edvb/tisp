@@ -105,6 +105,12 @@
       (car lst)
       (nth (- i 1) (cdr lst)))))
 
+(define (length lst)
+  (recur f ((lst lst) (x 0))
+         (if lst
+           (f (cdr lst) (+ x 1))
+           x)))
+
 (define (apply fn args)
   (eval (map (lambda (x)
                (list 'quote x))
