@@ -909,8 +909,6 @@ static Val
 prim_lambda(Env env, Val args)
 {
 	tsp_arg_min(args, "lambda", 2);
-	if (car(args)->t != PAIR && !nilp(car(args)))
-		tsp_warn("lambda: incorrect format, no argument list found");
 	return mk_func(FUNCTION, car(args), cdr(args), env);
 }
 
@@ -918,8 +916,6 @@ static Val
 prim_macro(Env env, Val args)
 {
 	tsp_arg_min(args, "macro", 2);
-	if (car(args)->t != PAIR && !nilp(car(args)))
-		tsp_warn("macro: incorrect format, no argument list found");
 	return mk_func(MACRO, car(args), cdr(args), env);
 }
 
