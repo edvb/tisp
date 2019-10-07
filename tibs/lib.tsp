@@ -63,11 +63,11 @@
   (macro (con . body)
          (list 'cond (list con (void)) (list t (cons 'do body)))))
 (define let
-  (macro (vars body)
-         (cons (list 'lambda (map car vars) body) (map cadr vars))))
+  (macro (vars . body)
+         (cons (list* 'lambda (map car vars) body) (map cadr vars))))
 (define recur
-  (macro (fn vars body)
-         (cons (list 'lambda (cons fn (map car vars)) body) (cons (list 'lambda (map car vars) body) (map cadr vars)))))
+  (macro (fn vars . body)
+         (cons (list* 'lambda (cons fn (map car vars)) body) (cons (list* 'lambda (map car vars) body) (map cadr vars)))))
 
 ;;; Logic
 (define (not x)
