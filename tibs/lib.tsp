@@ -115,10 +115,6 @@
   (eval (map (lambda (x)
                (list 'quote x))
              (cons fn args))))
-(define (foreach args fn)
-  (unless (nil? args)
-    (fn (car args))
-    (foreach (cdr args) fn)))
 
 (define (map fn lst)
   (if lst
@@ -179,9 +175,9 @@
 (define (newline) (print "\n"))
 (define (disp . str) (apply print str) (newline))
 (define (disp-string . str)
-  (foreach str
-           (lambda (s)
-             (if (string? s)
-               (print "\"" s "\"")
-               (print s))))
+  (map (lambda (s)
+         (if (string? s)
+           (print "\"" s "\"")
+           (print s)))
+       str)
   (newline))
