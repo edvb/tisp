@@ -71,10 +71,10 @@
 
 ;;; Logic
 (define (not x)
-  (if x () t))
+  (if x nil t))
 (define and ; Use a macro so arguments aren't evaluated all at once
   (macro (a b)
-         (list 'if a b ())))
+         (list 'if a b nil)))
 (define nand
   (macro (a b)
          (list 'not (list 'and a b))))
@@ -127,7 +127,7 @@
         (else (cons (car l1) (append (cdr l1) l2)))))
 
 (define (assoc key table)
-  (cond ((nil? table) ())
+  (cond ((nil? table) nil)
         ((= key (caar table)) (car table))
         (else (assoc key (cdr table)))))
 
@@ -138,7 +138,7 @@
                (zip (cdr x) (cdr y))))))
 
 (define (member? mem lst)
-  (cond ((nil? lst) ())
+  (cond ((nil? lst) nil)
         ((= mem (car lst)) t)
         (else (member? mem (cdr lst)))))
 
