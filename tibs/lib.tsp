@@ -94,6 +94,12 @@
     (cons (car lst) (apply list* (cdr lst)))
     (car lst)))
 
+(define (length lst)
+  (recur f ((lst lst) (x 0))
+         (if lst
+           (f (cdr lst) (+ x 1))
+           x)))
+
 (define (last lst)
   (if (cdr lst)
     (last (cdr lst))
@@ -105,11 +111,16 @@
       (car lst)
       (nth (- i 1) (cdr lst)))))
 
-(define (length lst)
-  (recur f ((lst lst) (x 0))
-         (if lst
-           (f (cdr lst) (+ x 1))
-           x)))
+(define (apply proc args)
+  (eval (map (lambda (x) ; prevent args from being evaluated twice
+               (list 'quote x))
+             (cons proc args))))
+
+(define (map proc lst)
+  (if lst
+    (cons (proc (car lst))
+          (map proc (cdr lst)))
+    nil))
 
 (define (reverse l)
   (recur f ((in l) (out nil))
@@ -117,31 +128,21 @@
            (f (cdr in) (cons (car in) out))
            out)))
 
-(define (apply fn args)
-  (eval (map (lambda (x)
-               (list 'quote x))
-             (cons fn args))))
-
-(define (map fn lst)
-  (if lst
-    (cons (fn (car lst))
-          (map fn (cdr lst)))
-    nil))
-
-(define (append l1 l2)
-  (cond ((nil? l1) l2)
-        (else (cons (car l1) (append (cdr l1) l2)))))
-
-(define (assoc key table)
-  (cond ((nil? table) nil)
-        ((= key (caar table)) (car table))
-        (else (assoc key (cdr table)))))
+(define (append x y)
+  (if x
+    (cons (car x) (append (cdr x) y))
+    y))
 
 (define (zip x y)
   (cond ((and (nil? x) (nil? y)) nil)
         ((and (pair? x) (pair? y))
          (cons (cons (car x) (car y))
                (zip (cdr x) (cdr y))))))
+
+(define (assoc key table)
+  (cond ((nil? table) nil)
+        ((= key (caar table)) (car table))
+        (else (assoc key (cdr table)))))
 
 (define (member? mem lst)
   (cond ((nil? lst) nil)
