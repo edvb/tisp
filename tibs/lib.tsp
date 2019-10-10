@@ -111,6 +111,12 @@
            (f (cdr lst) (+ x 1))
            x)))
 
+(define (reverse l)
+  (recur f ((in l) (out nil))
+         (if (pair? in)
+           (f (cdr in) (cons (car in) out))
+           out)))
+
 (define (apply fn args)
   (eval (map (lambda (x)
                (list 'quote x))
