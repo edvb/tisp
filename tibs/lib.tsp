@@ -162,6 +162,13 @@
 (define (logb b x) (/ (log x) (log b)))
 (define (log10 x) (logb 10. x))
 
+(define (csc x) (/ (sin x)))
+(define (sec x) (/ (cos x)))
+(define (cot x) (/ (tan x)))
+(define (arccsc x) (/ (arcsin x)))
+(define (arcsec x) (/ (arccos x)))
+(define (arccot x) (/ (arctan x)))
+
 (define (abs x) (if (>= x 0) x (- x)))
 (define (sgn x) (cond ((= x 0) 0) ((> x 0) 1) (else -1)))
 (define (max a b) (if (> a b) a b))
