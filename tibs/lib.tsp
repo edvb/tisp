@@ -154,8 +154,11 @@
 (define tau (* 2 pi))
 (define e (exp 1.))
 
+(define (inc x) (+ x 1))
+(define (dec x) (- x 1))
 (define (truncate x) (* (floor (abs x)) (sgn x)))
 (define (sqr x) (* x x))
+(define (cube x) (* x (* x x)))
 (define (root b p) (^ b (/ p)))
 (define (sqrt x) (root x 2))
 (define (cbrt x) (root x 3))
