@@ -659,16 +659,16 @@ tisp_eval_list(Env env, Val v)
 {
 	Val cur = mk_pair(NULL, env->none);
 	Val ret = cur, ev;
-	for (; !nilp(v); v = cdr(v)) {
+	for (; !nilp(v); v = cdr(v), cur = cdr(cur)) {
 		if (v->t != PAIR) {
-			if ((ev = tisp_eval(env, v)))
-				cdr(cur) = ev;
+			if (!(ev = tisp_eval(env, v)))
+				return NULL;
+			cdr(cur) = ev;
 			return cdr(ret);
 		}
-		if ((ev = tisp_eval(env, car(v))))
-			cdr(cur) = ev;
-		cdr(cur) = mk_pair(cdr(cur), env->none);
-		cur = cdr(cur);
+		if (!(ev = tisp_eval(env, car(v))))
+			return NULL;
+		cdr(cur) = mk_pair(ev, env->none);
 	}
 	cdr(cur) = env->nil;
 	return cdr(ret);
@@ -862,7 +862,7 @@ prim_eval(Env env, Val args)
 	tsp_arg_num(args, "eval", 1);
 	if (!(v = tisp_eval(env, car(args))))
 		return NULL;
-	return tisp_eval(env, v);
+	return (v = tisp_eval(env, v)) ? v : env->none;
 }
 
 /* test equality of all values given */
