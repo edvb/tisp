@@ -1007,6 +1007,25 @@ prim_load(Env env, Val args)
 	return env->none;
 }
 
+/* display error message */
+static Val
+prim_error(Env env, Val args)
+{
+	Val v;
+	if (!(v = tisp_eval_list(env, args)))
+		return NULL;
+	tsp_arg_min(v, "error", 2);
+	tsp_arg_type(car(v), "error", SYMBOL);
+	fprintf(stderr, "tisp: error: %s: ", car(v)->v.s);
+	for (v = cdr(v); !nilp(v); v = cdr(v))
+		if (car(v)->t & STRING) /* don't print quotes around string */
+			fprintf(stderr, "%s", car(v)->v.s);
+		else
+			tisp_print(stderr, car(v));
+	fputc('\n', stderr);
+	return NULL;
+}
+
 /* list tisp version */
 static Val
 prim_version(Env env, Val args)
@@ -1053,6 +1072,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(macro);
 	tsp_env_fn(define);
 	tsp_env_fn(load);
+	tsp_env_fn(error);
 	tsp_env_fn(version);
 
 	env->strs = hash_new(cap, NULL);
