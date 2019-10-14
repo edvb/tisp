@@ -4,8 +4,8 @@
     (unless (and (pair? expr) (= (car expr) 'quit))
       (let ((ans (eval expr)))
         (unless (void? ans)
-          (disp-string ans)))
-      (repl))))
+          (disp-string ans))
+        (repl)))))
 
 ;; simple repl
 (define (repl-simple)
