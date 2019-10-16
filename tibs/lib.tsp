@@ -58,10 +58,10 @@
 (define else t)
 (define when
   (macro (con . body)
-         (list 'cond (list con (cons 'do body)) (list t (void)))))
+         (list 'cond (list con (cons 'do body)))))
 (define unless
   (macro (con . body)
-         (list 'cond (list con (void)) (list t (cons 'do body)))))
+         (list 'cond (list (list not con) (cons 'do body)))))
 (define let
   (macro (vars . body)
          (cons (list* 'lambda (map car vars) body) (map cadr vars))))

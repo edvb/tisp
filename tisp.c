@@ -890,7 +890,7 @@ prim_cond(Env env, Val args)
 			return NULL;
 		else if (!nilp(cond))
 			return tisp_eval(env, car(cdar(v)));
-	return env->nil;
+	return env->none;
 }
 
 /* return type of tisp value */
