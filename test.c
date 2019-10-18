@@ -290,13 +290,18 @@ char *tests[][2] = {
 	{ "(assoc 3 '((1 b)))",                                         "()"          },
 	{ "(assoc 4/3 (list (list 1 pi) (list 4/3 1/2 3) (list 2 3)))", "(4/3 1/2 3)" },
 
-	{ "member?",                               NULL },
-	{ "(member? 'foo '(foo bar baz))",         "t"  },
-	{ "(member? 'bar '(foo bar baz))",         "t"  },
-	{ "(member? 4 '(12 38 4 8))",              "t"  },
-	{ "(member? 3.2 '(4/3 2 8 2 3.14 3.2))",   "t"  },
-	{ "(member? \"quux\" (list 4.2 3 'quux))", "()" },
-	{ "(member? 'qux '(foo bar baz))",         "()" },
+	{ "member",                                         NULL                             },
+	{ "(memp even? (list 1 3 19 4 7 8 2))",             "(4 7 8 2)"                      },
+	{ "(memp negative? (list 1/3 pi 3.2e-9 0 4 -7 2))", "(-7 2)"                         },
+	{ "(memp (lambda (x) (> x 8)) '(1/3 1/2 5/3 8 9))", "(9)"                            },
+	{ "(memp (lambda (x) (= x \"fry\")) "
+		"'(\"fry\" \"nibbler\" \"prof\"))",         "(\"fry\" \"nibbler\" \"prof\")" },
+	{ "(member 'foo '(foo bar baz))",                   "(foo bar baz)"                  },
+	{ "(member 'bar '(foo bar baz))",                   "(bar baz)"                      },
+	{ "(member 4 '(12 38 4 8))",                        "(4 8)"                          },
+	{ "(member 3.2 '(4/3 2 8 2 3.14 3.2))",             "(3.2)"                          },
+	{ "(member \"quux\" (list 4.2 3 'quux))",           "()"                             },
+	{ "(member 'qux '(foo bar baz))",                   "()"                             },
 
 
 	{ "numbers",            NULL   },

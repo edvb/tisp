@@ -144,10 +144,13 @@
         ((= key (caar table)) (car table))
         (else (assoc key (cdr table)))))
 
-(define (member? mem lst)
+(define (memp proc lst)
   (cond ((nil? lst) nil)
-        ((= mem (car lst)) t)
-        (else (member? mem (cdr lst)))))
+        ((proc (car lst)) lst)
+        (else (memp proc (cdr lst)))))
+
+(define (member mem lst)
+  (memp (lambda (x) (= mem x)) lst))
 
 ;;; Math
 (define pi (* 4 (arctan 1.)))
