@@ -24,4 +24,4 @@ DEBUG ?= 0
 # CFLAGS += -DTIB_DYNAMIC
 
 # compiler and linker
-CC = cc
+CC ?= cc
