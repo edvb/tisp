@@ -48,7 +48,7 @@ $(EXE): $(OBJ) $(LIB)
 
 clean:
 	@echo cleaning
-	@rm -f $(OBJ) $(LIB) $(EXE) test test.o test.out libs.tsp.h
+	@rm -f $(OBJ) $(LIB) $(EXE) test test.o libs.tsp.h
 
 install: all
 	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
