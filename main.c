@@ -10,6 +10,7 @@
 	tsp_include_tib(math);
 	tsp_include_tib(io);
 	tsp_include_tib(time);
+	tsp_include_tib(string);
 #endif
 
 int
@@ -23,6 +24,7 @@ main(int argc, char *argv[])
 	tib_env_math(env);
 	tib_env_io(env);
 	tib_env_time(env);
+	tib_env_string(env);
 #  include "libs.tsp.h"
 	tisp_env_lib(env, libs_tsp);
 #endif
