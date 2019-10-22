@@ -191,7 +191,8 @@
     1
     (* n (! (- n 1)))))
 
-;;; Printing
+;;; IO
+(define (print . str) (apply write (cons 'stdout str)))
 (define (newline) (print "\n"))
 (define (disp . str) (apply print str) (newline))
 (define (disp-string . str)

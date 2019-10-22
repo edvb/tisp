@@ -7,10 +7,7 @@
           (disp-string ans))
         (repl)))))
 
-;; simple repl
+;; simple repl, only requires io c library
 (define (repl-simple)
-  (print "> ")
-  (print (eval (parse (read))))
-  (newline)
+  (write 'stdout "> " (eval (parse (read))) "\n")
   (repl-simple))
-
