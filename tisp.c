@@ -948,6 +948,28 @@ prim_define(Env env, Val args)
 	return env->none;
 }
 
+static Val
+prim_set(Env env, Val args)
+{
+	Val val;
+	Hash h;
+	Entry e = NULL;
+	tsp_arg_num(args, "set!", 2);
+	tsp_arg_type(car(args), "set!", SYMBOL);
+	if (!(val = tisp_eval(env, cadr(args))))
+		return NULL;
+	/* find first occurrence of symbol */
+	for (h = env->h; h; h = h->next) {
+		e = entry_get(h, car(args)->v.s);
+		if (e->key)
+			break;
+	}
+	if (!e || !e->key)
+		tsp_warnf("set!: variable %s is not defined", car(args)->v.s);
+	e->val = val;
+	return env->none;
+}
+
 /* loads tisp file or C dynamic library */
 static Val
 prim_load(Env env, Val args)
@@ -1071,6 +1093,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(lambda);
 	tsp_env_fn(macro);
 	tsp_env_fn(define);
+	tsp_env_name_fn(set!, set);
 	tsp_env_fn(load);
 	tsp_env_fn(error);
 	tsp_env_fn(version);
