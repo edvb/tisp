@@ -152,6 +152,19 @@
 (define (member mem lst)
   (memp (lambda (x) (= mem x)) lst))
 
+;;; Stacks
+(define (push stack val)
+  (cons val stack))
+
+(define pop cdr)
+
+(define peek car)
+
+(define (swap stack)
+  (let ((x (peek stack))
+        (y (peek (pop stack))))
+    (push (push (pop (pop stack)) x) y)))
+
 ;;; Math
 (define pi (* 4 (arctan 1.)))
 (define tau (* 2 pi))

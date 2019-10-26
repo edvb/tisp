@@ -301,6 +301,15 @@ char *tests[][2] = {
 	{ "(member \"quux\" (list 4.2 3 'quux))",           "()"                             },
 	{ "(member 'qux '(foo bar baz))",                   "()"                             },
 
+	{ "stack",                                   NULL                   },
+	{ "(peek '(1 2 3 4 5 6))",                   "1"                    },
+	{ "(peek (list 'a 'b 'c))",                  "a"                    },
+	{ "(pop (list 1/2 1/4))",                    "(1/4)"                },
+	{ "(pop '(\"foo\" \"bar\" \"baz\"))",        "(\"bar\" \"baz\")"    },
+	{ "(push '(6 3 5/3 .38) .5)",                "(0.5 6 3 5/3 0.38)"   },
+	{ "(push (list \"ni\" 'shrubbery) (* 3 2))", "(6 \"ni\" shrubbery)" },
+	{ "(swap '(1 2 3 5 7 11))",                  "(2 1 3 5 7 11)"       },
+	{ "(swap (list 1/2 1/4 1/9 1/16))",          "(1/4 1/2 1/9 1/16)"   },
 
 	{ "numbers",            NULL   },
 	{ "(decimal 1/2)",      "0.5"  },
