@@ -94,6 +94,8 @@
     (cons (car lst) (apply list* (cdr lst)))
     (car lst)))
 
+(define (do0 . body) (car body))
+
 (define (length lst)
   (recur f ((lst lst) (x 0))
          (if lst
