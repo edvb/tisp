@@ -158,7 +158,19 @@
 (define (push stack val)
   (cons val stack))
 
+(define push!
+  (macro (stack val)
+         (list do
+               (list set! stack (list push stack val))
+               stack)))
+
 (define pop cdr)
+
+(define pop!
+  (macro (stack)
+         (list do0
+               (list peek stack)
+               (list set! stack (list pop stack)))))
 
 (define peek car)
 
@@ -166,6 +178,13 @@
   (let ((x (peek stack))
         (y (peek (pop stack))))
     (push (push (pop (pop stack)) x) y)))
+
+(define swap!
+  (macro (stack)
+         (list let (list (list 'x (list pop! stack))
+                         (list 'y (list pop! stack)))
+               (list set! stack (list push (list push stack 'x) 'y))
+               stack)))
 
 ;;; Math
 (define pi (* 4 (arctan 1.)))
