@@ -24,7 +24,7 @@ options:
 
 libs.tsp.h: $(TSP)
 	@echo xxd $@
-	@echo "char libs_tsp[] = { 0x28, 0x64, 0x6f, 0x20," > $@
+	@echo "char libs_tsp[] = { 0x28, " > $@
 	@cat $(TSP) | xxd -i - >> $@
 	@echo ", 0x29, 0x00};" >> $@
 

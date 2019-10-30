@@ -640,7 +640,7 @@ Val
 tisp_parse_file(Env env, char *fname)
 {
 	struct Str str = { NULL };
-	Val ret = mk_pair(mk_sym(env, "do"), env->nil);
+	Val ret = mk_pair(NULL, env->nil);
 	Val v, last = ret;
 	char *file;
 	if (!(file = tisp_read_file(fname)))
@@ -648,7 +648,7 @@ tisp_parse_file(Env env, char *fname)
 	for (str.d = file; *str.d && (v = tisp_read(env, &str)); last = cdr(last))
 		cdr(last) = mk_pair(v, env->nil);
 	free(file);
-	return ret;
+	return cdr(ret);
 }
 
 /* eval */
@@ -844,16 +844,6 @@ prim_void(Env env, Val args)
 	return env->none;
 }
 
-/* evaluate all functions given, returning the value of the last one */
-static Val
-prim_do(Env env, Val args)
-{
-	Val v;
-	if (!(v = tisp_eval_list(env, args)))
-		return NULL;
-	return nilp(v) ? env->none : list_last(v);
-}
-
 /* evaluate argument given */
 static Val
 prim_eval(Env env, Val args)
@@ -995,7 +985,7 @@ prim_load(Env env, Val args)
 		strcat(name, v->v.s);
 		strcat(name, ".tsp");
 		if (access(name, R_OK) != -1) {
-			tisp_eval(env, tisp_parse_file(env, name));
+			tisp_eval_list(env, tisp_parse_file(env, name));
 			free(name);
 			return env->none;
 		}
@@ -1085,7 +1075,6 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(cons);
 	tsp_env_fn(quote);
 	tsp_env_fn(void);
-	tsp_env_fn(do);
 	tsp_env_fn(eval);
 	tsp_env_name_fn(=, eq);
 	tsp_env_fn(cond);
@@ -1113,7 +1102,8 @@ tisp_env_lib(Env env, char* lib)
 	struct Str s;
 	if (!(s.d = strndup(lib, strlen(lib))))
 		return;
-	tisp_eval(env, tisp_read(env, &s));
+	/* TODO check if tisp_read is NULL */
+	tisp_eval_list(env, tisp_read(env, &s));
 }
 
 void

@@ -30,7 +30,7 @@ main(int argc, char *argv[])
 #endif
 
 	if (argc == 1)
-		tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, NULL)));
+		tisp_print(stdout, tisp_eval_list(env, tisp_parse_file(env, NULL)));
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
@@ -47,10 +47,10 @@ main(int argc, char *argv[])
 				fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
-				tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, NULL)));
+				tisp_print(stdout, tisp_eval_list(env, tisp_parse_file(env, NULL)));
 			}
 		} else { /* otherwise read as file */
-			tisp_print(stdout, tisp_eval(env, tisp_parse_file(env, argv[i])));
+			tisp_print(stdout, tisp_eval_list(env, tisp_parse_file(env, argv[i])));
 		}
 	}
 
