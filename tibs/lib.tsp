@@ -51,6 +51,11 @@
 (define (rational? x)  (or (integer? x) (ratio? x)))
 (define (number? x)    (or (rational? x) (decimal? x)))
 
+(define assert
+  (macro (condition)
+         (list 'unless condition
+               (list error ''assert "assertion " 'condition " failed"))))
+
 ;;; Control Flow
 (define if
   (macro (con c d)
