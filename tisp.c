@@ -76,6 +76,7 @@ erealloc(void *p, size_t size)
 /* utility functions */
 
 /* return named string for each type */
+/* TODO loop through each type bit to print */
 char *
 type_str(Type t)
 {
@@ -149,7 +150,7 @@ count_parens(char *s, int len)
 	return count;
 }
 
-/* get length of list */
+/* get length of list, if improper list return -1 */
 int
 list_len(Val v)
 {
@@ -208,6 +209,7 @@ hash(char *key)
 {
 	uint32_t h = 0;
 	char c;
+	/* TODO ULONG_MAX is always bigger than uint32_t */
 	while (h < ULONG_MAX && (c = *key++))
 		h = h * 33 + c;
 	return h;
@@ -284,6 +286,7 @@ hash_add(Hash ht, char *key, Val val)
 
 /* add each binding args[i] -> vals[i] */
 /* args and vals are both lists */
+/* TODO don't return anything in hash_extend since it's modifying ht */
 static Hash
 hash_extend(Hash ht, Val args, Val vals)
 {
@@ -297,7 +300,8 @@ hash_extend(Hash ht, Val args, Val vals)
 			val = vals;
 		}
 		if (arg->t != SYMBOL)
-			tsp_warn("hash_extend: argument not a symbol");
+			tsp_warnf("expected symbol for argument of function"
+				  " definition, recieved %s", type_str(arg->t));
 		hash_add(ht, arg->v.s, val);
 		if (args->t != PAIR)
 			break;
@@ -534,7 +538,7 @@ read_str(Env env, Str str)
 		else if (*str->d == '\\' && str->d[1] == '"')
 			str->d++, len++;
 	str->d++; /* skip last closing quote */
-	s[len] = '\0';
+	s[len] = '\0'; /* TODO remember string length */
 	return mk_str(env, esc_str(s));
 }
 
@@ -567,6 +571,7 @@ read_pair(Env env, Str str)
 		skip_ws(str);
 		return env->nil;
 	}
+	/* TODO simplify read_pair by supporting (. x) => x */
 	if (!(a = tisp_read(env, str)))
 		return NULL;
 	skip_ws(str);
@@ -674,6 +679,7 @@ tisp_eval_list(Env env, Val v)
 	return cdr(ret);
 }
 
+/* evaluate procedure f of name v with arguments */
 static Val
 eval_proc(Env env, Val v, Val f, Val args)
 {
@@ -727,6 +733,7 @@ tisp_eval(Env env, Val v)
 /* print */
 
 /* print value of a list, display as #<void> if element inside returns void */
+/* TODO remove need for list_print by using repl to skip printing */
 static void
 list_print(FILE *f, Val v)
 {
@@ -878,7 +885,7 @@ prim_cond(Env env, Val args)
 	for (v = args; !nilp(v); v = cdr(v))
 		if (!(cond = tisp_eval(env, caar(v))))
 			return NULL;
-		else if (!nilp(cond))
+		else if (!nilp(cond)) /* TODO incorporate else directly into cond */
 			return tisp_eval(env, car(cdar(v)));
 	return env->none;
 }
@@ -902,6 +909,7 @@ prim_lambda(Env env, Val args)
 	return mk_func(FUNCTION, car(args), cdr(args), env);
 }
 
+/* creates new tisp defined macro */
 static Val
 prim_macro(Env env, Val args)
 {
@@ -924,7 +932,7 @@ prim_define(Env env, Val args)
 			tsp_warnf("define: incorrect format,"
 			          " expected symbol for function name, received %s",
 			          type_str(sym->t));
-		val = mk_func(FUNCTION, cdar(args), cdr(args), env); /* TODO copy env into new env */
+		val = mk_func(FUNCTION, cdar(args), cdr(args), env);
 	} else if (car(args)->t == SYMBOL) {
 		sym = car(args);
 		val = tisp_eval(env, cadr(args));
@@ -938,6 +946,7 @@ prim_define(Env env, Val args)
 	return env->none;
 }
 
+/* set symbol to new value */
 static Val
 prim_set(Env env, Val args)
 {
@@ -961,6 +970,9 @@ prim_set(Env env, Val args)
 }
 
 /* loads tisp file or C dynamic library */
+/* TODO lua like error listing places load looked */
+/* TODO only use dlopen if -ldl is given with TIB_DYNAMIC */
+/* TODO define load in lisp which calls load-dl */
 static Val
 prim_load(Env env, Val args)
 {
@@ -1019,13 +1031,14 @@ prim_load(Env env, Val args)
 	return env->none;
 }
 
-/* display error message */
+/* display message and return error */
 static Val
 prim_error(Env env, Val args)
 {
 	Val v;
 	if (!(v = tisp_eval_list(env, args)))
 		return NULL;
+	/* TODO have error auto print function name that was pre-defined */
 	tsp_arg_min(v, "error", 2);
 	tsp_arg_type(car(v), "error", SYMBOL);
 	fprintf(stderr, "tisp: error: %s: ", car(v)->v.s);
