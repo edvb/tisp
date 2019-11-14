@@ -113,11 +113,11 @@
     (last (cdr lst))
     (car lst)))
 
-(define (nth i lst)
+(define (nth lst i)
   (when (pair? lst)
     (if (<= i 0)
       (car lst)
-      (nth (- i 1) (cdr lst)))))
+      (nth (cdr lst) (- i 1)))))
 
 (define (apply proc args)
   (eval (map (lambda (x) ; prevent args from being evaluated twice
