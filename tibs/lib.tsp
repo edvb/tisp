@@ -119,6 +119,11 @@
       (car lst)
       (nth (cdr lst) (- i 1)))))
 
+(define (count x lst)
+  (cond ((nil? lst) 0)
+        ((= x (car lst)) (+ 1 (count x (cdr lst))))
+        (else (count x (cdr lst)))))
+
 (define (apply proc args)
   (eval (map (lambda (x) ; prevent args from being evaluated twice
                (list 'quote x))

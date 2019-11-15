@@ -255,6 +255,11 @@ char *tests[][2] = {
 	{ "(nth (list 3 5/2 .332 -2) 2)",           "0.332" },
 	{ "(nth '(a b c) 0)",                       "a"     },
 	{ "(nth (list 'foo 'bar 'zar 'baz) 3)",     "baz"   },
+	{ "(count 3 '(1 2 3 4))",                   "1"     },
+	{ "(count 1/2 (list 1/2 1/3 2/4 8 9.0))",   "2"     },
+	{ "(count 'a '(b c a a f h a b c a))",      "4"     },
+	{ "(count 3.2 nil)",                        "0"     },
+	{ "(count \"Bobandy\" '(1/2 1/4 \"Jim\"))", "0"     },
 
 	{ "apply",                     NULL          },
 	{ "(apply list '(1 2 3))",     "(1 2 3)"     },
