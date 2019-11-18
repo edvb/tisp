@@ -91,7 +91,7 @@ prim_parse(Env env, Val args)
 	tsp_arg_type(v, "parse", STRING);
 	str.d = v->v.s;
 	v = tisp_read(env, &str);
-	return v;
+	return v ? v : env->none;
 }
 
 void

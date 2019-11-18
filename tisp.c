@@ -1113,10 +1113,11 @@ void
 tisp_env_lib(Env env, char* lib)
 {
 	struct Str s;
+	Val v;
 	if (!(s.d = strndup(lib, strlen(lib))))
 		return;
-	/* TODO check if tisp_read is NULL */
-	tisp_eval_list(env, tisp_read(env, &s));
+	if ((v = tisp_read(env, &s)))
+		tisp_eval_list(env, v);
 }
 
 void

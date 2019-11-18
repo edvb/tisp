@@ -18,6 +18,7 @@ main(int argc, char *argv[])
 {
 	int i;
 	struct Str str = { NULL };
+	Val v;
 
 	Env env = tisp_env_init(64);
 #ifndef TIB_DYNAMIC
@@ -39,7 +40,8 @@ main(int argc, char *argv[])
 					fputs("tisp: expected command after -c\n", stderr);
 					exit(2);
 				}
-				tisp_print(stdout, tisp_eval(env, tisp_read(env, &str)));
+				if ((v = tisp_read(env, &str)))
+					tisp_print(stdout, tisp_eval(env, v));
 			} else if (argv[i][1] == 'v') { /* version and copyright info */
 				fprintf(stderr, "tisp v%s (c) 2017-2019 Ed van Bruggen\n", VERSION);
 				exit(0);
