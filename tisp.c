@@ -32,6 +32,7 @@
 #include "tisp.h"
 
 #define BETWEEN(X, A, B)  ((A) <= (X) && (X) <= (B))
+#define LEN(X)            (sizeof(X) / sizeof((X)[0]))
 
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
@@ -595,6 +596,11 @@ read_pair(Env env, Str str)
 Val
 tisp_read(Env env, Str str)
 {
+	char *shorthands[] = {
+		"'", "quote",
+		"`", "quasiquote",
+		",", "unquote",
+	};
 	skip_ws(str);
 	if (strlen(str->d) == 0)
 		return env->none;
@@ -602,9 +608,15 @@ tisp_read(Env env, Str str)
 		return read_num(str);
 	if (*str->d == '"')
 		return read_str(env, str);
-	if (*str->d == '\'') {
-		str->d++;
-		return mk_pair(mk_sym(env, "quote"), mk_pair(tisp_read(env, str), env->nil));
+	for (int i = 0; i < LEN(shorthands); i += 2) {
+		if (*str->d == *shorthands[i]) {
+			Val v;
+			str->d++;
+			if (!(v = tisp_read(env, str)))
+				return NULL;
+			return mk_pair(mk_sym(env, shorthands[i+1]),
+			               mk_pair(v, env->nil));
+		}
 	}
 	if (issym(*str->d))
 		return read_sym(env, str);
