@@ -44,7 +44,7 @@
 (define (macro? x)     (= (type x) "macro"))
 (define (pair? x)      (= (type x) "pair"))
 (define (cons? x)      (and (pair? x) (not (pair? (cdr x)))))
-(define (list? x)      (and (pair? x) (pair? (cdr x))))
+(define (list? x)      (if (pair? x) (list? (cdr x)) (not x)))
 (define (boolean? x)   (or (= x t) (nil? x)))
 (define (true? x)      (= x t))
 (define  false?         nil?)
