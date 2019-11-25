@@ -221,7 +221,7 @@
 (define (arccot x) (/ (arctan x)))
 
 (define (abs x) (if (>= x 0) x (- x)))
-(define (sgn x) (cond ((= x 0) 0) ((> x 0) 1) (else -1)))
+(define (sgn x) (if (= x 0) 0 (/ (abs x) x)))
 (define (max a b) (if (> a b) a b))
 (define (min a b) (if (< a b) a b))
 
