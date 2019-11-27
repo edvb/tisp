@@ -43,6 +43,7 @@
 (define (function? x)  (= (type x) "function"))
 (define (macro? x)     (= (type x) "macro"))
 (define (pair? x)      (= (type x) "pair"))
+(define (atom? x)      (not (pair? x)))
 (define (cons? x)      (and (pair? x) (not (pair? (cdr x)))))
 (define (list? x)      (if (pair? x) (list? (cdr x)) (not x)))
 (define (boolean? x)   (or (= x t) (nil? x)))
