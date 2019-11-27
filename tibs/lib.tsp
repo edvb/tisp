@@ -122,6 +122,7 @@
 
 (define (count x lst)
   (cond ((nil? lst) 0)
+        ((atom? lst) (error 'count "expected proper list"))
         ((= x (car lst)) (+ 1 (count x (cdr lst))))
         (else (count x (cdr lst)))))
 
@@ -143,12 +144,14 @@
            out)))
 
 (define (append x y)
-  (if x
-    (cons (car x) (append (cdr x) y))
-    y))
+  (cond
+    ((pair? x) (cons (car x) (append (cdr x) y)))
+    ((nil? x) y)
+    (else (error 'append "expected proper list"))))
 
 (define (zip x y)
   (cond ((and (nil? x) (nil? y)) nil)
+        ((or (nil? x) (nil? y)) (error 'zip "given lists of unequal length"))
         ((and (pair? x) (pair? y))
          (cons (cons (car x) (car y))
                (zip (cdr x) (cdr y))))))
