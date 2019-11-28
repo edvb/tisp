@@ -146,7 +146,6 @@ struct Env {
 
 char *type_str(Type t);
 int list_len(Val v);
-void skip_ws(Str str);
 
 Val mk_int(int i);
 Val mk_str(Env env, char *s);

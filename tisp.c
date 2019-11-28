@@ -128,13 +128,14 @@ isdelim(int c)
 }
 
 /* skip over comments and white space */
-void
-skip_ws(Str str)
+static void
+skip_ws(Str str, int skipnl)
 {
-	while (*str->d && strchr(" \t\n;", *str->d) != 0) {
-		str->d += strspn(str->d, " \t\n"); /* skip white space */
-		for (; *str->d == ';'; str->d++)   /* skip comments until newline */
-			str->d += strcspn(str->d, "\n");
+	const char *s = skipnl ? " \t\n" : " \t";
+	while (*str->d && (strchr(s, *str->d) || *str->d == ';')) {
+		str->d += strspn(str->d, s);     /* skip white space */
+		for (; *str->d == ';'; str->d++) /* skip comments until newline */
+			str->d += strcspn(str->d, "\n") - !skipnl;
 	}
 }
 
@@ -547,8 +548,7 @@ read_str(Env env, Str str)
 static Val
 read_sym(Env env, Str str)
 {
-	int n = 1;
-	int i = 0;
+	int n = 1, i = 0;
 	char *sym = emalloc(n);
 	for (; *str->d && issym(*str->d); str->d++) {
 		sym[i++] = *str->d;
@@ -566,25 +566,25 @@ static Val
 read_pair(Env env, Str str)
 {
 	Val a, b;
-	skip_ws(str);
+	skip_ws(str, 1);
 	if (*str->d == ')') {
 		str->d++;
-		skip_ws(str);
+		skip_ws(str, 1);
 		return env->nil;
 	}
 	/* TODO simplify read_pair by supporting (. x) => x */
 	if (!(a = tisp_read(env, str)))
 		return NULL;
-	skip_ws(str);
+	skip_ws(str, 1);
 	if (*str->d == '.' && isdelim(str->d[1])) {
 		str->d++;
 		if (!(b = tisp_read(env, str)))
 			return NULL;
-		skip_ws(str);
+		skip_ws(str, 1);
 		if (*str->d != ')')
 			tsp_warn("did not find closing ')'");
 		str->d++;
-		skip_ws(str);
+		skip_ws(str, 1);
 	} else {
 		if (!(b = read_pair(env, str)))
 			return NULL;
@@ -601,7 +601,7 @@ tisp_read(Env env, Str str)
 		"`", "quasiquote",
 		",", "unquote",
 	};
-	skip_ws(str);
+	skip_ws(str, 1);
 	if (strlen(str->d) == 0)
 		return env->none;
 	if (isnum(str->d))
