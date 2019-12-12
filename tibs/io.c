@@ -82,15 +82,19 @@ static Val
 prim_parse(Env env, Val args)
 {
 	Val v;
-	struct Str str = { NULL };
+	char *file = env->file;
+	size_t filec = env->filec;
 	tsp_arg_num(args, "parse", 1);
 	if (!(v = tisp_eval(env, car(args))))
 		return NULL;
 	if (nilp(v))
 		return mk_pair(mk_sym(env, "quit"), env->nil);
 	tsp_arg_type(v, "parse", STRING);
-	str.d = v->v.s;
-	v = tisp_read(env, &str);
+	env->file = v->v.s;
+	env->filec = 0;
+	v = tisp_read(env);
+	env->file = file;
+	env->filec = filec;
 	return v ? v : env->none;
 }
 

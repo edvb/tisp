@@ -17,7 +17,6 @@ int
 main(int argc, char *argv[])
 {
 	int i;
-	struct Str str = { NULL };
 	Val v = NULL;
 
 	Env env = tisp_env_init(64);
@@ -38,11 +37,11 @@ main(int argc, char *argv[])
 	for (i = 1; i < argc; i++, v = NULL) {
 		if (argv[i][0] == '-') {
 			if (argv[i][1] == 'c') { /* run next argument as tisp command */
-				if (!(str.d = argv[++i])) {
+				if (!(env->file = argv[++i])) {
 					fputs("tisp: expected command after -c\n", stderr);
 					exit(2);
 				}
-				if ((v = tisp_read(env, &str)))
+				if ((v = tisp_read(env)))
 					v = tisp_eval(env, v);
 			} else if (argv[i][1] == 'v') { /* version and copyright info */
 				fprintf(stderr, "tisp v%s (c) 2017-2019 Ed van Bruggen\n", VERSION);

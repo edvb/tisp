@@ -60,6 +60,10 @@
 #define tsp_env_fn(NAME)          tsp_env_name_fn(NAME, NAME)
 #define tsp_include_tib(NAME)     void tib_env_##NAME(Env)
 
+#define tsp_finc(ENV) ENV->filec++
+#define tsp_fgetat(ENV, O) ENV->file[ENV->filec+O]
+#define tsp_fget(ENV) tsp_fgetat(ENV,0)
+
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
 #define caar(P) car(car(P))
@@ -73,11 +77,6 @@
 struct Val;
 typedef struct Val *Val;
 typedef struct Env *Env;
-
-/* improved interface for a pointer to a string */
-typedef struct Str {
-	char *d;
-} *Str;
 
 /* fraction */
 typedef struct {
@@ -138,6 +137,8 @@ struct Val {
 };
 
 struct Env {
+	char *file;
+	size_t filec;
 	Val none, nil, t;
 	Hash h, strs, syms;
 	void **libh;
@@ -157,7 +158,8 @@ Val mk_func(Type t, Val args, Val body, Env env);
 Val mk_pair(Val a, Val b);
 Val mk_list(Env env, int n, Val *a);
 
-Val tisp_read(Env env, Str str);
+Val tisp_read(Env env);
+Val tisp_read_line(Env env);
 Val tisp_eval_list(Env env, Val v);
 Val tisp_eval(Env env, Val v);
 void tisp_print(FILE *f, Val v);

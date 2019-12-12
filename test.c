@@ -484,15 +484,15 @@ char *tests[][2] = {
 int
 tisp_test(Env env, const char *input, const char *expect, int output)
 {
-	struct Str str = { NULL };
 	Val v;
 	FILE *f;
 	size_t nread;
 	char buf[BUFSIZ] = {0};
 
-	if (!(str.d = strdup(input)))
+	if (!(env->file = strdup(input)))
 		return 0;
-	if (!(v = tisp_read(env, &str)))
+	env->filec = 0;
+	if (!(v = tisp_read(env)))
 		return 0;
 	if (!(v = tisp_eval(env, v))) {
 		if (output)

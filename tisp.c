@@ -124,18 +124,19 @@ isnum(char *str)
 static char
 isdelim(int c)
 {
+	/* add .{}[]`', */
 	return isspace(c) || c == '(' || c == ')' || c == '"' || c == ';';
 }
 
 /* skip over comments and white space */
 static void
-skip_ws(Str str, int skipnl)
+skip_ws(Env env, int skipnl)
 {
 	const char *s = skipnl ? " \t\n" : " \t";
-	while (*str->d && (strchr(s, *str->d) || *str->d == ';')) {
-		str->d += strspn(str->d, s);     /* skip white space */
-		for (; *str->d == ';'; str->d++) /* skip comments until newline */
-			str->d += strcspn(str->d, "\n") - !skipnl;
+	while (tsp_fget(env) && (strchr(s, tsp_fget(env)) || tsp_fget(env) == ';')) {
+		env->filec += strspn(env->file+env->filec, s); /* skip white space */
+		for (; tsp_fget(env) == ';'; tsp_finc(env)) /* skip comments until newline */
+			env->filec += strcspn(env->file+env->filec, "\n") - !skipnl;
 	}
 }
 
@@ -436,35 +437,35 @@ mk_list(Env env, int n, Val *a)
 
 /* read first character of number to determine sign */
 static int
-read_sign(Str str)
+read_sign(Env env)
 {
-	switch (*str->d) {
-	case '-': ++str->d; return -1;
-	case '+': ++str->d; return 1;
+	switch (tsp_fget(env)) {
+	case '-': tsp_finc(env); return -1;
+	case '+': tsp_finc(env); return 1;
 	default: return 1;
 	}
 }
 
 /* return read integer */
 static int
-read_int(Str str)
+read_int(Env env)
 {
-	int ret;
-	for (ret = 0; isdigit(*str->d); str->d++)
-		ret = ret * 10 + *str->d - '0';
+	int ret = 0;
+	for (; tsp_fget(env) && isdigit(tsp_fget(env)); tsp_finc(env))
+		ret = ret * 10 + tsp_fget(env) - '0';
 	return ret;
 }
 
 /* return read scientific notation */
 static Val
-read_sci(Str str, double val, int isint)
+read_sci(Env env, double val, int isint)
 {
-	if (tolower(*str->d) != 'e')
+	if (tolower(tsp_fget(env)) != 'e')
 		goto finish;
 
-	str->d++;
-	double sign = read_sign(str) == 1 ? 10.0 : 0.1;
-	for (int expo = read_int(str); expo--; val *= sign) ;
+	tsp_finc(env);
+	double sign = read_sign(env) == 1 ? 10.0 : 0.1;
+	for (int expo = read_int(env); expo--; val *= sign) ;
 
 finish:
 	if (isint)
@@ -474,29 +475,26 @@ finish:
 
 /* return read number */
 static Val
-read_num(Str str)
+read_num(Env env)
 {
-	int sign = read_sign(str);
-	int num = read_int(str);
-	Str s;
-	switch (*str->d) {
+	int sign = read_sign(env);
+	int num = read_int(env);
+	size_t oldc;
+	switch (tsp_fget(env)) {
 	case '/':
-		str->d++;
-		if (!isnum(str->d))
+		if (!isnum(env->file + ++env->filec))
 			tsp_warn("incorrect ratio format, no denominator found");
-		return mk_rat(sign * num, read_sign(str) * read_int(str));
+		return mk_rat(sign * num, read_sign(env) * read_int(env));
 	case '.':
-		s = emalloc(sizeof(Str));
-		s->d = ++str->d;
-		double d = (double) read_int(s);
-		int size = s->d - str->d;
-		str->d = s->d;
-		free(s);
+		tsp_finc(env);
+		oldc = env->filec;
+		double d = (double) read_int(env);
+		int size = env->filec - oldc;
 		while (size--)
 			d /= 10.0;
-		return read_sci(str, sign * (num+d), 0);
+		return read_sci(env, sign * (num+d), 0);
 	default:
-		return read_sci(str, sign * num, 1);
+		return read_sci(env, sign * num, 1);
 	}
 }
 
@@ -530,28 +528,28 @@ esc_str(char *s)
 
 /* return read string */
 static Val
-read_str(Env env, Str str)
+read_str(Env env)
 {
 	int len = 0;
-	char *s = ++str->d; /* skip starting open quote */
-	for (; *str->d != '"'; str->d++, len++)
-		if (!*str->d)
+	char *s = env->file + ++env->filec; /* skip starting open quote */
+	for (; tsp_fget(env) != '"'; tsp_finc(env), len++)
+		if (!tsp_fget(env))
 			tsp_warn("reached end before closing double quote");
-		else if (*str->d == '\\' && str->d[1] == '"')
-			str->d++, len++;
-	str->d++; /* skip last closing quote */
+		else if (tsp_fget(env) == '\\' && tsp_fgetat(env, 1) == '"')
+			tsp_finc(env), len++;
+	tsp_finc(env); /* skip last closing quote */
 	s[len] = '\0'; /* TODO remember string length */
 	return mk_str(env, esc_str(s));
 }
 
 /* return read symbol */
 static Val
-read_sym(Env env, Str str)
+read_sym(Env env)
 {
 	int n = 1, i = 0;
 	char *sym = emalloc(n);
-	for (; *str->d && issym(*str->d); str->d++) {
-		sym[i++] = *str->d;
+	for (; tsp_fget(env) && issym(tsp_fget(env)); tsp_finc(env)) {
+		sym[i++] = tsp_fget(env);
 		if (i == n) {
 			n *= 2;
 			sym = erealloc(sym, n);
@@ -563,30 +561,30 @@ read_sym(Env env, Str str)
 
 /* return read string containing a list */
 static Val
-read_pair(Env env, Str str)
+read_pair(Env env)
 {
 	Val a, b;
-	skip_ws(str, 1);
-	if (*str->d == ')') {
-		str->d++;
-		skip_ws(str, 1);
+	skip_ws(env, 1);
+	if (tsp_fget(env) == ')') {
+		tsp_finc(env);
+		skip_ws(env, 1);
 		return env->nil;
 	}
 	/* TODO simplify read_pair by supporting (. x) => x */
-	if (!(a = tisp_read(env, str)))
+	if (!(a = tisp_read(env)))
 		return NULL;
-	skip_ws(str, 1);
-	if (*str->d == '.' && isdelim(str->d[1])) {
-		str->d++;
-		if (!(b = tisp_read(env, str)))
+	skip_ws(env, 1);
+	if (tsp_fget(env) == '.' && isdelim(tsp_fgetat(env,1))) {
+		tsp_finc(env);
+		if (!(b = tisp_read(env)))
 			return NULL;
-		skip_ws(str, 1);
-		if (*str->d != ')')
+		skip_ws(env, 1);
+		if (tsp_fget(env) != ')')
 			tsp_warn("did not find closing ')'");
-		str->d++;
-		skip_ws(str, 1);
+		tsp_finc(env);
+		skip_ws(env, 1);
 	} else {
-		if (!(b = read_pair(env, str)))
+		if (!(b = read_pair(env)))
 			return NULL;
 	}
 	return mk_pair(a, b);
@@ -594,37 +592,37 @@ read_pair(Env env, Str str)
 
 /* reads given string returning its tisp value */
 Val
-tisp_read(Env env, Str str)
+tisp_read(Env env)
 {
 	char *shorthands[] = {
 		"'", "quote",
 		"`", "quasiquote",
 		",", "unquote",
 	};
-	skip_ws(str, 1);
-	if (strlen(str->d) == 0)
+	skip_ws(env, 1);
+	if (strlen(env->file+env->filec) == 0)
 		return env->none;
-	if (isnum(str->d))
-		return read_num(str);
-	if (*str->d == '"')
-		return read_str(env, str);
+	if (isnum(env->file+env->filec))
+		return read_num(env);
+	if (tsp_fget(env) == '"')
+		return read_str(env);
 	for (int i = 0; i < LEN(shorthands); i += 2) {
-		if (*str->d == *shorthands[i]) {
+		if (tsp_fget(env) == *shorthands[i]) {
 			Val v;
-			str->d++;
-			if (!(v = tisp_read(env, str)))
+			tsp_finc(env);
+			if (!(v = tisp_read(env)))
 				return NULL;
 			return mk_pair(mk_sym(env, shorthands[i+1]),
 			               mk_pair(v, env->nil));
 		}
 	}
-	if (issym(*str->d))
-		return read_sym(env, str);
-	if (*str->d == '(') {
-		str->d++;
-		return read_pair(env, str);
+	if (issym(tsp_fget(env)))
+		return read_sym(env);
+	if (tsp_fget(env) == '(') {
+		tsp_finc(env);
+		return read_pair(env);
 	}
-	tsp_warnf("could not read given input '%s'", str->d);
+	tsp_warnf("could not read given input '%s'", env->file+env->filec);
 }
 
 /* return string containing contents of file name */
@@ -656,15 +654,17 @@ tisp_read_file(char *fname)
 Val
 tisp_parse_file(Env env, char *fname)
 {
-	struct Str str = { NULL };
 	Val ret = mk_pair(NULL, env->nil);
 	Val v, last = ret;
-	char *file;
-	if (!(file = tisp_read_file(fname)))
+	char *file = env->file;
+	size_t filec = env->filec;
+	if (!(env->file = tisp_read_file(fname)))
 		return ret;
-	for (str.d = file; *str.d && (v = tisp_read(env, &str)); last = cdr(last))
+	for (env->filec = 0; tsp_fget(env) && (v = tisp_read(env)); last = cdr(last))
 		cdr(last) = mk_pair(v, env->nil);
-	free(file);
+	free(env->file);
+	env->file = file;
+	env->filec = filec;
 	return cdr(ret);
 }
 
@@ -1085,6 +1085,9 @@ tisp_env_init(size_t cap)
 {
 	Env env = emalloc(sizeof(struct Env));
 
+	env->file = NULL;
+	env->filec = 0;
+
 	env->nil = emalloc(sizeof(struct Val));
 	env->nil->t = NIL;
 	env->none = emalloc(sizeof(struct Val));
@@ -1124,12 +1127,15 @@ tisp_env_init(size_t cap)
 void
 tisp_env_lib(Env env, char* lib)
 {
-	struct Str s;
 	Val v;
-	if (!(s.d = strndup(lib, strlen(lib))))
-		return;
-	if ((v = tisp_read(env, &s)))
+	char *file = env->file;
+	size_t filec = env->filec;
+	env->file = lib;
+	env->filec = 0;
+	if ((v = tisp_read(env)))
 		tisp_eval_list(env, v);
+	env->file = file;
+	env->filec = filec;
 }
 
 void
