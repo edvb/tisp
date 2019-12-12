@@ -1,4 +1,9 @@
 (define nil ())
+(define (list . lst) lst)
+
+(define defmacro
+  (macro (args . body)
+         (list 'define (car args) (list 'macro (cdr args) . body))))
 
 ;;; CXR
 (define (caar x) (car (car x)))
@@ -52,49 +57,43 @@
 (define (rational? x)  (or (integer? x) (ratio? x)))
 (define (number? x)    (or (rational? x) (decimal? x)))
 
-(define assert
-  (macro (condition)
-         (list 'unless condition
-               (list error ''assert "assertion " 'condition " failed"))))
+(defmacro (assert condition)
+  (list 'unless condition
+        (list error ''assert "assertion " 'condition " failed")))
 
 ;;; Control Flow
-(define if
-  (macro (con c d)
-         (list 'cond (list con c) (list t d))))
+; TODO if d = pair and car d = else use cdr d
+(defmacro (if con c d)
+  (list 'cond (list con c) (list t d)))
 (define else t)
-(define when
-  (macro (con . body)
-         (list 'cond (list con (cons 'do body)))))
-(define unless
-  (macro (con . body)
-         (list 'cond (list (list not con) (cons 'do body)))))
-(define let
-  (macro (vars . body)
-         (cons (list* 'lambda (map car vars) body) (map cadr vars))))
-(define recur
-  (macro (fn vars . body)
-         (cons (list* 'lambda (cons fn (map car vars)) body) (cons (list* 'lambda (map car vars) body) (map cadr vars)))))
+(defmacro (when con . body)
+  (list 'cond (list con (cons 'do body))))
+(defmacro (unless con . body)
+  (list 'cond (list (list not con) (cons 'do body))))
+(defmacro (let vars . body)
+  (cons (list* 'lambda (map car vars) body) (map cadr vars)))
+(defmacro (recur fn vars . body)
+  (list* (list* 'lambda (cons fn (map car vars)) body)
+         (list* 'lambda (map car vars) body)
+         (map cadr vars)))
 
 ;;; Logic
 (define (not x)
   (if x nil t))
-(define and ; Use a macro so arguments aren't evaluated all at once
-  (macro (a b)
-         (list 'if a b nil)))
-(define nand
-  (macro (a b)
-         (list 'not (list 'and a b))))
-(define or
-  (macro (a b)
-         (list 'if a a b)))
-(define nor
-  (macro (a b)
-         (list 'not (list 'or a b))))
+; TODO logic func many arguments
+; Use a macro so arguments aren't evaluated all at once
+(defmacro (and a b)
+  (list 'if a b nil))
+(defmacro (nand a b)
+  (list 'not (list 'and a b)))
+(defmacro (or a b)
+  (list 'if a a b))
+(defmacro (nor a b)
+  (list 'not (list 'or a b)))
 
 ;;; Lists
 (define first car)
 (define rest cdr)
-(define (list . lst) lst)
 (define (list* . lst)
   (if (cdr lst)
     (cons (car lst) (apply list* (cdr lst)))
@@ -156,6 +155,7 @@
          (cons (cons (car x) (car y))
                (zip (cdr x) (cdr y))))))
 
+; TODO assoc optional equal? arg
 (define (assoc key table)
   (cond ((nil? table) nil)
         ((= key (caar table)) (car table))
@@ -173,19 +173,17 @@
 (define (push stack val)
   (cons val stack))
 
-(define push!
-  (macro (stack val)
-         (list do
-               (list set! stack (list push stack val))
-               stack)))
+(defmacro (push! stack val)
+  (list do
+        (list set! stack (list push stack val))
+        stack))
 
 (define pop cdr)
 
-(define pop!
-  (macro (stack)
-         (list do0
-               (list peek stack)
-               (list set! stack (list pop stack)))))
+(defmacro (pop! stack)
+  (list do0
+        (list peek stack)
+        (list set! stack (list pop stack))))
 
 (define peek car)
 
@@ -194,12 +192,12 @@
         (y (peek (pop stack))))
     (push (push (pop (pop stack)) x) y)))
 
-(define swap!
-  (macro (stack)
-         (list let (list (list 'x (list pop! stack))
-                         (list 'y (list pop! stack)))
-               (list set! stack (list push (list push stack 'x) 'y))
-               stack)))
+; TODO swap! use gen sym instead of x and y ?
+(defmacro (swap! stack)
+  (list let (list (list 'x (list pop! stack))
+                  (list 'y (list pop! stack)))
+        (list set! stack (list push (list push stack 'x) 'y))
+        stack))
 
 ;;; Math
 (define pi (* 4 (arctan 1.)))
