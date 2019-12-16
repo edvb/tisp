@@ -78,6 +78,8 @@
          (map cadr vars)))
 
 ;;; Logic
+(define true t)
+(define false ())
 (define (not x)
   (if x nil t))
 ; TODO logic func many arguments
@@ -92,14 +94,12 @@
   (list 'not (list 'or a b)))
 
 ;;; Lists
-(define first car)
-(define rest cdr)
 (define (list* . lst)
   (if (cdr lst)
     (cons (car lst) (apply list* (cdr lst)))
     (car lst)))
 
-(define (do . body) (last body))
+(define (do  . body) (last body))
 (define (do0 . body) (car body))
 
 (define (length lst)
