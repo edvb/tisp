@@ -233,6 +233,12 @@
 (define (even? x) (= (mod x 2) 0))
 (define (odd? x)  (= (mod x 2) 1))
 
+(define (dot x y)
+  (if x
+    (+ (* (car x) (car y))
+       (dot (cdr x) (cdr y)))
+    0))
+
 (define (! n)
   (if (= n 1)
     1
