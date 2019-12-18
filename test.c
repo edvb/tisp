@@ -482,19 +482,19 @@ char *tests[][2] = {
 };
 
 int
-tisp_test(Env env, const char *input, const char *expect, int output)
+tisp_test(Tsp st, const char *input, const char *expect, int output)
 {
 	Val v;
 	FILE *f;
 	size_t nread;
 	char buf[BUFSIZ] = {0};
 
-	if (!(env->file = strdup(input)))
+	if (!(st->file = strdup(input)))
 		return 0;
-	env->filec = 0;
-	if (!(v = tisp_read(env)))
+	st->filec = 0;
+	if (!(v = tisp_read(st)))
 		return 0;
-	if (!(v = tisp_eval(env, v))) {
+	if (!(v = tisp_eval(st, st->global, v))) {
 		if (output)
 			putchar('\n');
 		return 0;
@@ -519,9 +519,9 @@ main(void)
 {
 	int correct = 0, total = 0, seccorrect = 0, sectotal = 0, last = 1;
 	int errors[LEN(tests)] = {0};
-	Env env = tisp_env_init(1024);
-	tib_env_math(env);
-	tisp_env_lib(env, libs_tsp);
+	Tsp st = tisp_env_init(1024);
+	tib_env_math(st);
+	tisp_env_lib(st, libs_tsp);
 
 	for (int i = 0; ; i++) {
 		if (!tests[i][1]) {
@@ -534,7 +534,7 @@ main(void)
 						printf("  input: %s\n"
 						       "    expect: %s\n"
 						       "    output: ", tests[j][0], tests[j][1]);
-						tisp_test(env, tests[j][0], tests[j][1], 1);
+						tisp_test(st, tests[j][0], tests[j][1], 1);
 					}
 				last = i + 1;
 			}
@@ -544,7 +544,7 @@ main(void)
 			seccorrect = 0;
 			sectotal = 0;
 		} else {
-			if (tisp_test(env, tests[i][0], tests[i][1], 0)) {
+			if (tisp_test(st, tests[i][0], tests[i][1], 0)) {
 				correct++;
 				seccorrect++;
 			} else {
@@ -556,6 +556,5 @@ main(void)
 	}
 	printf("%-10s %d/%d\n", "total", correct, total);
 
-	/* tisp_env_free(env); */
 	return correct != total;
 }

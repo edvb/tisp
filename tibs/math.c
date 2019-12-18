@@ -25,14 +25,14 @@
 
 #include "../tisp.h"
 
-#define EVAL_CHECK(A, V, NAME, TYPE) do { \
-	if (!(A = tisp_eval(env, V)))     \
-		return NULL;              \
-	tsp_arg_type(A, NAME, TYPE);      \
+#define EVAL_CHECK(A, V, NAME, TYPE) do {  \
+	if (!(A = tisp_eval(st, vars, V))) \
+		return NULL;               \
+	tsp_arg_type(A, NAME, TYPE);       \
 } while(0)
 
 static Val
-prim_numerator(Env env, Val args)
+prim_numerator(Tsp st, Hash vars, Val args)
 {
 	Val a;
 	tsp_arg_num(args, "numerator", 1);
@@ -41,7 +41,7 @@ prim_numerator(Env env, Val args)
 }
 
 static Val
-prim_denominator(Env env, Val args)
+prim_denominator(Tsp st, Hash vars, Val args)
 {
 	Val a;
 	tsp_arg_num(args, "denominator", 1);
@@ -90,7 +90,7 @@ static Val
 
 #define PRIM_ROUND(NAME, FORCE)                                      \
 static Val                                                           \
-prim_##NAME(Env env, Val args)                                       \
+prim_##NAME(Tsp st, Hash vars, Val args)                             \
 {                                                                    \
 	Val a;                                                       \
 	tsp_arg_num(args, #NAME, 1);                                 \
@@ -110,7 +110,7 @@ PRIM_ROUND(floor, 0)
 PRIM_ROUND(ceil,  0)
 
 static Val
-prim_add(Env env, Val args)
+prim_add(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "+", 2);
@@ -124,7 +124,7 @@ prim_add(Env env, Val args)
 }
 
 static Val
-prim_sub(Env env, Val args)
+prim_sub(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	int len = list_len(args);
@@ -145,7 +145,7 @@ prim_sub(Env env, Val args)
 }
 
 static Val
-prim_mul(Env env, Val args)
+prim_mul(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "*", 2);
@@ -158,7 +158,7 @@ prim_mul(Env env, Val args)
 }
 
 static Val
-prim_div(Env env, Val args)
+prim_div(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	int len = list_len(args);
@@ -177,7 +177,7 @@ prim_div(Env env, Val args)
 }
 
 static Val
-prim_mod(Env env, Val args)
+prim_mod(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "mod", 2);
@@ -188,8 +188,9 @@ prim_mod(Env env, Val args)
 	return mk_int((int)num(a) % abs((int)num(b)));
 }
 
+/* TODO if given function as 2nd arg run it on first arg */
 static Val
-prim_pow(Env env, Val args)
+prim_pow(Tsp st, Hash vars, Val args)
 {
 	double bnum, bden;
 	Val b, p;
@@ -201,23 +202,23 @@ prim_pow(Env env, Val args)
 	if (bnum == (int)bnum && bden == (int)bden &&
 	    b->t & NUMBER && p->t & NUMBER)
 		return mk_num(b->t, p->t, 0)(bnum, bden);
-	return mk_pair(mk_sym(env, "^"), mk_pair(b, mk_pair(p, env->nil)));
+	return mk_pair(mk_sym(st, "^"), mk_pair(b, mk_pair(p, st->nil)));
 }
 
-#define PRIM_COMPARE(NAME, OP)                    \
-static Val                                        \
-prim_##NAME(Env env, Val args)                    \
-{                                                 \
-	Val v;                                    \
-	if (!(v = tisp_eval_list(env, args)))     \
-		return NULL;                      \
-	if (list_len(v) != 2)                     \
-		return env->t;                    \
-	tsp_arg_type(car(v), #OP, NUMBER);        \
-	tsp_arg_type(car(cdr(v)), #OP, NUMBER);   \
-	return ((num(car(v))*den(car(cdr(v)))) OP \
-		(num(car(cdr(v)))*den(car(v)))) ? \
-		env->t : env->nil;                \
+#define PRIM_COMPARE(NAME, OP)                     \
+static Val                                         \
+prim_##NAME(Tsp st, Hash vars, Val args)           \
+{                                                  \
+	Val v;                                     \
+	if (!(v = tisp_eval_list(st, vars, args))) \
+		return NULL;                       \
+	if (list_len(v) != 2)                      \
+		return st->t;                      \
+	tsp_arg_type(car(v), #OP, NUMBER);         \
+	tsp_arg_type(car(cdr(v)), #OP, NUMBER);    \
+	return ((num(car(v))*den(car(cdr(v)))) OP  \
+		(num(car(cdr(v)))*den(car(v)))) ?  \
+		st->t : st->nil;                   \
 }
 
 PRIM_COMPARE(lt,  <)
@@ -225,16 +226,16 @@ PRIM_COMPARE(gt,  >)
 PRIM_COMPARE(lte, <=)
 PRIM_COMPARE(gte, >=)
 
-#define PRIM_TRIG(NAME)                                           \
-static Val                                                        \
-prim_##NAME(Env env, Val args)                                    \
-{                                                                 \
-	Val v;                                                    \
-	tsp_arg_num(args, #NAME, 1);                              \
-	EVAL_CHECK(v, car(args), #NAME, EXPRESSION);              \
-	if (v->t & DECIMAL)                                       \
-		return mk_dec(NAME(num(v)));                      \
-	return mk_pair(mk_sym(env, #NAME), mk_pair(v, env->nil)); \
+#define PRIM_TRIG(NAME)                                         \
+static Val                                                      \
+prim_##NAME(Tsp st, Hash vars, Val args)                        \
+{                                                               \
+	Val v;                                                  \
+	tsp_arg_num(args, #NAME, 1);                            \
+	EVAL_CHECK(v, car(args), #NAME, EXPRESSION);            \
+	if (v->t & DECIMAL)                                     \
+		return mk_dec(NAME(num(v)));                    \
+	return mk_pair(mk_sym(st, #NAME), mk_pair(v, st->nil)); \
 }
 
 PRIM_TRIG(sin)
@@ -253,7 +254,7 @@ PRIM_TRIG(exp)
 PRIM_TRIG(log)
 
 void
-tib_env_math(Env env)
+tib_env_math(Tsp st)
 {
 	tsp_env_fn(numerator);
 	tsp_env_fn(denominator);

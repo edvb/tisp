@@ -26,7 +26,7 @@
 
 /* return number of seconds since 1970 (unix time stamp) */
 static Val
-prim_time(Env env, Val args)
+prim_time(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "time", 0);
 	return mk_int(time(NULL));
@@ -34,20 +34,20 @@ prim_time(Env env, Val args)
 
 /* return time taken to run command given */
 static Val
-prim_timeit(Env env, Val args)
+prim_timeit(Tsp st, Hash env, Val args)
 {
 	Val v;
 	clock_t t;
 	tsp_arg_num(args, "timeit", 1);
 	t = clock();
-	if (!(v = tisp_eval(env, car(args))))
+	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
 	t = clock() - t;
 	return mk_dec(((double)t)/CLOCKS_PER_SEC);
 }
 
 void
-tib_env_time(Env env)
+tib_env_time(Tsp st)
 {
 	tsp_env_fn(time);
 	tsp_env_fn(timeit);

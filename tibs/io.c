@@ -27,12 +27,12 @@
 
 /* write all arguemnts to given file, or stdout/stderr, without newline */
 static Val
-prim_write(Env env, Val args)
+prim_write(Tsp st, Hash env, Val args)
 {
 	Val v;
 	FILE *f;
 	tsp_arg_min(args, "write", 2);
-	if (!(v = tisp_eval_list(env, args)))
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 
 	/* first argument can either be the symbol stdout or stderr,
@@ -54,52 +54,52 @@ prim_write(Env env, Val args)
 		else
 			tisp_print(f, car(v));
 	fflush(f);
-	return env->none;
+	return st->none;
 }
 
 /* return string of given file or read from stdin */
 static Val
-prim_read(Env env, Val args)
+prim_read(Tsp st, Hash env, Val args)
 {
 	Val v;
 	char *file, *fname = NULL; /* read from stdin by default */
 	if (list_len(args) > 1)
 		tsp_warnf("read: expected 0 or 1 argument, received %d", list_len(args));
 	if (list_len(args) == 1) { /* if file name given as string, read it */
-		if (!(v = tisp_eval(env, car(args))))
+		if (!(v = tisp_eval(st, env, car(args))))
 			return NULL;
 		tsp_arg_type(v, "read", STRING);
 		fname = v->v.s;
 	}
 	if (!(file = tisp_read_file(fname)))
-		return env->nil;
-	return mk_str(env, file);
+		return st->nil;
+	return mk_str(st, file);
 }
 
 /* parse string as tisp expression, return (quit) if given nil */
 /* TODO parse more than 1 expression */
 static Val
-prim_parse(Env env, Val args)
+prim_parse(Tsp st, Hash env, Val args)
 {
 	Val v;
-	char *file = env->file;
-	size_t filec = env->filec;
+	char *file = st->file;
+	size_t filec = st->filec;
 	tsp_arg_num(args, "parse", 1);
-	if (!(v = tisp_eval(env, car(args))))
+	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
 	if (nilp(v))
-		return mk_pair(mk_sym(env, "quit"), env->nil);
+		return mk_pair(mk_sym(st, "quit"), st->nil);
 	tsp_arg_type(v, "parse", STRING);
-	env->file = v->v.s;
-	env->filec = 0;
-	v = tisp_read(env);
-	env->file = file;
-	env->filec = filec;
-	return v ? v : env->none;
+	st->file = v->v.s;
+	st->filec = 0;
+	v = tisp_read(st);
+	st->file = file;
+	st->filec = filec;
+	return v ? v : st->none;
 }
 
 void
-tib_env_io(Env env)
+tib_env_io(Tsp st)
 {
 	tsp_env_fn(write);
 	tsp_env_fn(read);

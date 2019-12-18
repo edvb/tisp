@@ -63,8 +63,8 @@
 
 ;;; Control Flow
 ; TODO if d = pair and car d = else use cdr d
-(defmacro (if con c d)
-  (list 'cond (list con c) (list t d)))
+(defmacro (if con a b)
+  (list 'cond (list con a) (list t b)))
 (define else t)
 (defmacro (when con . body)
   (list 'cond (list con (cons 'do body))))

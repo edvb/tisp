@@ -56,13 +56,13 @@
 		                type_str(TYPE), type_str(ARG->t));             \
 } while(0)
 
-#define tsp_env_name_fn(NAME, FN) tisp_env_add(env, #NAME, mk_prim(prim_##FN))
+#define tsp_env_name_fn(NAME, FN) tisp_env_add(st, #NAME, mk_prim(prim_##FN))
 #define tsp_env_fn(NAME)          tsp_env_name_fn(NAME, NAME)
-#define tsp_include_tib(NAME)     void tib_env_##NAME(Env)
+#define tsp_include_tib(NAME)     void tib_env_##NAME(Tsp)
 
-#define tsp_finc(ENV) ENV->filec++
-#define tsp_fgetat(ENV, O) ENV->file[ENV->filec+O]
-#define tsp_fget(ENV) tsp_fgetat(ENV,0)
+#define tsp_finc(ST) ST->filec++
+#define tsp_fgetat(ST, O) ST->file[ST->filec+O]
+#define tsp_fget(ST) tsp_fgetat(ST,0)
 
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
@@ -76,7 +76,7 @@
 
 struct Val;
 typedef struct Val *Val;
-typedef struct Env *Env;
+typedef struct Tsp *Tsp;
 
 /* fraction */
 typedef struct {
@@ -95,19 +95,20 @@ typedef struct Hash {
 } *Hash;
 
 /* basic function written in C, not lisp */
-typedef Val (*Prim)(Env, Val);
+typedef Val (*Prim)(Tsp, Hash, Val);
 
 /* function written directly in lisp instead of C */
 typedef struct {
 	Val args;
 	Val body;
-	Env env;
+	Hash env;
 } Func;
 
 typedef struct {
 	Val car, cdr;
 } Pair;
 
+/* possible tisp object types */
 typedef enum {
 	NONE      = 1 << 0,
 	NIL       = 1 << 1,
@@ -123,8 +124,10 @@ typedef enum {
 } Type;
 #define RATIONAL   (INTEGER | RATIO)
 #define NUMBER     (RATIONAL | DECIMAL)
+/* TODO rename to math ? */
 #define EXPRESSION (NUMBER | SYMBOL | PAIR)
 
+/* tisp object */
 struct Val {
 	Type t; /* NONE, NIL */
 	union {
@@ -136,11 +139,12 @@ struct Val {
 	} v;
 };
 
-struct Env {
+/* tisp state and global environment */
+struct Tsp {
 	char *file;
 	size_t filec;
 	Val none, nil, t;
-	Hash h, strs, syms;
+	Hash global, strs, syms;
 	void **libh;
 	size_t libhc;
 };
@@ -149,25 +153,24 @@ char *type_str(Type t);
 int list_len(Val v);
 
 Val mk_int(int i);
-Val mk_str(Env env, char *s);
-Val mk_prim(Prim prim);
 Val mk_dec(double d);
 Val mk_rat(int num, int den);
-Val mk_sym(Env env, char *s);
-Val mk_func(Type t, Val args, Val body, Env env);
+Val mk_str(Tsp st, char *s);
+Val mk_sym(Tsp st, char *s);
+Val mk_prim(Prim prim);
+Val mk_func(Type t, Val args, Val body, Hash env);
 Val mk_pair(Val a, Val b);
-Val mk_list(Env env, int n, Val *a);
+Val mk_list(Tsp st, int n, Val *a);
 
-Val tisp_read(Env env);
-Val tisp_read_line(Env env);
-Val tisp_eval_list(Env env, Val v);
-Val tisp_eval(Env env, Val v);
+Val tisp_read(Tsp st);
+Val tisp_read_line(Tsp st);
+Val tisp_eval_list(Tsp st, Hash env, Val v);
+Val tisp_eval(Tsp st, Hash env, Val v);
 void tisp_print(FILE *f, Val v);
 
 char *tisp_read_file(char *fname);
-Val tisp_parse_file(Env env, char *fname);
+Val tisp_parse_file(Tsp st, char *fname);
 
-void tisp_env_add(Env e, char *key, Val v);
-Env  tisp_env_init(size_t cap);
-void tisp_env_lib(Env env, char* lib);
-void tisp_env_free(Env env);
+void tisp_env_add(Tsp st, char *key, Val v);
+Tsp  tisp_env_init(size_t cap);
+void tisp_env_lib(Tsp st, char* lib);

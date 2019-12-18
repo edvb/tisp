@@ -130,13 +130,13 @@ isdelim(int c)
 
 /* skip over comments and white space */
 static void
-skip_ws(Env env, int skipnl)
+skip_ws(Tsp st, int skipnl)
 {
 	const char *s = skipnl ? " \t\n" : " \t";
-	while (tsp_fget(env) && (strchr(s, tsp_fget(env)) || tsp_fget(env) == ';')) {
-		env->filec += strspn(env->file+env->filec, s); /* skip white space */
-		for (; tsp_fget(env) == ';'; tsp_finc(env)) /* skip comments until newline */
-			env->filec += strcspn(env->file+env->filec, "\n") - !skipnl;
+	while (tsp_fget(st) && (strchr(s, tsp_fget(st)) || tsp_fget(st) == ';')) {
+		st->filec += strspn(st->file+st->filec, s); /* skip white space */
+		for (; tsp_fget(st) == ';'; tsp_finc(st)) /* skip comments until newline */
+			st->filec += strcspn(st->file+st->filec, "\n") - !skipnl;
 	}
 }
 
@@ -312,19 +312,6 @@ hash_extend(Hash ht, Val args, Val vals)
 	return ht;
 }
 
-/* clean up hash table */
-static void
-hash_free(Hash ht)
-{
-	for (Hash h = ht; h; h = h->next) {
-		for (int i = 0; i < h->cap; i++)
-			if (h->items[i].key)
-				free(h->items[i].val);
-		free(h->items);
-	}
-	free(ht);
-}
-
 /* make types */
 
 Val
@@ -366,30 +353,30 @@ mk_rat(int num, int den)
 }
 
 Val
-mk_str(Env env, char *s)
+mk_str(Tsp st, char *s)
 {
 	Val ret;
-	if ((ret = hash_get(env->strs, s)))
+	if ((ret = hash_get(st->strs, s)))
 		return ret;
 	ret = emalloc(sizeof(struct Val));
 	ret->t = STRING;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
 	strcpy(ret->v.s, s);
-	hash_add(env->strs, s, ret);
+	hash_add(st->strs, s, ret);
 	return ret;
 }
 
 Val
-mk_sym(Env env, char *s)
+mk_sym(Tsp st, char *s)
 {
 	Val ret;
-	if ((ret = hash_get(env->syms, s)))
+	if ((ret = hash_get(st->syms, s)))
 		return ret;
 	ret = emalloc(sizeof(struct Val));
 	ret->t = SYMBOL;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
 	strcpy(ret->v.s, s);
-	hash_add(env->syms, s, ret);
+	hash_add(st->syms, s, ret);
 	return ret;
 }
 
@@ -403,7 +390,7 @@ mk_prim(Prim pr)
 }
 
 Val
-mk_func(Type t, Val args, Val body, Env env)
+mk_func(Type t, Val args, Val body, Hash env)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = t;
@@ -424,10 +411,10 @@ mk_pair(Val a, Val b)
 }
 
 Val
-mk_list(Env env, int n, Val *a)
+mk_list(Tsp st, int n, Val *a)
 {
 	int i;
-	Val b = env->nil;
+	Val b = st->nil;
 	for (i = n-1; i >= 0; i--)
 		b = mk_pair(a[i], b);
 	return b;
@@ -437,35 +424,35 @@ mk_list(Env env, int n, Val *a)
 
 /* read first character of number to determine sign */
 static int
-read_sign(Env env)
+read_sign(Tsp st)
 {
-	switch (tsp_fget(env)) {
-	case '-': tsp_finc(env); return -1;
-	case '+': tsp_finc(env); return 1;
+	switch (tsp_fget(st)) {
+	case '-': tsp_finc(st); return -1;
+	case '+': tsp_finc(st); return 1;
 	default: return 1;
 	}
 }
 
 /* return read integer */
 static int
-read_int(Env env)
+read_int(Tsp st)
 {
 	int ret = 0;
-	for (; tsp_fget(env) && isdigit(tsp_fget(env)); tsp_finc(env))
-		ret = ret * 10 + tsp_fget(env) - '0';
+	for (; tsp_fget(st) && isdigit(tsp_fget(st)); tsp_finc(st))
+		ret = ret * 10 + tsp_fget(st) - '0';
 	return ret;
 }
 
 /* return read scientific notation */
 static Val
-read_sci(Env env, double val, int isint)
+read_sci(Tsp st, double val, int isint)
 {
-	if (tolower(tsp_fget(env)) != 'e')
+	if (tolower(tsp_fget(st)) != 'e')
 		goto finish;
 
-	tsp_finc(env);
-	double sign = read_sign(env) == 1 ? 10.0 : 0.1;
-	for (int expo = read_int(env); expo--; val *= sign) ;
+	tsp_finc(st);
+	double sign = read_sign(st) == 1 ? 10.0 : 0.1;
+	for (int expo = read_int(st); expo--; val *= sign) ;
 
 finish:
 	if (isint)
@@ -475,26 +462,26 @@ finish:
 
 /* return read number */
 static Val
-read_num(Env env)
+read_num(Tsp st)
 {
-	int sign = read_sign(env);
-	int num = read_int(env);
+	int sign = read_sign(st);
+	int num = read_int(st);
 	size_t oldc;
-	switch (tsp_fget(env)) {
+	switch (tsp_fget(st)) {
 	case '/':
-		if (!isnum(env->file + ++env->filec))
+		if (!isnum(st->file + ++st->filec))
 			tsp_warn("incorrect ratio format, no denominator found");
-		return mk_rat(sign * num, read_sign(env) * read_int(env));
+		return mk_rat(sign * num, read_sign(st) * read_int(st));
 	case '.':
-		tsp_finc(env);
-		oldc = env->filec;
-		double d = (double) read_int(env);
-		int size = env->filec - oldc;
+		tsp_finc(st);
+		oldc = st->filec;
+		double d = (double) read_int(st);
+		int size = st->filec - oldc;
 		while (size--)
 			d /= 10.0;
-		return read_sci(env, sign * (num+d), 0);
+		return read_sci(st, sign * (num+d), 0);
 	default:
-		return read_sci(env, sign * num, 1);
+		return read_sci(st, sign * num, 1);
 	}
 }
 
@@ -528,63 +515,63 @@ esc_str(char *s)
 
 /* return read string */
 static Val
-read_str(Env env)
+read_str(Tsp st)
 {
 	int len = 0;
-	char *s = env->file + ++env->filec; /* skip starting open quote */
-	for (; tsp_fget(env) != '"'; tsp_finc(env), len++)
-		if (!tsp_fget(env))
+	char *s = st->file + ++st->filec; /* skip starting open quote */
+	for (; tsp_fget(st) != '"'; tsp_finc(st), len++)
+		if (!tsp_fget(st))
 			tsp_warn("reached end before closing double quote");
-		else if (tsp_fget(env) == '\\' && tsp_fgetat(env, 1) == '"')
-			tsp_finc(env), len++;
-	tsp_finc(env); /* skip last closing quote */
+		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, 1) == '"')
+			tsp_finc(st), len++;
+	tsp_finc(st); /* skip last closing quote */
 	s[len] = '\0'; /* TODO remember string length */
-	return mk_str(env, esc_str(s));
+	return mk_str(st, esc_str(s));
 }
 
 /* return read symbol */
 static Val
-read_sym(Env env)
+read_sym(Tsp st)
 {
 	int n = 1, i = 0;
 	char *sym = emalloc(n);
-	for (; tsp_fget(env) && issym(tsp_fget(env)); tsp_finc(env)) {
-		sym[i++] = tsp_fget(env);
+	for (; tsp_fget(st) && issym(tsp_fget(st)); tsp_finc(st)) {
+		sym[i++] = tsp_fget(st);
 		if (i == n) {
 			n *= 2;
 			sym = erealloc(sym, n);
 		}
 	}
 	sym[i] = '\0';
-	return mk_sym(env, sym);
+	return mk_sym(st, sym);
 }
 
 /* return read string containing a list */
 static Val
-read_pair(Env env)
+read_pair(Tsp st)
 {
 	Val a, b;
-	skip_ws(env, 1);
-	if (tsp_fget(env) == ')') {
-		tsp_finc(env);
-		skip_ws(env, 1);
-		return env->nil;
+	skip_ws(st, 1);
+	if (tsp_fget(st) == ')') {
+		tsp_finc(st);
+		skip_ws(st, 1);
+		return st->nil;
 	}
 	/* TODO simplify read_pair by supporting (. x) => x */
-	if (!(a = tisp_read(env)))
+	if (!(a = tisp_read(st)))
 		return NULL;
-	skip_ws(env, 1);
-	if (tsp_fget(env) == '.' && isdelim(tsp_fgetat(env,1))) {
-		tsp_finc(env);
-		if (!(b = tisp_read(env)))
+	skip_ws(st, 1);
+	if (tsp_fget(st) == '.' && isdelim(tsp_fgetat(st,1))) {
+		tsp_finc(st);
+		if (!(b = tisp_read(st)))
 			return NULL;
-		skip_ws(env, 1);
-		if (tsp_fget(env) != ')')
+		skip_ws(st, 1);
+		if (tsp_fget(st) != ')')
 			tsp_warn("did not find closing ')'");
-		tsp_finc(env);
-		skip_ws(env, 1);
+		tsp_finc(st);
+		skip_ws(st, 1);
 	} else {
-		if (!(b = read_pair(env)))
+		if (!(b = read_pair(st)))
 			return NULL;
 	}
 	return mk_pair(a, b);
@@ -592,37 +579,37 @@ read_pair(Env env)
 
 /* reads given string returning its tisp value */
 Val
-tisp_read(Env env)
+tisp_read(Tsp st)
 {
 	char *shorthands[] = {
 		"'", "quote",
 		"`", "quasiquote",
 		",", "unquote",
 	};
-	skip_ws(env, 1);
-	if (strlen(env->file+env->filec) == 0)
-		return env->none;
-	if (isnum(env->file+env->filec))
-		return read_num(env);
-	if (tsp_fget(env) == '"')
-		return read_str(env);
+	skip_ws(st, 1);
+	if (strlen(st->file+st->filec) == 0)
+		return st->none;
+	if (isnum(st->file+st->filec))
+		return read_num(st);
+	if (tsp_fget(st) == '"')
+		return read_str(st);
 	for (int i = 0; i < LEN(shorthands); i += 2) {
-		if (tsp_fget(env) == *shorthands[i]) {
+		if (tsp_fget(st) == *shorthands[i]) {
 			Val v;
-			tsp_finc(env);
-			if (!(v = tisp_read(env)))
+			tsp_finc(st);
+			if (!(v = tisp_read(st)))
 				return NULL;
-			return mk_pair(mk_sym(env, shorthands[i+1]),
-			               mk_pair(v, env->nil));
+			return mk_pair(mk_sym(st, shorthands[i+1]),
+			               mk_pair(v, st->nil));
 		}
 	}
-	if (issym(tsp_fget(env)))
-		return read_sym(env);
-	if (tsp_fget(env) == '(') {
-		tsp_finc(env);
-		return read_pair(env);
+	if (issym(tsp_fget(st)))
+		return read_sym(st);
+	if (tsp_fget(st) == '(') {
+		tsp_finc(st);
+		return read_pair(st);
 	}
-	tsp_warnf("could not read given input '%s'", env->file+env->filec);
+	tsp_warnf("could not read given input '%s'", st->file+st->filec);
 }
 
 /* return string containing contents of file name */
@@ -652,19 +639,19 @@ tisp_read_file(char *fname)
 
 /* read given file name returning its tisp value */
 Val
-tisp_parse_file(Env env, char *fname)
+tisp_parse_file(Tsp st, char *fname)
 {
-	Val ret = mk_pair(NULL, env->nil);
+	Val ret = mk_pair(NULL, st->nil);
 	Val v, last = ret;
-	char *file = env->file;
-	size_t filec = env->filec;
-	if (!(env->file = tisp_read_file(fname)))
+	char *file = st->file;
+	size_t filec = st->filec;
+	if (!(st->file = tisp_read_file(fname)))
 		return ret;
-	for (env->filec = 0; tsp_fget(env) && (v = tisp_read(env)); last = cdr(last))
-		cdr(last) = mk_pair(v, env->nil);
-	free(env->file);
-	env->file = file;
-	env->filec = filec;
+	for (st->filec = 0; tsp_fget(st) && (v = tisp_read(st)); last = cdr(last))
+		cdr(last) = mk_pair(v, st->nil);
+	free(st->file);
+	st->file = file;
+	st->filec = filec;
 	return cdr(ret);
 }
 
@@ -672,47 +659,50 @@ tisp_parse_file(Env env, char *fname)
 
 /* evaluate each element of list */
 Val
-tisp_eval_list(Env env, Val v)
+tisp_eval_list(Tsp st, Hash env, Val v)
 {
-	Val cur = mk_pair(NULL, env->none);
+	Val cur = mk_pair(NULL, st->none);
 	Val ret = cur, ev;
 	for (; !nilp(v); v = cdr(v), cur = cdr(cur)) {
 		if (v->t != PAIR) {
-			if (!(ev = tisp_eval(env, v)))
+			if (!(ev = tisp_eval(st, env, v)))
 				return NULL;
 			cdr(cur) = ev;
 			return cdr(ret);
 		}
-		if (!(ev = tisp_eval(env, car(v))))
+		if (!(ev = tisp_eval(st, env, car(v))))
 			return NULL;
-		cdr(cur) = mk_pair(ev, env->none);
+		cdr(cur) = mk_pair(ev, st->none);
 	}
-	cdr(cur) = env->nil;
+	cdr(cur) = st->nil;
 	return cdr(ret);
 }
 
 /* evaluate procedure f of name v with arguments */
 static Val
-eval_proc(Env env, Val v, Val f, Val args)
+eval_proc(Tsp st, Hash env, Val v, Val f, Val args)
 {
 	Val ret;
+	Hash e;
 	switch (f->t) {
 	case PRIMITIVE:
-		return (*f->v.pr)(env, args);
+		return (*f->v.pr)(st, env, args);
 	case FUNCTION:
 		/* tail call into the function body with the extended env */
-		if (!(args = tisp_eval_list(env, args)))
+		if (!(args = tisp_eval_list(st, env, args)))
 			return NULL;
 		/* FALLTHROUGH */
 	case MACRO:
 		tsp_arg_num(args, v->t == SYMBOL ? v->v.s : "lambda", list_len(f->v.f.args));
-		env->h = hash_new(32, env->h);
-		if (!(hash_extend(env->h, f->v.f.args, args)))
+		e = hash_new(8, f->v.f.env);
+		/* TODO call hash_extend in hash_new to know new hash size */
+		if (!(hash_extend(e, f->v.f.args, args)))
 			return NULL;
-		ret = list_last(tisp_eval_list(env, f->v.f.body));
+		if (!(ret = tisp_eval_list(st, e, f->v.f.body)))
+			return NULL;
+		ret = list_last(ret);
 		if (f->t == MACRO)
-			ret = tisp_eval(env, ret);
-		env->h = env->h->next;
+			ret = tisp_eval(st, env, ret);
 		return ret;
 	default:
 		tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
@@ -721,12 +711,12 @@ eval_proc(Env env, Val v, Val f, Val args)
 
 /* evaluate given value */
 Val
-tisp_eval(Env env, Val v)
+tisp_eval(Tsp st, Hash env, Val v)
 {
 	Val f;
 	switch (v->t) {
 	case SYMBOL:
-		if (!(f = hash_get(env->h, v->v.s)))
+		if (!(f = hash_get(env, v->v.s)))
 #ifdef TSP_SYM_RETURN
 			return v;
 #else
@@ -734,9 +724,9 @@ tisp_eval(Env env, Val v)
 #endif
 		return f;
 	case PAIR:
-		if (!(f = tisp_eval(env, car(v))))
+		if (!(f = tisp_eval(st, env, car(v))))
 			return NULL;
-		return eval_proc(env, car(v), f, cdr(v));
+		return eval_proc(st, env, car(v), f, cdr(v));
 	default:
 		return v;
 	}
@@ -815,11 +805,11 @@ tisp_print(FILE *f, Val v)
 
 /* return first element of list */
 static Val
-prim_car(Env env, Val args)
+prim_car(Tsp st, Hash env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "car", 1);
-	if (!(v = tisp_eval_list(env, args)))
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	tsp_arg_type(car(v), "car", PAIR);
 	return caar(v);
@@ -827,11 +817,11 @@ prim_car(Env env, Val args)
 
 /* return elements of a list after the first */
 static Val
-prim_cdr(Env env, Val args)
+prim_cdr(Tsp st, Hash env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "cdr", 1);
-	if (!(v = tisp_eval_list(env, args)))
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	tsp_arg_type(car(v), "cdr", PAIR);
 	return cdar(v);
@@ -839,18 +829,18 @@ prim_cdr(Env env, Val args)
 
 /* return new pair */
 static Val
-prim_cons(Env env, Val args)
+prim_cons(Tsp st, Hash env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "cons", 2);
-	if (!(v = tisp_eval_list(env, args)))
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	return mk_pair(car(v), cadr(v));
 }
 
 /* do not evaluate argument */
 static Val
-prim_quote(Env env, Val args)
+prim_quote(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "quote", 1);
 	return car(args);
@@ -858,64 +848,64 @@ prim_quote(Env env, Val args)
 
 /* returns nothing */
 static Val
-prim_void(Env env, Val args)
+prim_void(Tsp st, Hash env, Val args)
 {
-	return env->none;
+	return st->none;
 }
 
 /* evaluate argument given */
 static Val
-prim_eval(Env env, Val args)
+prim_eval(Tsp st, Hash env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "eval", 1);
-	if (!(v = tisp_eval(env, car(args))))
+	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
-	return (v = tisp_eval(env, v)) ? v : env->none;
+	return (v = tisp_eval(st, env, v)) ? v : st->none;
 }
 
 /* test equality of all values given */
 static Val
-prim_eq(Env env, Val args)
+prim_eq(Tsp st, Hash env, Val args)
 {
 	Val v;
-	if (!(v = tisp_eval_list(env, args)))
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	if (nilp(v))
-		return env->t;
+		return st->t;
 	for (; !nilp(cdr(v)); v = cdr(v))
 		if (!vals_eq(car(v), cadr(v)))
-			return env->nil;
-	return env->t;
+			return st->nil;
+	return st->t;
 }
 
 /* evaluates all expressions if their conditions are met */
 static Val
-prim_cond(Env env, Val args)
+prim_cond(Tsp st, Hash env, Val args)
 {
 	Val v, cond;
 	for (v = args; !nilp(v); v = cdr(v))
-		if (!(cond = tisp_eval(env, caar(v))))
+		if (!(cond = tisp_eval(st, env, caar(v))))
 			return NULL;
 		else if (!nilp(cond)) /* TODO incorporate else directly into cond */
-			return tisp_eval(env, car(cdar(v)));
-	return env->none;
+			return tisp_eval(st, env, car(cdar(v)));
+	return st->none;
 }
 
 /* return type of tisp value */
 static Val
-prim_type(Env env, Val args)
+prim_type(Tsp st, Hash env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "type", 1);
-	if (!(v = tisp_eval(env, car(args))))
+	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
-	return mk_str(env, type_str(v->t));
+	return mk_str(st, type_str(v->t));
 }
 
 /* creates new tisp lambda function */
 static Val
-prim_lambda(Env env, Val args)
+prim_lambda(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "lambda", 2);
 	return mk_func(FUNCTION, car(args), cdr(args), env);
@@ -923,7 +913,7 @@ prim_lambda(Env env, Val args)
 
 /* creates new tisp defined macro */
 static Val
-prim_macro(Env env, Val args)
+prim_macro(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "macro", 2);
 	return mk_func(MACRO, car(args), cdr(args), env);
@@ -933,7 +923,7 @@ prim_macro(Env env, Val args)
  * if pair is given as name of variable, creates function with the car as the
  * function name and the cdr the function arguments */
 static Val
-prim_define(Env env, Val args)
+prim_define(Tsp st, Hash env, Val args)
 {
 	Val sym, val;
 	Hash h;
@@ -947,30 +937,30 @@ prim_define(Env env, Val args)
 		val = mk_func(FUNCTION, cdar(args), cdr(args), env);
 	} else if (car(args)->t == SYMBOL) {
 		sym = car(args);
-		val = tisp_eval(env, cadr(args));
+		val = tisp_eval(st, env, cadr(args));
 	} else
 		tsp_warn("define: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
 	/* last linked hash is global namespace */
-	for (h = env->h; h->next; h = h->next) ;
+	for (h = env; h->next; h = h->next) ;
 	hash_add(h, sym->v.s, val);
-	return env->none;
+	return st->none;
 }
 
 /* set symbol to new value */
 static Val
-prim_set(Env env, Val args)
+prim_set(Tsp st, Hash env, Val args)
 {
 	Val val;
 	Hash h;
 	Entry e = NULL;
 	tsp_arg_num(args, "set!", 2);
 	tsp_arg_type(car(args), "set!", SYMBOL);
-	if (!(val = tisp_eval(env, cadr(args))))
+	if (!(val = tisp_eval(st, env, cadr(args))))
 		return NULL;
 	/* find first occurrence of symbol */
-	for (h = env->h; h; h = h->next) {
+	for (h = env; h; h = h->next) {
 		e = entry_get(h, car(args)->v.s);
 		if (e->key)
 			break;
@@ -978,7 +968,7 @@ prim_set(Env env, Val args)
 	if (!e || !e->key)
 		tsp_warnf("set!: variable %s is not defined", car(args)->v.s);
 	e->val = val;
-	return env->none;
+	return st->none;
 }
 
 /* loads tisp file or C dynamic library */
@@ -986,10 +976,10 @@ prim_set(Env env, Val args)
 /* TODO only use dlopen if -ldl is given with TIB_DYNAMIC */
 /* TODO define load in lisp which calls load-dl */
 static Val
-prim_load(Env env, Val args)
+prim_load(Tsp st, Hash env, Val args)
 {
 	Val v;
-	void (*tibenv)(Env);
+	void (*tibenv)(Tsp);
 	char *name;
 	const char *paths[] = {
 #ifdef DEBUG
@@ -999,7 +989,7 @@ prim_load(Env env, Val args)
 	};
 
 	tsp_arg_num(args, "load", 1);
-	if (!(v = tisp_eval(env, car(args))))
+	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
 	tsp_arg_type(v, "load", STRING);
 
@@ -1009,20 +999,20 @@ prim_load(Env env, Val args)
 		strcat(name, v->v.s);
 		strcat(name, ".tsp");
 		if (access(name, R_OK) != -1) {
-			tisp_eval_list(env, tisp_parse_file(env, name));
+			tisp_eval_list(st, env, tisp_parse_file(st, name));
 			free(name);
-			return env->none;
+			return st->none;
 		}
 	}
 
 	/* If not tisp file, try loading shared object library */
-	env->libh = erealloc(env->libh, (env->libhc+1)*sizeof(void*));
+	st->libh = erealloc(st->libh, (st->libhc+1)*sizeof(void*));
 
 	name = erealloc(name, (strlen(v->v.s)+10) * sizeof(char));
 	strcpy(name, "libtib");
 	strcat(name, v->v.s);
 	strcat(name, ".so");
-	if (!(env->libh[env->libhc] = dlopen(name, RTLD_LAZY))) {
+	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY))) {
 		free(name);
 		tsp_warnf("load: could not load '%s':\n%s", v->v.s, dlerror());
 	}
@@ -1031,24 +1021,24 @@ prim_load(Env env, Val args)
 	name = erealloc(name, (strlen(v->v.s)+9) * sizeof(char));
 	strcpy(name, "tib_env_");
 	strcat(name, v->v.s);
-	tibenv = dlsym(env->libh[env->libhc], name);
+	tibenv = dlsym(st->libh[st->libhc], name);
 	if (dlerror()) {
 		free(name);
 		tsp_warnf("load: could not run '%s':\n%s", v->v.s, dlerror());
 	}
-	(*tibenv)(env);
+	(*tibenv)(st);
 	free(name);
 
-	env->libhc++;
-	return env->none;
+	st->libhc++;
+	return st->none;
 }
 
 /* display message and return error */
 static Val
-prim_error(Env env, Val args)
+prim_error(Tsp st, Hash env, Val args)
 {
 	Val v;
-	if (!(v = tisp_eval_list(env, args)))
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	/* TODO have error auto print function name that was pre-defined */
 	tsp_arg_min(v, "error", 2);
@@ -1065,39 +1055,39 @@ prim_error(Env env, Val args)
 
 /* list tisp version */
 static Val
-prim_version(Env env, Val args)
+prim_version(Tsp st, Hash env, Val args)
 {
-	return mk_str(env, "0.0");
+	return mk_str(st, "0.0");
 }
 
 /* environment */
 
 /* add new variable of name key and value v to the given environment */
 void
-tisp_env_add(Env e, char *key, Val v)
+tisp_env_add(Tsp st, char *key, Val v)
 {
-	hash_add(e->h, key, v);
+	hash_add(st->global, key, v);
 }
 
-/* initialise tisp's environment */
-Env
+/* initialise tisp's state and global environment */
+Tsp
 tisp_env_init(size_t cap)
 {
-	Env env = emalloc(sizeof(struct Env));
+	Tsp st = emalloc(sizeof(struct Tsp));
 
-	env->file = NULL;
-	env->filec = 0;
+	st->file = NULL;
+	st->filec = 0;
 
-	env->nil = emalloc(sizeof(struct Val));
-	env->nil->t = NIL;
-	env->none = emalloc(sizeof(struct Val));
-	env->none->t = NONE;
-	env->t = emalloc(sizeof(struct Val));
-	env->t->t = SYMBOL;
-	env->t->v.s = "t";
+	st->nil = emalloc(sizeof(struct Val));
+	st->nil->t = NIL;
+	st->none = emalloc(sizeof(struct Val));
+	st->none->t = NONE;
+	st->t = emalloc(sizeof(struct Val));
+	st->t->t = SYMBOL;
+	st->t->v.s = "t";
 
-	env->h = hash_new(cap, NULL);
-	tisp_env_add(env, "t", env->t);
+	st->global = hash_new(cap, NULL);
+	tisp_env_add(st, "t", st->t);
 	tsp_env_fn(car);
 	tsp_env_fn(cdr);
 	tsp_env_fn(cons);
@@ -1115,51 +1105,25 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(error);
 	tsp_env_fn(version);
 
-	env->strs = hash_new(cap, NULL);
-	env->syms = hash_new(cap, NULL);
+	st->strs = hash_new(cap, NULL);
+	st->syms = hash_new(cap, NULL);
 
-	env->libh = NULL;
-	env->libhc = 0;
+	st->libh = NULL;
+	st->libhc = 0;
 
-	return env;
+	return st;
 }
 
 void
-tisp_env_lib(Env env, char* lib)
+tisp_env_lib(Tsp st, char* lib)
 {
 	Val v;
-	char *file = env->file;
-	size_t filec = env->filec;
-	env->file = lib;
-	env->filec = 0;
-	if ((v = tisp_read(env)))
-		tisp_eval_list(env, v);
-	env->file = file;
-	env->filec = filec;
-}
-
-void
-tisp_env_free(Env env)
-{
-	int i;
-
-	hash_free(env->h);
-	hash_free(env->strs);
-	hash_free(env->syms);
-	for (i = 0; i < env->libhc; i++)
-		dlclose(env->libh[i]);
-	free(env->nil);
-	free(env->none);
-	free(env);
-}
-
-void
-val_free(Val v)
-{
-	if (v->t == PAIR) {
-		val_free(car(v));
-		val_free(cdr(v));
-	}
-	if (v->t != NIL)
-		free(v);
+	char *file = st->file;
+	size_t filec = st->filec;
+	st->file = lib;
+	st->filec = 0;
+	if ((v = tisp_read(st)))
+		tisp_eval_list(st, st->global, v);
+	st->file = file;
+	st->filec = filec;
 }
