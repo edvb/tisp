@@ -926,7 +926,6 @@ static Val
 prim_define(Tsp st, Hash env, Val args)
 {
 	Val sym, val;
-	Hash h;
 	tsp_arg_min(args, "define", 2);
 	if (car(args)->t == PAIR) {
 		sym = caar(args);
@@ -942,9 +941,7 @@ prim_define(Tsp st, Hash env, Val args)
 		tsp_warn("define: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
-	/* last linked hash is global namespace */
-	for (h = env; h->next; h = h->next) ;
-	hash_add(h, sym->v.s, val);
+	hash_add(env, sym->v.s, val);
 	return st->none;
 }
 
