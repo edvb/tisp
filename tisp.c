@@ -861,7 +861,7 @@ prim_eval(Tsp st, Hash env, Val args)
 	tsp_arg_num(args, "eval", 1);
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
-	return (v = tisp_eval(st, env, v)) ? v : st->none;
+	return (v = tisp_eval(st, st->global, v)) ? v : st->none;
 }
 
 /* test equality of all values given */
