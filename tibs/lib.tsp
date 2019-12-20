@@ -71,7 +71,13 @@
 (defmacro (unless con . body)
   (list 'cond (list (list not con) (cons 'do body))))
 (defmacro (let vars . body)
-  (cons (list* 'lambda (map car vars) body) (map cadr vars)))
+  (list (list* 'lambda ()
+               (append
+                 (map
+                   (lambda (x)
+                     (list 'define (car x) (cadr x)))
+                   vars)
+                 body))))
 (defmacro (recur fn vars . body)
   (list* (list* 'lambda (cons fn (map car vars)) body)
          (list* 'lambda (map car vars) body)
