@@ -78,10 +78,12 @@
                      (list 'define (car x) (cadr x)))
                    vars)
                  body))))
-(defmacro (recur fn vars . body)
-  (list* (list* 'lambda (cons fn (map car vars)) body)
-         (list* 'lambda (map car vars) body)
-         (map cadr vars)))
+(defmacro (recur proc vars . body)
+  (list 'let
+        (list*
+          (list proc (list* 'lambda (map car vars) body))
+          vars)
+        (list* proc (map car vars))))
 
 ;;; Logic
 (define true t)
