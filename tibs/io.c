@@ -53,7 +53,10 @@ prim_write(Tsp st, Hash env, Val args)
 			fprintf(f, "%s", car(v)->v.s);
 		else
 			tisp_print(f, car(v));
-	fflush(f);
+	if (f == stdout || f == stderr)
+		fflush(f);
+	else
+		fclose(f);
 	return st->none;
 }
 
