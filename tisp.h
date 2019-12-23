@@ -165,6 +165,7 @@ Val mk_list(Tsp st, int n, Val *a);
 Val tisp_read(Tsp st);
 Val tisp_read_line(Tsp st);
 Val tisp_eval_list(Tsp st, Hash env, Val v);
+Val tisp_eval_seq(Tsp st, Hash env, Val v);
 Val tisp_eval(Tsp st, Hash env, Val v);
 void tisp_print(FILE *f, Val v);
 

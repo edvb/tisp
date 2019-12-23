@@ -163,15 +163,6 @@ list_len(Val v)
 	return nilp(v) ? len : -1;
 }
 
-/* return last element in list */
-static Val
-list_last(Val v)
-{
-	while (cdr(v)->t == PAIR)
-		v = cdr(v);
-	return nilp(cdr(v)) ? car(v) : cdr(v);
-}
-
 /* check if two values are equal */
 static int
 vals_eq(Val a, Val b)
@@ -678,6 +669,17 @@ tisp_eval_list(Tsp st, Hash env, Val v)
 	return cdr(ret);
 }
 
+/* evaluate all elements of list returning last */
+Val
+tisp_eval_seq(Tsp st, Hash env, Val v)
+{
+	Val ret = st->none;
+	for (; v->t == PAIR; v = cdr(v))
+		if (!(ret = tisp_eval(st, env, car(v))))
+			return NULL;
+	return nilp(v) ? ret : tisp_eval(st, env, v);
+}
+
 /* evaluate procedure f of name v with arguments */
 static Val
 eval_proc(Tsp st, Hash env, Val v, Val f, Val args)
@@ -698,9 +700,8 @@ eval_proc(Tsp st, Hash env, Val v, Val f, Val args)
 		/* TODO call hash_extend in hash_new to know new hash size */
 		if (!(hash_extend(e, f->v.f.args, args)))
 			return NULL;
-		if (!(ret = tisp_eval_list(st, e, f->v.f.body)))
+		if (!(ret = tisp_eval_seq(st, e, f->v.f.body)))
 			return NULL;
-		ret = list_last(ret);
 		if (f->t == MACRO)
 			ret = tisp_eval(st, env, ret);
 		return ret;
@@ -888,7 +889,7 @@ prim_cond(Tsp st, Hash env, Val args)
 		if (!(cond = tisp_eval(st, env, caar(v))))
 			return NULL;
 		else if (!nilp(cond)) /* TODO incorporate else directly into cond */
-			return tisp_eval(st, env, car(cdar(v)));
+			return tisp_eval_seq(st, env, cdar(v));
 	return st->none;
 }
 
@@ -996,7 +997,7 @@ prim_load(Tsp st, Hash env, Val args)
 		strcat(name, v->v.s);
 		strcat(name, ".tsp");
 		if (access(name, R_OK) != -1) {
-			tisp_eval_list(st, env, tisp_parse_file(st, name));
+			tisp_eval_seq(st, env, tisp_parse_file(st, name));
 			free(name);
 			return st->none;
 		}
@@ -1120,7 +1121,7 @@ tisp_env_lib(Tsp st, char* lib)
 	st->file = lib;
 	st->filec = 0;
 	if ((v = tisp_read(st)))
-		tisp_eval_list(st, st->global, v);
+		tisp_eval_seq(st, st->global, v);
 	st->file = file;
 	st->filec = filec;
 }

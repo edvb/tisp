@@ -31,8 +31,8 @@ main(int argc, char *argv[])
 
 	/* TODO reduce redunecy by setting argv[i][0] = '-' ? */
 	if (argc == 1)
-		if ((v = tisp_eval_list(st, st->global, tisp_parse_file(st, NULL))))
-			tisp_print(stdout, car(v));
+		if ((v = tisp_eval_seq(st, st->global, tisp_parse_file(st, NULL))))
+			tisp_print(stdout, v);
 
 	for (i = 1; i < argc; i++, v = NULL) {
 		if (argv[i][0] == '-') {
@@ -50,10 +50,10 @@ main(int argc, char *argv[])
 				fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
-				v = tisp_eval_list(st, st->global, tisp_parse_file(st, NULL));
+				v = tisp_eval_seq(st, st->global, tisp_parse_file(st, NULL));
 			}
 		} else { /* otherwise read as file */
-			v = tisp_eval_list(st, st->global, tisp_parse_file(st, argv[i]));
+			v = tisp_eval_seq(st, st->global, tisp_parse_file(st, argv[i]));
 		}
 		if (v) tisp_print(stdout, v);
 	}
