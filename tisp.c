@@ -632,7 +632,7 @@ tisp_read_file(char *fname)
 Val
 tisp_parse_file(Tsp st, char *fname)
 {
-	Val ret = mk_pair(NULL, st->nil);
+	Val ret = mk_pair(st->none, st->nil);
 	Val v, last = ret;
 	char *file = st->file;
 	size_t filec = st->filec;
