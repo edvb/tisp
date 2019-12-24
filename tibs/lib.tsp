@@ -75,7 +75,7 @@
                (append
                  (map
                    (lambda (x)
-                     (list 'define (car x) (cadr x)))
+                     (list* 'define (car x) (cdr x)))
                    vars)
                  body))))
 (defmacro (recur proc vars . body)
