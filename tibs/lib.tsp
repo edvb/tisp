@@ -177,6 +177,17 @@
 (define (member mem lst)
   (memp (lambda (x) (= mem x)) lst))
 
+; define English list element accessors
+(define rest cdr) ; TODO first and rest are generics for list, vec, str types
+(define first car)
+(let (((def name count)
+       (list 'define (list name 'x) (list 'nth 'x count))))
+  (recur f ((n 1)
+            (lst '(second third forth fifth sixth seventh eighth ninth tenth)))
+         (when lst
+           (eval (def (car lst) n))
+           (f (+ n 1) (cdr lst)))))
+
 ;;; Stacks
 (define (push stack val)
   (cons val stack))
