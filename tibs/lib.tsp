@@ -254,7 +254,10 @@
 
 ;;; IO
 (define (print . str) (apply write (list* 'stdout nil str)))
-(define (newline) (print "\n"))
+(define (newline . file)
+  (if (or (nil? file) (nil? (cdr file)))
+    (write (car (or file '(stdout))) file "\n")
+    (error 'newline "only zero or one file can be given")))
 (define (disp . str) (apply print str) (newline))
 ; TODO rename displayln, also quote syms and lists
 (define (disp-string . str)
