@@ -253,9 +253,10 @@
     (* n (! (- n 1)))))
 
 ;;; IO
-(define (print . str) (apply write (cons 'stdout str)))
+(define (print . str) (apply write (list* 'stdout nil str)))
 (define (newline) (print "\n"))
 (define (disp . str) (apply print str) (newline))
+; TODO rename displayln, also quote syms and lists
 (define (disp-string . str)
   (map (lambda (s)
          (if (string? s)

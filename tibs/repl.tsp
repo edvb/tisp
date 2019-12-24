@@ -10,6 +10,6 @@
 
 ;; simple repl, only requires io c library
 (define (repl-simple)
-  (write 'stdout "> ")
-  (write 'stdout (eval (parse (read))) "\n")
+  (write 'stdout nil "> ")
+  (write 'stdout nil (eval (parse (read))) "\n")
   (repl-simple))

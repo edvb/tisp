@@ -26,15 +26,20 @@
 #include "../tisp.h"
 
 /* write all arguemnts to given file, or stdout/stderr, without newline */
+/* first argument is file name, second is option to append file */
 static Val
 prim_write(Tsp st, Hash env, Val args)
 {
 	Val v;
 	FILE *f;
+	const char *mode = "w";
 	tsp_arg_min(args, "write", 2);
 	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 
+	/* if second argument is true, append file don't write over */
+	if (!nilp(cadr(v)))
+		mode = "a";
 	/* first argument can either be the symbol stdout or stderr,
 	 * or the file as a string */
 	if (car(v)->t == SYMBOL)
@@ -42,13 +47,13 @@ prim_write(Tsp st, Hash env, Val args)
 	else if (car(v)->t != STRING)
 		tsp_warnf("write: expected file name as string, received %s",
 		           type_str(car(v)->t));
-	else if (!(f = fopen(car(v)->v.s, "w")))
+	else if (!(f = fopen(car(v)->v.s, mode)))
 		tsp_warnf("write: could not load file '%s'", car(v)->v.s);
 	if (f == stderr && strncmp(car(v)->v.s, "stderr", 7))
 		tsp_warn("write: expected file name as string, "
 		                  "or symbol stdout/stderr");
 
-	for (v = cdr(v); !nilp(v); v = cdr(v))
+	for (v = cddr(v); !nilp(v); v = cdr(v))
 		if (car(v)->t & STRING) /* don't print quotes around string */
 			fprintf(f, "%s", car(v)->v.s);
 		else
