@@ -138,6 +138,7 @@
                (list 'quote x))
              (cons proc args))))
 
+; TODO many lsts for proc w/ multi arguments
 (define (map proc lst)
   (if lst
     (cons (proc (car lst))
@@ -150,6 +151,7 @@
            (f (cdr in) (cons (car in) out))
            out)))
 
+; TODO accept many lists to append
 (define (append x y)
   (cond
     ((pair? x) (cons (car x) (append (cdr x) y)))
@@ -234,15 +236,23 @@
 (define (logb b x) (/ (log x) (log b)))
 (define (log10 x) (logb 10. x))
 
-(define (csc x) (/ (sin x)))
-(define (sec x) (/ (cos x)))
-(define (cot x) (/ (tan x)))
-(define (arccsc x) (/ (arcsin x)))
-(define (arcsec x) (/ (arccos x)))
-(define (arccot x) (/ (arctan x)))
+; define inverse trig functions
+(let (((def inv func)
+       (eval (list 'define (list inv 'x) (list '/ (list func 'x)))))
+      ((def* inv func)
+       (def inv func)
+       (def (symbol inv 'h) (symbol func 'h)))
+      ((def** inv func)
+       (def* inv func)
+       (def* (symbol 'arc inv) (symbol 'arc func))))
+  (recur f ((lst '((csc sin) (sec cos) (cot tan))))
+         (when lst
+           (apply def** (car lst))
+           (f (cdr lst)))))
 
 (define (abs x) (if (>= x 0) x (- x)))
 (define (sgn x) (if (= x 0) 0 (/ (abs x) x)))
+; TODO many args
 (define (max a b) (if (> a b) a b))
 (define (min a b) (if (< a b) a b))
 
