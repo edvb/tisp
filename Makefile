@@ -50,6 +50,7 @@ clean:
 	@echo cleaning
 	@rm -f $(OBJ) $(LIB) $(EXE) test test.o libs.tsp.h
 
+# TODO don't cp some if not in dynamic mode
 install: all
 	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
 	@mkdir -p $(DESTDIR)$(PREFIX)/bin
@@ -78,10 +79,10 @@ uninstall:
 	@echo removing tisp libraries from $(DESTDIR)$(PREFIX)/share/tisp
 	@rm -rf $(DESTDIR)$(PREFIX)/share/tisp/
 
-test: $(OBJ) $(LIB) test.o
+test: $(OBJ) $(LIB) libs.tsp.h test.o
 	@echo running tests
 	@echo $(CC) -o test
-	@$(CC) -o test tisp.o tibs/math.o test.o $(LDFLAGS)
+	@$(CC) -o test tisp.o $(TIB:.c=.o) test.o $(LDFLAGS)
 	@./test
 
 man:

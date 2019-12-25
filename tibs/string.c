@@ -28,32 +28,61 @@ typedef Val (*MkFn)(Tsp, char*);
 
 /* TODO string tib: strlen lower upper strpos strsub */
 
-/* TODO return string val in val_string to be concated */
+/* TODO simplify by using fmemopen and tisp_print */
 static Val
-val_string(Tsp st, Val v, MkFn mk_fn)
+val_string(Tsp st, Val args, MkFn mk_fn)
 {
-	char s[43];
-	switch (v->t) {
-	case NONE:
-		return mk_fn(st, "void");
-	case NIL:
-		return mk_fn(st, "nil");
-	case INTEGER:
-		snprintf(s, 21, "%d", (int)v->v.n.num);
-		return mk_fn(st, s);
-	case DECIMAL:
-		snprintf(s, 17, "%.15g", v->v.n.num);
-		return mk_fn(st, s);
-	case RATIO:
-		snprintf(s, 43, "%d/%d", (int)v->v.n.num, (int)v->v.n.den);
-		return mk_fn(st, s);
-	case STRING:
-	case SYMBOL:
-		return mk_fn(st, v->v.s);
-	case PAIR:
-	default:
-		tsp_warnf("could not convert type %s into string", type_str(v->t));
+	Val v;
+	char s[43], *ret = calloc(1, sizeof(char));
+	int len = 1;
+	for (; !nilp(args); args = cdr(args)) {
+		v = car(args);
+		switch (v->t) {
+		case NONE:
+			len += 5;
+			ret = realloc(ret, len*sizeof(char));
+			strcat(ret, "void");
+			break;
+		case NIL:
+			len += 4;
+			ret = realloc(ret, len*sizeof(char));
+			strcat(ret, "nil");
+			break;
+		case INTEGER:
+			snprintf(s, 21, "%d", (int)v->v.n.num);
+			len += strlen(s);
+			s[len] = '\0';
+			ret = realloc(ret, len*sizeof(char));
+			strcat(ret, s);
+			break;
+		case DECIMAL:
+			snprintf(s, 17, "%.15g", v->v.n.num);
+			len += strlen(s);
+			s[len] = '\0';
+			ret = realloc(ret, len*sizeof(char));
+			strcat(ret, s);
+			break;
+		case RATIO:
+			snprintf(s, 43, "%d/%d", (int)v->v.n.num, (int)v->v.n.den);
+			len += strlen(s);
+			s[len] = '\0';
+			ret = realloc(ret, len*sizeof(char));
+			strcat(ret, s);
+			break;
+		case STRING:
+		case SYMBOL:
+			len += strlen(v->v.s);
+			ret = realloc(ret, len*sizeof(char));
+			strcat(ret, v->v.s);
+			break;
+		case PAIR:
+		default:
+			tsp_warnf("could not convert type %s into string", type_str(v->t));
+		}
 	}
+	v = mk_fn(st, ret);
+	free(ret);
+	return v;
 }
 
 /* TODO string and symbol: multi arguments to concat */
@@ -61,8 +90,8 @@ static Val
 prim_string(Tsp st, Hash env, Val args)
 {
 	Val v;
-	tsp_arg_num(args, "string", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
+	tsp_arg_min(args, "string", 1);
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	return val_string(st, v, mk_str);
 }
@@ -71,8 +100,8 @@ static Val
 prim_symbol(Tsp st, Hash env, Val args)
 {
 	Val v;
-	tsp_arg_num(args, "symbol", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
+	tsp_arg_min(args, "symbol", 1);
+	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	return val_string(st, v, mk_sym);
 }

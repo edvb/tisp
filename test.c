@@ -9,6 +9,7 @@
 #include "libs.tsp.h"
 
 tsp_include_tib(math);
+tsp_include_tib(string);
 
 #define LEN(X) (sizeof(X) / sizeof((X)[0]))
 
@@ -521,6 +522,7 @@ main(void)
 	int errors[LEN(tests)] = {0};
 	Tsp st = tisp_env_init(1024);
 	tib_env_math(st);
+	tib_env_string(st);
 	tisp_env_lib(st, libs_tsp);
 
 	for (int i = 0; ; i++) {
