@@ -26,7 +26,7 @@
 
 typedef Val (*MkFn)(Tsp, char*);
 
-/* TODO string tib: strlen lower upper strpos strsub */
+/* TODO string tib: lower upper strpos strsub */
 
 /* TODO simplify by using fmemopen and tisp_print */
 static Val
@@ -106,9 +106,23 @@ prim_symbol(Tsp st, Hash env, Val args)
 	return val_string(st, v, mk_sym);
 }
 
+static Val
+prim_strlen(Tsp st, Hash env, Val args)
+{
+	Val v;
+	tsp_arg_num(args, "symbol", 1);
+	if (!(v = tisp_eval(st, env, car(args))))
+		return NULL;
+	if (!(v->t & (STRING|SYMBOL)))
+		tsp_warnf("strlen: expected string or symbol, received %s",
+		                   type_str(v->t));
+	return mk_int(strlen(v->v.s));
+}
+
 void
 tib_env_string(Tsp st)
 {
 	tsp_env_fn(symbol);
 	tsp_env_fn(string);
+	tsp_env_fn(strlen);
 }
