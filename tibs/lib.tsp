@@ -121,11 +121,13 @@
     (last (cdr lst))
     (car lst)))
 
+; TODO make nth generic for list str vec, made up of list-ref vec-ref str-ref
 (define (nth lst i)
-  (when (pair? lst)
+  (if (pair? lst)
     (if (<= i 0)
       (car lst)
-      (nth (cdr lst) (- i 1)))))
+      (nth (cdr lst) (- i 1)))
+    (error 'nth "index of list out bounds")))
 
 (define (count x lst)
   (cond ((nil? lst) 0)
