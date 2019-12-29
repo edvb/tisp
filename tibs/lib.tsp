@@ -253,7 +253,7 @@
            (f (cdr lst)))))
 
 (define (abs x) (if (>= x 0) x (- x)))
-(define (sgn x) (if (= x 0) 0 (/ (abs x) x)))
+(define (sgn x) (if (= x 0) x (/ (abs x) x)))
 ; TODO many args
 (define (max a b) (if (> a b) a b))
 (define (min a b) (if (< a b) a b))
