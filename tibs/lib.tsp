@@ -147,6 +147,12 @@
           (map proc (cdr lst)))
     nil))
 
+(define (filter proc lst)
+  (cond
+    ((not (pair? lst)) nil)
+    ((proc (car lst)) (cons (car lst) (filter proc (cdr lst))))
+    (else (filter proc (cdr lst)))))
+
 (define (reverse l)
   (recur f ((in l) (out nil))
          (if (pair? in)
