@@ -966,7 +966,7 @@ prim_set(Tsp st, Hash env, Val args)
 	if (!e || !e->key)
 		tsp_warnf("set!: variable %s is not defined", car(args)->v.s);
 	e->val = val;
-	return st->none;
+	return val;
 }
 
 /* loads tisp file or C dynamic library */

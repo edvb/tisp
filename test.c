@@ -169,9 +169,9 @@ char *tests[][2] = {
 	{ "foo",                         "4"     },
 	{ "(define bar foo)",            ""      },
 	{ "bar",                         "4"     },
-	{ "(set! foo 5)",                ""      },
+	{ "(set! foo 5)",                "5"     },
 	{ "foo",                         "5"     },
-	{ "(set! foo (+ foo bar))",      ""      },
+	{ "(set! foo (+ foo bar))",      "9"     },
 	{ "foo",                         "9"     },
 	{ "(define add +)",              ""      },
 	{ "(add foo bar)",               "13"    },
@@ -184,9 +184,9 @@ char *tests[][2] = {
 	{ "(define (add2 x)"
 	  "        (+ x 1) (+ x 2))",    ""      },
 	{ "(add2 2)",                    "4"     },
-	{ "(set! add2 2)",               ""      },
+	{ "(set! add2 2)",               "2"     },
 	{ "add2",                        "2"     },
-	{ "(set! add2 \"2\")",           ""      },
+	{ "(set! add2 \"2\")",           "\"2\"" },
 	{ "add2",                        "\"2\"" },
 
 	{ "lambda",                       NULL },

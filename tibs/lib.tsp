@@ -203,9 +203,7 @@
   (cons val stack))
 
 (defmacro (push! stack val)
-  (list do
-        (list set! stack (list push stack val))
-        stack))
+  (list set! stack (list push stack val)))
 
 (define pop cdr)
 
@@ -225,8 +223,7 @@
 (defmacro (swap! stack)
   (list let (list (list 'x (list pop! stack))
                   (list 'y (list pop! stack)))
-        (list set! stack (list push (list push stack 'x) 'y))
-        stack))
+        (list set! stack (list push (list push stack 'x) 'y))))
 
 ;;; Math
 (define pi (* 4 (arctan 1.)))
