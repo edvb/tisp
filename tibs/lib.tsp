@@ -85,6 +85,32 @@
           vars)
         (list* proc (map car vars))))
 
+(defmacro (quasiquote x)
+  (define (check x)
+    (unless (and (pair? (cdr x)) (nil? (cddr x)))
+      (error (car x) "invalid form " x)))
+  (define (quasicons a d)
+    (if (pair? d)
+      (if (= (car d) 'quote)
+        (if (and (pair? a) (= (car a) 'quote))
+          (list 'quote (list* (cadr a) (cadr d)))
+          (if (nil? (cadr d))
+            (list 'list a)
+            (list list* a d)))
+        (if (member (car d) '(list list*))
+          (list* (car d) a (cdr d))
+          (list list* a d)))
+      (list list* a d)))
+  (recur f ((x x))
+         (cond
+           ((atom? x) (list 'quote x))
+           ((= (car x) 'unquote)
+            (check x)
+            (cadr x))
+           (else (quasicons (f (car x)) (f (cdr x)))))))
+
+(defmacro (unquote x) (list error ''unquote "called outside of quasiquote"))
+
 ;;; Logic
 (define true t)
 (define false ())
@@ -203,14 +229,14 @@
   (cons val stack))
 
 (defmacro (push! stack val)
-  (list set! stack (list push stack val)))
+  `(set! ,stack (push ,stack ,val)))
 
 (define pop cdr)
 
 (defmacro (pop! stack)
-  (list do0
-        (list peek stack)
-        (list set! stack (list pop stack))))
+  `(do0
+     (peek ,stack)
+     (set! ,stack (pop ,stack))))
 
 (define peek car)
 
@@ -221,9 +247,9 @@
 
 ; TODO swap! use gen sym instead of x and y ?
 (defmacro (swap! stack)
-  (list let (list (list 'x (list pop! stack))
-                  (list 'y (list pop! stack)))
-        (list set! stack (list push (list push stack 'x) 'y))))
+  `(let ((x (pop! ,stack))
+         (y (pop! ,stack)))
+     (set! ,stack (push (push ,stack x) y))))
 
 ;;; Math
 (define pi (* 4 (arctan 1.)))
