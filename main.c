@@ -44,7 +44,7 @@ main(int argc, char *argv[])
 				if ((v = tisp_read(st)))
 					v = tisp_eval(st, st->global, v);
 			} else if (argv[i][1] == 'v') { /* version and copyright info */
-				fprintf(stderr, "tisp v%s (c) 2017-2019 Ed van Bruggen\n", VERSION);
+				fprintf(stderr, "tisp v%s (c) 2017-2020 Ed van Bruggen\n", VERSION);
 				exit(0);
 			} else if (argv[i][1]) { /* unsupported argument or help */
 				fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
