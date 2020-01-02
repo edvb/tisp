@@ -36,9 +36,10 @@
 (define (cddddr x) (cdr (cdr (cdr (cdr x)))))
 
 ;;; Types
+(define (any? x)       t)
 (define (void? x)      (= (type x) "void"))
 (define (nil? x)       (= (type x) "nil"))
-(define  empty?         nil?)
+(define  empty?        nil?)
 (define (integer? x)   (= (type x) "integer"))
 (define (decimal? x)   (= (type x) "decimal"))
 (define (ratio? x)     (= (type x) "ratio"))
@@ -53,7 +54,7 @@
 (define (list? x)      (if (pair? x) (list? (cdr x)) (not x)))
 (define (boolean? x)   (or (= x t) (nil? x)))
 (define (true? x)      (= x t))
-(define  false?         nil?)
+(define  false?        nil?)
 (define (rational? x)  (or (integer? x) (ratio? x)))
 (define (number? x)    (or (rational? x) (decimal? x)))
 
