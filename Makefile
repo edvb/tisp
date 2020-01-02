@@ -38,6 +38,8 @@ libs.tsp.h: $(TSP)
 
 $(OBJ): config.mk libs.tsp.h
 
+test.o: libs.tsp.h
+
 $(LIB): $(TIB)
 	@echo $(CC) -o $@
 	@$(CC) -shared -o $@ $(OBJ)
@@ -79,7 +81,7 @@ uninstall:
 	@echo removing tisp libraries from $(DESTDIR)$(PREFIX)/share/tisp
 	@rm -rf $(DESTDIR)$(PREFIX)/share/tisp/
 
-test: $(OBJ) $(LIB) libs.tsp.h test.o
+test: $(OBJ) $(LIB) test.o
 	@echo running tests
 	@echo $(CC) -o test
 	@$(CC) -o test tisp.o $(TIB:.c=.o) test.o $(LDFLAGS)
