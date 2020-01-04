@@ -180,6 +180,12 @@
     ((proc (car lst)) (cons (car lst) (filter proc (cdr lst))))
     (else (filter proc (cdr lst)))))
 
+(define (compose . procs)
+  (if procs
+    (lambda (x)
+      ((car procs) ((apply compose (cdr procs)) x)))
+    (lambda (x) x)))
+
 (define (reverse l)
   (recur f ((in l) (out nil))
          (if (pair? in)

@@ -274,6 +274,10 @@ char *tests[][2] = {
 	{ "(filter positive? '(1 2 -4 5 -9 10))",                   "(1 2 5 10)"        },
 	{ "(filter odd? '(8 6 17 9 82 34 27))",                     "(17 9 27)"         },
 	{ "(filter integer? '(1/2 3.e-2 9/3 3.2 0.0 8 17))",        "(3 8 17)"          },
+	{ "((compose - sqrt) 9)",                                   "-3"                },
+	{ "((compose / sqrt sqr) 18)",                              "1/18"              },
+	{ "((compose - sqrt cube) 4)",                              "-8"                },
+	{ "((compose -) 5/3)",                                      "-5/3"              },
 
 	{ "list mod",                                 NULL                        },
 	{ "(reverse '(1 2 3 4 5))",                   "(5 4 3 2 1)"               },
