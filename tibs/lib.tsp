@@ -59,8 +59,8 @@
 (define (number? x)    (or (rational? x) (decimal? x)))
 
 (defmacro (assert condition)
-  (list 'unless condition
-        (list error ''assert "assertion " 'condition " failed")))
+  `(unless ,condition
+        (error 'assert "assertion " ',condition " failed")))
 
 ;;; Control Flow
 ; TODO if d = pair and car d = else use cdr d
