@@ -36,9 +36,11 @@ libs.tsp.h: $(TSP)
 	@echo $(CC) $<
 	@$(CC) -c -o $@ $< $(CFLAGS)
 
-$(OBJ): config.mk libs.tsp.h
+$(OBJ): config.mk
 
-test.o: libs.tsp.h
+main.o: libs.tsp.h
+
+test.o: config.mk libs.tsp.h
 
 $(LIB): $(TIB)
 	@echo $(CC) -o $@
