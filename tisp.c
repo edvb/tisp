@@ -39,6 +39,7 @@ static void hash_add(Hash ht, char *key, Val val);
 
 /* general utility wrappers */
 
+/* TODO remove ealloc funcs */
 static void *
 ecalloc(size_t nmemb, size_t size)
 {
@@ -113,6 +114,7 @@ issym(char c)
 }
 
 /* check if character is start of a number */
+/* TODO only if -/+ is not followed by a delim */
 static int
 isnum(char *str)
 {
@@ -129,6 +131,7 @@ isdelim(int c)
 }
 
 /* skip over comments and white space */
+/* TODO support mac/windows line endings */
 static void
 skip_ws(Tsp st, int skipnl)
 {
@@ -343,6 +346,7 @@ mk_rat(int num, int den)
 	return ret;
 }
 
+/* TODO combine mk_str and mk_sym */
 Val
 mk_str(Tsp st, char *s)
 {
@@ -552,6 +556,8 @@ read_pair(Tsp st)
 	if (!(a = tisp_read(st)))
 		return NULL;
 	skip_ws(st, 1);
+	if (!tsp_fget(st))
+		tsp_warn("reached end before closing ')'");
 	if (tsp_fget(st) == '.' && isdelim(tsp_fgetat(st,1))) {
 		tsp_finc(st);
 		if (!(b = tisp_read(st)))
@@ -582,6 +588,7 @@ tisp_read(Tsp st)
 		return st->none;
 	if (isnum(st->file+st->filec))
 		return read_num(st);
+	/* TODO support | for symbols */
 	if (tsp_fget(st) == '"')
 		return read_str(st);
 	for (int i = 0; i < LEN(shorthands); i += 2) {
