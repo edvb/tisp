@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 				fprintf(stderr, "tisp v%s (c) 2017-2020 Ed van Bruggen\n", VERSION);
 				exit(0);
 			} else if (argv[i][1]) { /* unsupported argument or help */
-				fputs("usage: tisp [-hv] [FILE ...]\n", stderr);
+				fputs("usage: tisp [-hv] [-c COMMAND] [-] [FILE ...]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
 				v = tisp_eval_seq(st, st->global, tisp_parse_file(st, NULL));
