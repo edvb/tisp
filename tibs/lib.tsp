@@ -63,7 +63,7 @@
         (error 'assert "assertion " ',condition " failed")))
 
 ;;; Control Flow
-; TODO if d = pair and car d = else use cdr d
+; TODO if b = pair and car b = else use cdr b
 (defmacro (if con a b)
   (list 'cond (list con a) (list t b)))
 (define else t)
@@ -71,6 +71,7 @@
   (list 'cond (list con (cons 'do body))))
 (defmacro (unless con . body)
   (list 'cond (list (list not con) (cons 'do body))))
+
 (defmacro (let vars . body)
   (list (list* 'lambda ()
                (append
@@ -79,6 +80,7 @@
                      (list* 'define (car x) (cdr x)))
                    vars)
                  body))))
+
 (defmacro (recur proc vars . body)
   (list 'let
         (list*
@@ -86,6 +88,13 @@
           vars)
         (list* proc (map car vars))))
 
+(defmacro (switch val . body)
+  (list* 'cond (map
+                 (lambda (line)
+                   `((= ,val ,(car line)) ,(cadr line)))
+                 body)))
+
+; TODO allow for improper lists
 (defmacro (quasiquote x)
   (define (check x)
     (unless (and (pair? (cdr x)) (nil? (cddr x)))
@@ -162,6 +171,7 @@
         ((= x (car lst)) (+ 1 (count x (cdr lst))))
         (else (count x (cdr lst)))))
 
+; TODO many args
 (define (apply proc args)
   (eval (map (lambda (x) ; prevent args from being evaluated twice
                (list 'quote x))
