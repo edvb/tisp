@@ -12,6 +12,9 @@ code as short as possible.
 
 ## Options
 
+Read and evaluate all files in order given, if file name is `-` read from
+`stdin`. If no files are supplied launch REPL.
+
 #### -c COMMAND
 
 Read *COMMAND* as a line of Tisp code and print result

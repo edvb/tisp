@@ -16,7 +16,7 @@
 int
 main(int argc, char *argv[])
 {
-	int i;
+	int i = 1;
 	Val v = NULL;
 
 	Tsp st = tisp_env_init(64);
@@ -29,18 +29,19 @@ main(int argc, char *argv[])
 	tisp_env_lib(st, libs_tsp);
 #endif
 
-	/* TODO reduce redunecy by setting argv[i][0] = '-' ? */
-	if (argc == 1)
-		if ((v = tisp_eval_seq(st, st->global, tisp_parse_file(st, NULL))))
-			tisp_print(stdout, v);
+	if (argc == 1) {
+		st->file = "(repl)";
+		goto readstr;
+	}
 
-	for (i = 1; i < argc; i++, v = NULL) {
+	for (; i < argc; i++, v = NULL) {
 		if (argv[i][0] == '-') {
 			if (argv[i][1] == 'c') { /* run next argument as tisp command */
 				if (!(st->file = argv[++i])) {
 					fputs("tisp: expected command after -c\n", stderr);
 					exit(2);
 				}
+readstr:
 				if ((v = tisp_read(st)))
 					v = tisp_eval(st, st->global, v);
 			} else if (argv[i][1] == 'v') { /* version and copyright info */

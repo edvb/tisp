@@ -13,6 +13,9 @@ tisp [-hv] [-c COMMAND] [-] [FILE ...]
 Tisp is a tiny, terse, and transparent lisp library designed to be lightweight and easy to embedded in other programs. Simply drop the 'tisp.c' and 'tisp.h' files into your project in order to use the necessary functions for your program. An example command line interpreter is provided in 'main.c'. Tisp is a single value name language (lisp-1) which tries to be unambiguous and focus on simplicity.  Much of the language is defined with Tisp itself leaving the C code as short as possible.
 .PP
 .SH OPTIONS
+.PP
+Read and evaluate all files in order given, if file name is '-' read from 'stdin'. If no files are supplied launch REPL.
+.PP
 .TP
 \fB-c COMMAND\fP
 Read \fICOMMAND\fP as a line of Tisp code and print result
