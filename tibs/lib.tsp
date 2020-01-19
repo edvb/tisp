@@ -158,12 +158,28 @@
     (car lst)))
 
 ; TODO make nth generic for list str vec, made up of list-ref vec-ref str-ref
-(define (nth lst i)
-  (if (pair? lst)
-    (if (<= i 0)
-      (car lst)
-      (nth (cdr lst) (- i 1)))
-    (error 'nth "index of list out bounds")))
+(define (nth lst n)
+  (cond
+    ((atom? lst)
+     (error 'nth "index of list out of bounds"))
+    ((<= n 0) (car lst))
+    (else (nth (cdr lst) (- n 1)))))
+
+; TODO diff name head/tail since conflicts w/ unix
+; TODO support negative numers like unix tail/head to count from end backwards
+(define (head lst n)
+  (cond
+    ((<= n 0) nil)
+    ((atom? lst)
+     (error 'name "index of list out of bounds"))
+    (else (cons (car lst) (head (cdr lst) (- n 1))))))
+
+(define (tail lst n)
+  (cond
+    ((<= n 0) lst)
+    ((atom? lst)
+     (error 'tail "index of list out of bounds"))
+    (else (tail (cdr lst) (- n 1)))))
 
 (define (count x lst)
   (cond ((nil? lst) 0)
