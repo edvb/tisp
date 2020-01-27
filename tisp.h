@@ -19,27 +19,16 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifdef DEBUG
-#  define tsp_warnf(M, ...) do {                              \
-	fprintf(stderr, "tisp:%s:%d: error: " M "\n",         \
-	                  __FILE__, __LINE__, ##__VA_ARGS__); \
-	return NULL;                                          \
-} while(0)
-#  define tsp_warn(M) do {                                                 \
-	fprintf(stderr, "tisp:%s:%d: error: " M "\n", __FILE__, __LINE__); \
-	return NULL;                                                       \
-} while(0)
-#else
-#  define tsp_warnf(M, ...) do {                                \
+#define tsp_warnf(M, ...) do {                                  \
 	fprintf(stderr, "tisp: error: " M "\n", ##__VA_ARGS__); \
 	return NULL;                                            \
 } while(0)
-#  define tsp_warn(M) do {                       \
+#define tsp_warn(M) do {                         \
 	fprintf(stderr, "tisp: error: " M "\n"); \
 	return NULL;                             \
 } while(0)
-#endif
 
+/* TODO test general condition */
 #define tsp_arg_min(ARGS, NAME, NARGS) do {                                    \
 	if (list_len(ARGS) < NARGS)                                            \
 		tsp_warnf("%s: expected at least %d argument%s, received %d",  \

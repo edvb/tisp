@@ -987,9 +987,6 @@ prim_load(Tsp st, Hash env, Val args)
 	void (*tibenv)(Tsp);
 	char *name;
 	const char *paths[] = {
-#ifdef DEBUG
-		"./", /* check working directory first when in debug mode */
-#endif
 		"/usr/local/share/tisp/", "/usr/share/tisp/", "./", NULL
 	};
 

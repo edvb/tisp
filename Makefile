@@ -4,7 +4,7 @@
 include config.mk
 
 ifeq ($(DEBUG), 1)
-CFLAGS += -g -Og -DDEBUG
+CFLAGS += -g -Og
 LDFLAGS += -g -Og
 endif
 
