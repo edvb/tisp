@@ -742,23 +742,13 @@ tisp_eval(Tsp st, Hash env, Val v)
 
 /* print */
 
-/* print value of a list, display as #<void> if element inside returns void */
-/* TODO remove need for list_print by using repl to skip printing */
-static void
-list_print(FILE *f, Val v)
-{
-	if (v->t == NONE)
-		fprintf(f, "#<void>");
-	else
-		tisp_print(f, v);
-}
-
 /* main print function */
 void
 tisp_print(FILE *f, Val v)
 {
 	switch (v->t) {
 	case NONE:
+		fprintf(f, "#<void>");
 		break;
 	case NIL:
 		fprintf(f, "()");
@@ -791,14 +781,14 @@ tisp_print(FILE *f, Val v)
 		break;
 	case PAIR:
 		putc('(', f);
-		list_print(f, car(v));
+		tisp_print(f, car(v));
 		for (v = cdr(v); !nilp(v); v = cdr(v)) {
 			if (v->t == PAIR) {
 				putc(' ', f);
-				list_print(f, car(v));
+				tisp_print(f, car(v));
 			} else {
 				fprintf(f, " . ");
-				list_print(f, v);
+				tisp_print(f, v);
 				break;
 			}
 		}
