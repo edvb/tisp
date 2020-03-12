@@ -1,5 +1,6 @@
 /* See LICENSE file for copyright and license details. */
 #include <libgen.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,13 @@
 	tsp_include_tib(time);
 	tsp_include_tib(string);
 #endif
+
+/* stop program from being terminated with CTRL+C */
+void
+handler_sigint(int sig)
+{
+	sig = sig; /* prevent compiler warnings */
+}
 
 int
 main(int argc, char *argv[])
@@ -28,6 +36,8 @@ main(int argc, char *argv[])
 #  include "libs.tsp.h"
 	tisp_env_lib(st, libs_tsp);
 #endif
+
+	signal(SIGINT, handler_sigint);
 
 	if (argc == 1) {
 		st->file = "(repl)";
