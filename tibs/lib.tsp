@@ -207,10 +207,12 @@
     (else (filter proc (cdr lst)))))
 
 (define (compose . procs)
-  (if procs
-    (lambda (x)
-      ((car procs) ((apply compose (cdr procs)) x)))
-    (lambda (x) x)))
+  (cond
+    ((nil? procs) (lambda x x))
+    ((nil? (cdr procs)) (car procs))
+    (else
+      (lambda x
+        ((car procs) (apply (apply compose (cdr procs)) x))))))
 
 (define (reverse l)
   (recur f ((in l) (out nil))

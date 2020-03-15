@@ -289,6 +289,8 @@ char *tests[][2] = {
 	{ "((compose / sqrt sqr) 18)",                              "1/18"              },
 	{ "((compose - sqrt cube) 4)",                              "-8"                },
 	{ "((compose -) 5/3)",                                      "-5/3"              },
+	{ "((compose - +) 5 6)",                                    "-11"               },
+	{ "((compose sqrt integer *) 4.5 2)",                       "3"                 },
 
 	{ "list mod",                                 NULL                        },
 	{ "(reverse '(1 2 3 4 5))",                   "(5 4 3 2 1)"               },
