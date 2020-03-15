@@ -58,9 +58,11 @@
 (define (rational? x)  (or (integer? x) (ratio? x)))
 (define (number? x)    (or (rational? x) (decimal? x)))
 
-(defmacro (assert condition)
-  `(unless ,condition
-        (error 'assert "assertion " ',condition " failed")))
+(define (bool x) (if x t nil))
+
+(defmacro (assert expr)
+  `(unless ,expr
+        (error 'assert "assertion " ',expr " failed")))
 
 ;;; Control Flow
 ; TODO if b = pair and car b = else use cdr b
