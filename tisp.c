@@ -901,6 +901,48 @@ prim_type(Tsp st, Hash env, Val args)
 	return mk_str(st, type_str(v->t));
 }
 
+/* get a property of given value */
+static Val
+prim_get(Tsp st, Hash env, Val args)
+{
+	Val v, prop;
+	tsp_arg_num(args, "get", 2);
+	if (!(v = tisp_eval(st, env, car(args))))
+		return NULL;
+	if (!(prop = tisp_eval(st, env, cadr(args))))
+		return NULL;
+	tsp_arg_type(prop, "get", SYMBOL);
+	switch (v->t) {
+	case FUNCTION:
+	case MACRO:
+		if (!strncmp(prop->v.s, "body", 4))
+			return v->v.f.body;
+		if (!strncmp(prop->v.s, "args", 4))
+			return v->v.f.args;
+		break;
+	case INTEGER:
+	case RATIO:
+		if (!strncmp(prop->v.s, "num", 3))
+			return mk_int(v->v.n.num);
+		if (!strncmp(prop->v.s, "den", 3))
+			return mk_int(v->v.n.den);
+		break;
+	case PAIR:
+		if (!strncmp(prop->v.s, "car", 3))
+			return v->v.p.car;
+		if (!strncmp(prop->v.s, "cdr", 3))
+			return v->v.p.cdr;
+		break;
+	case STRING:
+	case SYMBOL:
+		if (!strncmp(prop->v.s, "len", 3))
+			return mk_int(strlen(v->v.s));
+	default: break;
+	}
+	tsp_warnf("get: can not access %s from type %s",
+		   prop->v.s, type_str(v->t));
+}
+
 /* creates new tisp lambda function */
 static Val
 prim_lambda(Tsp st, Hash env, Val args)
@@ -920,6 +962,7 @@ prim_macro(Tsp st, Hash env, Val args)
 /* creates new variable of given name and value
  * if pair is given as name of variable, creates function with the car as the
  * function name and the cdr the function arguments */
+/* TODO if var not func error if more than 2 args */
 static Val
 prim_define(Tsp st, Hash env, Val args)
 {
@@ -1089,6 +1132,7 @@ tisp_env_init(size_t cap)
 	tsp_env_name_fn(=, eq);
 	tsp_env_fn(cond);
 	tsp_env_fn(type);
+	tsp_env_fn(get);
 	tsp_env_fn(lambda);
 	tsp_env_fn(macro);
 	tsp_env_fn(define);
