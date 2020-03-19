@@ -77,6 +77,12 @@
         ,(list* 'define name val)
         (error 'var "incorrect form")))
 
+(define (doc proc)
+  "get documentation of function"
+  (if (string? (car (get proc 'body)))
+    (disp (car (get proc 'body)))
+    (error 'doc "procedure not documented")))
+
 (defmacro (assert expr)
   `(unless ,expr
         (error 'assert "assertion " ',expr " failed")))
