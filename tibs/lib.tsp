@@ -71,6 +71,12 @@
     ((or (void? x) (nil? x) (pair? x)) x)
     (else (list x))))
 
+(defmacro (var name eq . val)
+  "define new variable with given value"
+  `(if (= ',eq '=)
+        ,(list* 'define name val)
+        (error 'var "incorrect form")))
+
 (defmacro (assert expr)
   `(unless ,expr
         (error 'assert "assertion " ',expr " failed")))
