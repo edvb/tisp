@@ -59,6 +59,17 @@
 (define (number? x)    (or (rational? x) (decimal? x)))
 
 (define (bool x) (if x t nil))
+; TODO handle string and sym
+(define (pair x)
+  (cond
+    ((rational? x)
+     (cons (numerator x)
+           (denominator x)))
+    ((decimal? x)
+     (cons (integer (truncate x))
+           (- x (truncate x))))
+    ((or (void? x) (nil? x) (pair? x)) x)
+    (else (list x))))
 
 (defmacro (assert expr)
   `(unless ,expr
