@@ -87,6 +87,14 @@
   `(unless ,expr
         (error 'assert "assertion " ',expr " failed")))
 
+; TODO support any sized list n depending on size of optional val
+(define (default n val)
+  (cond
+    ((nil? n) val)
+    ((and (pair? n) (nil? (cdr n)))
+     (car n))
+    (else (error 'default "expected only 1 optional argument"))))
+
 ;;; Control Flow
 ; TODO if b = pair and car b = else use cdr b
 (defmacro (if con a b)
