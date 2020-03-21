@@ -342,7 +342,8 @@ mk_rat(int num, int den)
 		return mk_int(num);
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = RATIO;
-	ret->v.n = (Ratio){ num, den };
+	ret->v.n.num = num;
+	ret->v.n.den = den;
 	return ret;
 }
 
@@ -376,19 +377,21 @@ mk_sym(Tsp st, char *s)
 }
 
 Val
-mk_prim(Prim pr)
+mk_prim(Prim pr, char *name)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = PRIMITIVE;
-	ret->v.pr = pr;
+	ret->v.pr.name = name;
+	ret->v.pr.pr = pr;
 	return ret;
 }
 
 Val
-mk_func(Type t, Val args, Val body, Hash env)
+mk_func(Type t, char *name, Val args, Val body, Hash env)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = t;
+	ret->v.f.name = name;
 	ret->v.f.args = args;
 	ret->v.f.body = body;
 	ret->v.f.env  = env;
@@ -542,6 +545,7 @@ read_sym(Tsp st)
 }
 
 /* return read string containing a list */
+/* TODO read pair after as well, allow lambda((x) (* x 2))(4) */
 static Val
 read_pair(Tsp st)
 {
@@ -689,20 +693,21 @@ tisp_eval_seq(Tsp st, Hash env, Val v)
 
 /* evaluate procedure f of name v with arguments */
 static Val
-eval_proc(Tsp st, Hash env, Val v, Val f, Val args)
+eval_proc(Tsp st, Hash env, Val f, Val args)
 {
 	Val ret;
 	Hash e;
 	switch (f->t) {
 	case PRIMITIVE:
-		return (*f->v.pr)(st, env, args);
+		return (*f->v.pr.pr)(st, env, args);
 	case FUNCTION:
 		/* tail call into the function body with the extended env */
 		if (!(args = tisp_eval_list(st, env, args)))
 			return NULL;
 		/* FALLTHROUGH */
 	case MACRO:
-		tsp_arg_num(args, v->t == SYMBOL ? v->v.s : "lambda", list_len(f->v.f.args));
+		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anonymous",
+		            list_len(f->v.f.args));
 		e = hash_new(8, f->v.f.env);
 		/* TODO call hash_extend in hash_new to know new hash size */
 		if (!(hash_extend(e, f->v.f.args, args)))
@@ -734,7 +739,7 @@ tisp_eval(Tsp st, Hash env, Val v)
 	case PAIR:
 		if (!(f = tisp_eval(st, env, car(v))))
 			return NULL;
-		return eval_proc(st, env, car(v), f, cdr(v));
+		return eval_proc(st, env, f, cdr(v));
 	default:
 		return v;
 	}
@@ -748,10 +753,10 @@ tisp_print(FILE *f, Val v)
 {
 	switch (v->t) {
 	case NONE:
-		fprintf(f, "#<void>");
+		fputs("#<void>", f);
 		break;
 	case NIL:
-		fprintf(f, "()");
+		fputs("()", f);
 		break;
 	case INTEGER:
 		fprintf(f, "%d", (int)num(v));
@@ -770,14 +775,15 @@ tisp_print(FILE *f, Val v)
 	case SYMBOL:
 		fputs(v->v.s, f);
 		break;
-	case PRIMITIVE:
-		fprintf(f, "#<primitive>");
-		break;
 	case FUNCTION:
-		fprintf(f, "#<function>");
-		break;
 	case MACRO:
-		fprintf(f, "#<macro>");
+		fprintf(f, "#<%s%s%s>", /* if proc name is not null print it */
+		            v->t == FUNCTION ? "function" : "macro",
+		            v->v.pr.name ? ":" : "",
+		            v->v.pr.name ? v->v.pr.name : "");
+		break;
+	case PRIMITIVE:
+		fprintf(f, "#<primitive:%s>", v->v.pr.name);
 		break;
 	case PAIR:
 		putc('(', f);
@@ -787,7 +793,7 @@ tisp_print(FILE *f, Val v)
 				putc(' ', f);
 				tisp_print(f, car(v));
 			} else {
-				fprintf(f, " . ");
+				fputs(" . ", f);
 				tisp_print(f, v);
 				break;
 			}
@@ -913,8 +919,14 @@ prim_get(Tsp st, Hash env, Val args)
 		return NULL;
 	tsp_arg_type(prop, "get", SYMBOL);
 	switch (v->t) {
+	case PRIMITIVE:
+		if (!strncmp(prop->v.s, "name", 4))
+			return mk_str(st, v->v.pr.name);
+		break;
 	case FUNCTION:
 	case MACRO:
+		if (!strncmp(prop->v.s, "name", 4))
+			return mk_str(st, v->v.f.name);
 		if (!strncmp(prop->v.s, "body", 4))
 			return v->v.f.body;
 		if (!strncmp(prop->v.s, "args", 4))
@@ -948,7 +960,7 @@ static Val
 prim_lambda(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "lambda", 2);
-	return mk_func(FUNCTION, car(args), cdr(args), env);
+	return mk_func(FUNCTION, NULL, car(args), cdr(args), env);
 }
 
 /* creates new tisp defined macro */
@@ -956,7 +968,7 @@ static Val
 prim_macro(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "macro", 2);
-	return mk_func(MACRO, car(args), cdr(args), env);
+	return mk_func(MACRO, NULL, car(args), cdr(args), env);
 }
 
 /* creates new variable of given name and value
@@ -968,20 +980,22 @@ prim_define(Tsp st, Hash env, Val args)
 {
 	Val sym, val;
 	tsp_arg_min(args, "define", 2);
-	if (car(args)->t == PAIR) {
-		sym = caar(args);
+	if (car(args)->t == PAIR) { /* create function if given argument list */
+		sym = caar(args); /* first element of argument list is function name */
 		if (sym->t != SYMBOL)
 			tsp_warnf("define: incorrect format,"
 			          " expected symbol for function name, received %s",
 			          type_str(sym->t));
-		val = mk_func(FUNCTION, cdar(args), cdr(args), env);
-	} else if (car(args)->t == SYMBOL) {
+		val = mk_func(FUNCTION, sym->v.s, cdar(args), cdr(args), env);
+	} else if (car(args)->t == SYMBOL) { /* create variable */
 		sym = car(args);
 		val = tisp_eval(st, env, cadr(args));
-	} else
-		tsp_warn("define: incorrect format, no variable name found");
+	} else tsp_warn("define: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
+	/* set procedure name if it was previously anoymous */
+	if (val->t & (FUNCTION|MACRO) && !val->v.f.name)
+		val->v.f.name = sym->v.s;
 	hash_add(env, sym->v.s, val);
 	return st->none;
 }

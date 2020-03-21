@@ -28,7 +28,7 @@ typedef Val (*MkFn)(Tsp, char*);
 
 /* TODO string tib: lower upper strpos strsub */
 
-/* TODO simplify by using fmemopen and tisp_print */
+/* TODO simplify by using fmemopen/funopen and tisp_print */
 static Val
 val_string(Tsp st, Val args, MkFn mk_fn)
 {

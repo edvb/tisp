@@ -45,7 +45,7 @@
 		                type_str(TYPE), type_str(ARG->t));             \
 } while(0)
 
-#define tsp_env_name_fn(NAME, FN) tisp_env_add(st, #NAME, mk_prim(prim_##FN))
+#define tsp_env_name_fn(NAME, FN) tisp_env_add(st, #NAME, mk_prim(prim_##FN, #NAME))
 #define tsp_env_fn(NAME)          tsp_env_name_fn(NAME, NAME)
 #define tsp_include_tib(NAME)     void tib_env_##NAME(Tsp)
 
@@ -67,11 +67,6 @@ struct Val;
 typedef struct Val *Val;
 typedef struct Tsp *Tsp;
 
-/* fraction */
-typedef struct {
-	double num, den;
-} Ratio;
-
 typedef struct Entry *Entry;
 
 typedef struct Hash {
@@ -82,20 +77,6 @@ typedef struct Hash {
 	} *items;
 	struct Hash *next;
 } *Hash;
-
-/* basic function written in C, not lisp */
-typedef Val (*Prim)(Tsp, Hash, Val);
-
-/* function written directly in lisp instead of C */
-typedef struct {
-	Val args;
-	Val body;
-	Hash env;
-} Func;
-
-typedef struct {
-	Val car, cdr;
-} Pair;
 
 /* possible tisp object types */
 typedef enum {
@@ -116,15 +97,18 @@ typedef enum {
 /* TODO rename to math ? */
 #define EXPRESSION (NUMBER | SYMBOL | PAIR)
 
+/* bultin function written in C, not tisp */
+typedef Val (*Prim)(Tsp, Hash, Val);
+
 /* tisp object */
 struct Val {
 	Type t; /* NONE, NIL */
 	union {
-		Ratio n; /* INTEGER, DECIMAL, RATIO */
-		char *s; /* STRING, SYMBOL */
-		Prim pr; /* PRIMITIVE */
-		Func f;  /* FUNCTION */
-		Pair p;  /* PAIR */
+		char *s;                                            /* STRING, SYMBOL */
+		struct { double num, den; } n;                      /* NUMBER */
+		struct { char *name; Prim pr; } pr;                 /* PRIMITIVE */
+		struct { char *name; Val args, body; Hash env; } f; /* FUNCTION */
+		struct { Val car, cdr; } p;                         /* PAIR */
 	} v;
 };
 
@@ -146,8 +130,8 @@ Val mk_dec(double d);
 Val mk_rat(int num, int den);
 Val mk_str(Tsp st, char *s);
 Val mk_sym(Tsp st, char *s);
-Val mk_prim(Prim prim);
-Val mk_func(Type t, Val args, Val body, Hash env);
+Val mk_prim(Prim prim, char *name);
+Val mk_func(Type t, char *name, Val args, Val body, Hash env);
 Val mk_pair(Val a, Val b);
 Val mk_list(Tsp st, int n, Val *a);
 
