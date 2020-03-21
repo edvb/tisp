@@ -335,6 +335,11 @@
 (define (logb b x) (/ (log x) (log b)))
 (define (log10 x) (logb 10. x))
 
+(defmacro (++ x . n)
+  `(set! ,x (+ ,x ,(default n 1))))
+(defmacro (-- x . n)
+  `(set! ,x (- ,x ,(default n 1))))
+
 ; define inverse trig functions
 (let (((def inv func)
        (eval (list 'define (list inv 'x) (list '/ (list func 'x)))))
