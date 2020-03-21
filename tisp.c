@@ -756,7 +756,7 @@ tisp_print(FILE *f, Val v)
 		fputs("#<void>", f);
 		break;
 	case NIL:
-		fputs("()", f);
+		fputs("nil", f);
 		break;
 	case INTEGER:
 		fprintf(f, "%d", (int)num(v));
