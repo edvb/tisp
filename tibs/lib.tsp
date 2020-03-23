@@ -340,19 +340,19 @@
 (defmacro (-- x . n)
   `(set! ,x (- ,x ,(default n 1))))
 
-; define inverse trig functions
-(let (((def inv func)
-       (eval (list 'define (list inv 'x) (list '/ (list func 'x)))))
-      ((def* inv func)
-       (def inv func)
-       (def (symbol inv 'h) (symbol func 'h)))
-      ((def** inv func)
-       (def* inv func)
-       (def* (symbol 'arc inv) (symbol 'arc func))))
-  (recur f ((lst '((csc sin) (sec cos) (cot tan))))
-         (when lst
-           (apply def** (car lst))
-           (f (cdr lst)))))
+; inverse trig functions
+(define (csc x)     (/ (sin x)))
+(define (arccsc x)  (/ (arcsin x)))
+(define (csch x)    (/ (sinh x)))
+(define (arccsch x) (/ (arcsinh x)))
+(define (sec x)     (/ (cos x)))
+(define (arcsec x)  (/ (arccos x)))
+(define (sech x)    (/ (cosh x)))
+(define (arcsech x) (/ (arccosh x)))
+(define (cot x)     (/ (tan x)))
+(define (arccot x)  (/ (arctan x)))
+(define (coth x)    (/ (tanh x)))
+(define (arccoth x) (/ (arctanh x)))
 
 (define (abs x) (if (>= x 0) x (- x)))
 (define (sgn x) (if (= x 0) x (/ (abs x) x)))
