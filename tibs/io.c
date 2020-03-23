@@ -106,10 +106,60 @@ prim_parse(Tsp st, Hash env, Val args)
 	return v ? v : st->none;
 }
 
+/* save value as binary file to be quickly read again */
+static Val
+prim_save(Tsp st, Hash env, Val args)
+{
+	Val v;
+	char *fname;
+	FILE *f;
+	tsp_arg_min(args, "save", 2);
+	if (!(v = tisp_eval_list(st, env, args)))
+		return NULL;
+	tsp_arg_type(cadr(v), "save", STRING);
+	fname = cadr(v)->v.s;
+	if (!(f = fopen(fname, "wb")))
+		tsp_warnf("save: could not load file '%s'", fname);
+	if (!(fwrite(&*car(v), sizeof(struct Val), 1, f))) {
+		fclose(f);
+		tsp_warnf("save: could not save file '%s'", fname);
+	}
+	fclose(f);
+	return car(v);
+}
+
+/* return read binary value previously saved */
+static Val
+prim_open(Tsp st, Hash env, Val args)
+{
+	FILE *f;
+	char *fname;
+	struct Val v;
+	Val ret;
+	if (!(ret = malloc(sizeof(struct Val)))) {
+		fprintf(stderr, "malloc: ");
+		perror(NULL);
+		exit(1);
+	}
+	tsp_arg_min(args, "open", 1);
+	if (!(args = tisp_eval_list(st, env, args)))
+		return NULL;
+	tsp_arg_type(car(args), "save", STRING);
+	fname = car(args)->v.s;
+	if (!(f = fopen(fname, "rb")))
+		tsp_warnf("save: could not load file '%s'", fname);
+	while (fread(&v, sizeof(struct Val), 1, f)) ;
+	fclose(f);
+	memcpy(ret, &v, sizeof(struct Val));
+	return ret;
+}
+
 void
 tib_env_io(Tsp st)
 {
 	tsp_env_fn(write);
 	tsp_env_fn(read);
 	tsp_env_fn(parse);
+	tsp_env_fn(save);
+	tsp_env_fn(open);
 }
