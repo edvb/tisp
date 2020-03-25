@@ -54,6 +54,14 @@ clean:
 	@echo cleaning
 	@rm -f $(OBJ) $(LIB) $(EXE) test test.o tibs.tsp.h
 
+dist: tibs.tsp.h
+	@echo creating dist tarball
+	@mkdir -p tisp-$(VERSION)
+	@cp -R tisp.c tisp.h $(TIB) tibs.tsp.h tisp-$(VERSION)
+	@tar -cf tisp-$(VERSION).tar tisp-$(VERSION)
+	@gzip tisp-$(VERSION).tar
+	@rm -rf tisp-$(VERSION)
+
 # TODO don't cp some if not in dynamic mode
 install: all
 	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
@@ -94,4 +102,4 @@ man:
 	@markman -nCD -t TISP -V "$(VERSION)" -d "`date '+%B %Y'`" \
 		-s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" doc/$(EXE).1.md > doc/$(EXE).1
 
-.PHONY: all options clean install uninstall test man
+.PHONY: all options clean dist install uninstall test man
