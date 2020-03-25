@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "tisp.h"
-#include "libs.tsp.h"
+#include "tibs.tsp.h"
 
 tsp_include_tib(math);
 tsp_include_tib(string);

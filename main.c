@@ -33,7 +33,7 @@ main(int argc, char *argv[])
 	tib_env_io(st);
 	tib_env_time(st);
 	tib_env_string(st);
-#  include "libs.tsp.h"
+#  include "tibs.tsp.h"
 	tisp_env_lib(st, libs_tsp);
 #endif
 

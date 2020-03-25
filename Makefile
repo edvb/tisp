@@ -22,7 +22,7 @@ options:
 	@echo "CFLAGS  = $(CFLAGS)"
 	@echo "LDFLAGS = $(LDFLAGS)"
 
-libs.tsp.h: $(TSP)
+tibs.tsp.h: $(TSP)
 	@echo xxd $@
 	@echo "char libs_tsp[] = { 0x28, " > $@
 	@cat $(TSP) | xxd -i - >> $@
@@ -38,9 +38,9 @@ libs.tsp.h: $(TSP)
 
 $(OBJ): config.mk
 
-main.o: libs.tsp.h
+main.o: tibs.tsp.h
 
-test.o: config.mk libs.tsp.h
+test.o: config.mk tibs.tsp.h
 
 $(LIB): $(TIB)
 	@echo $(CC) -o $@
@@ -52,7 +52,7 @@ $(EXE): $(OBJ) $(LIB)
 
 clean:
 	@echo cleaning
-	@rm -f $(OBJ) $(LIB) $(EXE) test test.o libs.tsp.h
+	@rm -f $(OBJ) $(LIB) $(EXE) test test.o tibs.tsp.h
 
 # TODO don't cp some if not in dynamic mode
 install: all
