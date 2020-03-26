@@ -13,7 +13,7 @@ SRC = tisp.c main.c
 TIB = tibs/math.c tibs/io.c tibs/time.c tibs/string.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
 LIB = tibs/libtibmath.so tibs/libtibio.so
-TSP = tibs/lib.tsp tibs/repl.tsp
+TSP = tibs/lib.tsp tibs/doc.tsp tibs/repl.tsp
 
 all: options $(EXE)
 

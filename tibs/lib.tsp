@@ -55,6 +55,7 @@
 (define (boolean? x)   (or (= x t) (nil? x)))
 (define (true? x)      (= x t))
 (define  false?        nil?)
+(define (procedure? x) (or (primitive? x) (or (function? x) (macro? x))))
 (define (rational? x)  (or (integer? x) (ratio? x)))
 (define (number? x)    (or (rational? x) (decimal? x)))
 
@@ -74,14 +75,8 @@
 (defmacro (var name eq . val)
   "define new variable with given value"
   `(if (= ',eq '=)
-        ,(list* 'define name val)
-        (error 'var "incorrect form")))
-
-(define (doc proc)
-  "get documentation of function"
-  (if (string? (car (get proc 'body)))
-    (disp (car (get proc 'body)))
-    (error 'doc "procedure not documented")))
+     ,(list* 'define name val)
+     (error 'var "incorrect form")))
 
 (defmacro (assert expr)
   `(unless ,expr
