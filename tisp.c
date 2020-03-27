@@ -920,12 +920,12 @@ prim_get(Tsp st, Hash env, Val args)
 	switch (v->t) {
 	case PRIMITIVE:
 		if (!strncmp(prop->v.s, "name", 4))
-			return mk_str(st, v->v.pr.name);
+			return mk_sym(st, v->v.pr.name);
 		break;
 	case FUNCTION:
 	case MACRO:
 		if (!strncmp(prop->v.s, "name", 4))
-			return mk_str(st, v->v.f.name);
+			return mk_sym(st, v->v.f.name);
 		if (!strncmp(prop->v.s, "body", 4))
 			return v->v.f.body;
 		if (!strncmp(prop->v.s, "args", 4))
