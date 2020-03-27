@@ -206,8 +206,7 @@ hash(char *key)
 {
 	uint32_t h = 0;
 	char c;
-	/* TODO ULONG_MAX is always bigger than uint32_t */
-	while (h < ULONG_MAX && (c = *key++))
+	while (h < UINT32_MAX && (c = *key++))
 		h = h * 33 + c;
 	return h;
 }
