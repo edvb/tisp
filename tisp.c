@@ -179,7 +179,11 @@ vals_eq(Val a, Val b)
 		return 0;
 	if (a->t == PAIR) /* PAIR */
 		return vals_eq(car(a), car(b)) && vals_eq(cdr(a), cdr(b));
-	if (a != b) /* PROCEDUREs, STRING, SYMBOL, NIL, VOID */
+	/* TODO function var names should not matter in comparison */
+	if (a->t & (FUNCTION | MACRO)) /* FUNCTION, MACRO */
+		return vals_eq(a->v.f.args, b->v.f.args) &&
+		       vals_eq(a->v.f.body, b->v.f.body);
+	if (a != b) /* PRIMITIVE, STRING, SYMBOL, NIL, VOID */
 		return 0;
 	return 1;
 }
