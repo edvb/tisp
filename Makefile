@@ -73,6 +73,7 @@ install: all
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/tsp
 	@echo installing manual page to $(DESTDIR)$(MANPREFIX)/man1
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+	@cp -f doc/$(EXE).1 $(DESTDIR)$(MANPREFIX)/man1/
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@echo installing shared libraries to $(DESTDIR)$(PREFIX)/lib/tisp
 	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp
