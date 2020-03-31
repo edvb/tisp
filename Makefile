@@ -98,9 +98,9 @@ test: $(OBJ) $(LIB) test.o
 	@$(CC) -o test tisp.o $(TIB:.c=.o) test.o $(LDFLAGS)
 	@./test
 
-man:
+man: $(EXE)
 	@echo updating man page doc/$(EXE).1
-	@markman -nCD -t TISP -V "$(VERSION)" -d "`date '+%B %Y'`" \
+	@markman -nCD -t TISP -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`" \
 		-s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" doc/$(EXE).1.md > doc/$(EXE).1
 
 .PHONY: all options clean dist install uninstall test man
