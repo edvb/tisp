@@ -18,7 +18,7 @@ LDFLAGS = -O3 -Wl,-rpath=$(DESTDIR)$(PREFIX)/lib/tisp $(LIBS)
 DEBUG ?= 0
 
 # self evaluate symbols if they are not defined, instead of throwing error
-# CFLAGS += -DTSP_SYM_RETURN
+# CFLAGS += -DTSP_SELF_SYMBOL
 
 # do not load tibs statically, use load procedure instead
 # CFLAGS += -DTIB_DYNAMIC

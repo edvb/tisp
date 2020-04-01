@@ -268,6 +268,6 @@ See project page at <https://edryd.org/projects/tisp.html>
 
 View source code at <https://git.edryd.org/tisp>
 
-## LICENSE
+## License
 
 zlib License

@@ -733,7 +733,7 @@ tisp_eval(Tsp st, Hash env, Val v)
 	switch (v->t) {
 	case SYMBOL:
 		if (!(f = hash_get(env, v->v.s)))
-#ifdef TSP_SYM_RETURN
+#ifdef TSP_SELF_SYMBOL
 			return v;
 #else
 			tsp_warnf("could not find symbol %s", v->v.s);
@@ -743,6 +743,7 @@ tisp_eval(Tsp st, Hash env, Val v)
 		if (!(f = tisp_eval(st, env, car(v))))
 			return NULL;
 		return eval_proc(st, env, f, cdr(v));
+	case STRING: /* TODO string interpolation */
 	default:
 		return v;
 	}
