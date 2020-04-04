@@ -1141,6 +1141,7 @@ tisp_env_init(size_t cap)
 
 	st->global = hash_new(cap, NULL);
 	tisp_env_add(st, "t", st->t);
+	tisp_env_add(st, "nil", st->nil);
 	tsp_env_fn(car);
 	tsp_env_fn(cdr);
 	tsp_env_fn(cons);

@@ -1,4 +1,3 @@
-(define nil ())
 (define (list . lst) lst)
 
 (define defmacro
