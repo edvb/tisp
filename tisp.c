@@ -694,7 +694,20 @@ tisp_eval_seq(Tsp st, Hash env, Val v)
 	return nilp(v) ? ret : tisp_eval(st, env, v);
 }
 
-/* evaluate procedure f of name v with arguments */
+static void
+prepend_bt(Tsp st, Hash env, Val f)
+{
+	if (!f->v.f.name) /* no need to record anonymous functions */
+		return;
+	for (; env->next; env = env->next) ; /* bt var located at base env */
+	Entry e = entry_get(env, "bt");
+	if (e->val->t == PAIR && car(e->val)->t == SYMBOL &&
+	    !strncmp(f->v.f.name, car(e->val)->v.s, strlen(car(e->val)->v.s)))
+		return; /* don't record same function on recursion */
+	e->val = mk_pair(mk_sym(st, f->v.f.name), e->val);
+}
+
+/* evaluate procedure f with arguments */
 static Val
 eval_proc(Tsp st, Hash env, Val f, Val args)
 {
@@ -716,7 +729,7 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 		if (!(hash_extend(e, f->v.f.args, args)))
 			return NULL;
 		if (!(ret = tisp_eval_seq(st, e, f->v.f.body)))
-			return NULL;
+			return prepend_bt(st, env, f), NULL;
 		if (f->t == MACRO)
 			ret = tisp_eval(st, env, ret);
 		return ret;
@@ -1142,6 +1155,7 @@ tisp_env_init(size_t cap)
 	st->global = hash_new(cap, NULL);
 	tisp_env_add(st, "t", st->t);
 	tisp_env_add(st, "nil", st->nil);
+	tisp_env_add(st, "bt", st->nil);
 	tsp_env_fn(car);
 	tsp_env_fn(cdr);
 	tsp_env_fn(cons);
