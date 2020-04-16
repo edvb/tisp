@@ -5,7 +5,7 @@
       ; TODO push! ans to stack of outputs
       (let ((ans (eval expr)))
         (unless (void? ans)
-          (disp-string ans))
+          (displayln ans))
         (repl)))))
 
 ;; simple repl, only requires io c library

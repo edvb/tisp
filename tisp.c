@@ -787,8 +787,6 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "%d/%d", (int)num(v), (int)den(v));
 		break;
 	case STRING:
-		fprintf(f, "\"%s\"", v->v.s);
-		break;
 	case SYMBOL:
 		fputs(v->v.s, f);
 		break;
@@ -942,7 +940,7 @@ prim_get(Tsp st, Hash env, Val args)
 		break;
 	case FUNCTION:
 	case MACRO:
-		if (!strncmp(prop->v.s, "name", 4))
+		if (!strncmp(prop->v.s, "name", 4)) /* TODO fix seg fault on anon proc */
 			return mk_sym(st, v->v.f.name);
 		if (!strncmp(prop->v.s, "body", 4))
 			return v->v.f.body;

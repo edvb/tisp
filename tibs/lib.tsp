@@ -377,12 +377,14 @@
   (if (or (nil? file) (nil? (cdr file)))
     (write (car (or file '(stdout))) file "\n")
     (error 'newline "only zero or one file can be given")))
-(define (disp . str) (apply print str) (newline))
-; TODO rename displayln, also quote syms and lists
-(define (disp-string . str)
+
+(define (display . str)
   (map (lambda (s)
-         (if (string? s)
-           (print "\"" s "\"")
-           (print s)))
-       str)
-  (newline))
+         (cond
+           ((string? s) (print "\"" s "\""))
+           ((symbol? s) (print "'" s))
+           ((pair? s)   (print "'" s))
+           (else        (print s))))
+       str))
+(define (displayln . str) (apply display str) (newline))
+(define (println . str)   (apply print str) (newline))

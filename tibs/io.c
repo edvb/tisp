@@ -54,10 +54,7 @@ prim_write(Tsp st, Hash env, Val args)
 		                  "or symbol stdout/stderr");
 
 	for (v = cddr(v); !nilp(v); v = cdr(v))
-		if (car(v)->t & STRING) /* don't print quotes around string */
-			fprintf(f, "%s", car(v)->v.s);
-		else
-			tisp_print(f, car(v));
+		tisp_print(f, car(v));
 	if (f == stdout || f == stderr)
 		fflush(f);
 	else
