@@ -746,11 +746,7 @@ tisp_eval(Tsp st, Hash env, Val v)
 	switch (v->t) {
 	case SYMBOL:
 		if (!(f = hash_get(env, v->v.s)))
-#ifdef TSP_SELF_SYMBOL
-			return v;
-#else
 			tsp_warnf("could not find symbol %s", v->v.s);
-#endif
 		return f;
 	case PAIR:
 		if (!(f = tisp_eval(st, env, car(v))))
