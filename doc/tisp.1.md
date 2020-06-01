@@ -201,7 +201,7 @@ the body to be run if and only if the condition is met. Used for if/elseif/else
 statements found in C-like languages and `if`,`when`,`unless`,`switch` macros
 in Tisp.
 
-#### type
+#### typeof
 
 Returns a string stating the given argument's type. Used to create `type?`
 individual functions.

@@ -23,8 +23,8 @@
     (cond
       "(cond . (expr . body))"
       "conditional statement")
-    (type
-      "(type val)"
+    (typeof
+      "(typeof val)"
       "return a string stating the argument's type")
     (get
       "(get val prop)"

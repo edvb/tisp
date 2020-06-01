@@ -909,10 +909,10 @@ prim_cond(Tsp st, Hash env, Val args)
 
 /* return type of tisp value */
 static Val
-prim_type(Tsp st, Hash env, Val args)
+prim_typeof(Tsp st, Hash env, Val args)
 {
 	Val v;
-	tsp_arg_num(args, "type", 1);
+	tsp_arg_num(args, "typeof", 1);
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
 	return mk_str(st, type_str(v->t));
@@ -1158,7 +1158,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(eval);
 	tsp_env_name_fn(=, eq);
 	tsp_env_fn(cond);
-	tsp_env_fn(type);
+	tsp_env_fn(typeof);
 	tsp_env_fn(get);
 	tsp_env_fn(lambda);
 	tsp_env_fn(macro);
