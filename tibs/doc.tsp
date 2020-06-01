@@ -36,9 +36,10 @@
       "(macro args . body)"
       "create anonymous macro")
     (define
-      "(define var val)"
+      "(define var . val)"
       "(define (func . args) . body)"
-      "creates new variable with value, or create new function if argument list given")
+      "creates new variable with value, or create new function if argument list given"
+      "if value for variable is not given, make it a self-evaluating symbol")
     (set!
       "(set! var val)"
       "change the variable var to val")

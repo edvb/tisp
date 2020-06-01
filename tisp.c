@@ -990,7 +990,7 @@ static Val
 prim_define(Tsp st, Hash env, Val args)
 {
 	Val sym, val;
-	tsp_arg_min(args, "define", 2);
+	tsp_arg_min(args, "define", 1);
 	if (car(args)->t == PAIR) { /* create function if given argument list */
 		sym = caar(args); /* first element of argument list is function name */
 		if (sym->t != SYMBOL)
@@ -999,12 +999,12 @@ prim_define(Tsp st, Hash env, Val args)
 			          type_str(sym->t));
 		val = mk_func(FUNCTION, sym->v.s, cdar(args), cdr(args), env);
 	} else if (car(args)->t == SYMBOL) { /* create variable */
-		sym = car(args);
-		val = tisp_eval(st, env, cadr(args));
+		sym = car(args); /* if only symbol given, make it self evaluating */
+		val = nilp(cdr(args)) ? sym : tisp_eval(st, env, cadr(args));
 	} else tsp_warn("define: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
-	/* set procedure name if it was previously anoymous */
+	/* set procedure name if it was previously anonymous */
 	if (val->t & (FUNCTION|MACRO) && !val->v.f.name)
 		val->v.f.name = sym->v.s;
 	hash_add(env, sym->v.s, val);

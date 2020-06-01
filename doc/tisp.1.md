@@ -221,7 +221,8 @@ argument list and rest as macro's body.
 
 Create variable with the name of the first argument, with the value of the
 second. If name given is a list use the first element of this list as a new
-functions name and rest of list as its arguments.
+functions name and rest of list as its arguments. If only variable name is
+given make it self evaluating.
 
 #### set!
 
