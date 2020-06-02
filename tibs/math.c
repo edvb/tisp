@@ -199,8 +199,8 @@ prim_pow(Tsp st, Hash vars, Val args)
 	EVAL_CHECK(p, car(cdr(args)), "pow", EXPRESSION);
 	bnum = pow(num(b), num(p)/den(p));
 	bden = pow(den(b), num(p)/den(p));
-	if (bnum == (int)bnum && bden == (int)bden &&
-	    b->t & NUMBER && p->t & NUMBER)
+	if ((bnum == (int)bnum && bden == (int)bden) ||
+	     b->t & DECIMAL || p->t & DECIMAL)
 		return mk_num(b->t, p->t, 0)(bnum, bden);
 	return mk_pair(mk_sym(st, "^"), mk_pair(b, mk_pair(p, st->nil)));
 }
