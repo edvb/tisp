@@ -71,12 +71,6 @@
     ((or (void? x) (nil? x) (pair? x)) x)
     (else (list x))))
 
-(defmacro (var name eq . val)
-  "define new variable with given value"
-  `(if (= ',eq '=)
-     ,(list* 'define name val)
-     (error 'var "incorrect form")))
-
 (defmacro (assert expr)
   `(unless ,expr
         (error 'assert "assertion " ',expr " failed")))
@@ -180,6 +174,7 @@
            x)))
 
 (define (last lst)
+; recur loop ((lst lst) (n (if n (car n) 0)))
   (if (cdr lst)
     (last (cdr lst))
     (car lst)))
