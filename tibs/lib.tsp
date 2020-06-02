@@ -367,6 +367,7 @@
     (* n (! (- n 1)))))
 
 ;;; IO
+(define (run file) (eval (parse (read file))))
 (define (print . str) (apply write (list* 'stdout nil str)))
 (define (newline . file)
   (if (or (nil? file) (nil? (cdr file)))
