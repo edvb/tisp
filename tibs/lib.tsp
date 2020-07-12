@@ -378,6 +378,7 @@
   (map (lambda (s)
          (cond
            ((string? s) (print "\"" s "\""))
+           ((true? s)   (print s)) ; don't print 't since it's self evaluating
            ((symbol? s) (print "'" s))
            ((pair? s)   (print "'" s))
            (else        (print s))))
