@@ -10,10 +10,10 @@ endif
 
 EXE = tisp
 SRC = tisp.c main.c
-TIB = tibs/math.c tibs/io.c tibs/time.c tibs/string.c
+TIB = tib/math.c tib/io.c tib/time.c tib/string.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
-LIB = tibs/libtibmath.so tibs/libtibio.so
-TSP = tibs/lib.tsp tibs/doc.tsp tibs/repl.tsp
+LIB = tib/libtibmath.so tib/libtibio.so
+TSP = tib/core.tsp tib/io.tsp tib/math.tsp tib/doc.tsp tib/repl.tsp
 
 all: options $(EXE)
 

@@ -98,9 +98,11 @@ prim_parse(Tsp st, Hash env, Val args)
 	st->file = v->v.s;
 	st->filec = 0;
 	v = tisp_read(st);
+	/* for (; tsp_fget(st) && (v = tisp_read(st));) ; */
 	st->file = file;
 	st->filec = filec;
 	return v ? v : st->none;
+	/* return tisp_parse_file(st, v->v.s); */
 }
 
 /* save value as binary file to be quickly read again */

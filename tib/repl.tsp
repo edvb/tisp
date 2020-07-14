@@ -8,7 +8,7 @@
           (displayln ans))
         (repl)))))
 
-;; simple repl, only requires io c library
+;; simple repl, only requires io.c tib
 (define (repl-simple)
   (write 'stdout nil "> ")
   (write 'stdout nil (eval (parse (read))) "\n")
