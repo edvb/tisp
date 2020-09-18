@@ -115,7 +115,7 @@ char *tests[][2] = {
 	{ "(eval (+ 1 2))",                         "3"         },
 	{ "(eval '(- 4 3))",                        "1"         },
 	{ "(eval ''(mod 9 3))",                     "(mod 9 3)" },
-	{ "(do (define bar '(/ 25 5)) (eval bar))", "5"         },
+	{ "(do (def bar '(/ 25 5)) (eval bar))",    "5"         },
 
 	{ "cond",                                          NULL      },
 	{ "(cond)",                                        "#<void>" },
@@ -179,24 +179,24 @@ char *tests[][2] = {
 	{ "(= '((1 2) 3 4) '((1 2) 3 4))",               "t"   },
 	{ "(= '((1 b) 3 4) '((1 2) 3 4))",               "nil" },
 
-	{ "define",                      NULL      },
-	{ "(define foo 4)",              "#<void>" },
+	{ "def",                         NULL      },
+	{ "(def foo 4)",                 "#<void>" },
 	{ "foo",                         "4"       },
-	{ "(define bar foo)",            "#<void>" },
+	{ "(def bar foo)",               "#<void>" },
 	{ "bar",                         "4"       },
 	{ "(set! foo 5)",                "5"       },
 	{ "foo",                         "5"       },
 	{ "(set! foo (+ foo bar))",      "9"       },
 	{ "foo",                         "9"       },
-	{ "(define add +)",              "#<void>" },
+	{ "(def add +)",                 "#<void>" },
 	{ "(add foo bar)",               "13"      },
-	{ "(define (one x) (add x 1))",  "#<void>" },
+	{ "(def (one x) (add x 1))",     "#<void>" },
 	{ "(one foo)",                   "10"      },
-	{ "(define (more x)"
-	  "        (define term 3)"
+	{ "(def (more x)"
+	  "        (def term 3)"
 	  "        (+ x term))",         "#<void>" },
 	{ "(more 8)",                    "11"      },
-	{ "(define (add2 x)"
+	{ "(def (add2 x)"
 	  "        (+ x 1) (+ x 2))",    "#<void>" },
 	{ "(add2 2)",                    "4"       },
 	{ "(set! add2 2)",               "2"       },
@@ -367,7 +367,7 @@ char *tests[][2] = {
 	{ "(swap (list 1/2 1/4 1/9 1/16))",          "(1/4 1/2 1/9 1/16)" },
 
 	{ "stack!",                  NULL               },
-	{ "(define s '(1 2 3 4 5))", "#<void>"          },
+	{ "(def s '(1 2 3 4 5))",    "#<void>"          },
 	{ "(peek s)",                "1"                },
 	{ "(pop! s)",                "1"                },
 	{ "s",                       "(2 3 4 5)"        },

@@ -144,7 +144,7 @@ element of the argument given, in this case a list of size 3, which returns
 
 Procedures built in to the language written in C. Called like regular
 functions, see primitives section for more details. **eg** `car`, `cond`,
-`define`, `write`, `+`
+`def`, `write`, `+`
 
 #### Macros
 
@@ -217,7 +217,7 @@ be run with the supplied arguments.
 Similar to lambda, creates anonymous macro with first argument as macro's
 argument list and rest as macro's body.
 
-#### define
+#### def
 
 Create variable with the name of the first argument, with the value of the
 second. If name given is a list use the first element of this list as a new

@@ -1,4 +1,4 @@
-(define (repl)
+(def (repl)
   (print "> ")
   (let ((expr (parse (read))))
     (unless (and (pair? expr) (= (car expr) 'quit))
@@ -9,7 +9,7 @@
         (repl)))))
 
 ;; simple repl, only requires io.c tib
-(define (repl-simple)
+(def (repl-simple)
   (write 'stdout nil "> ")
   (write 'stdout nil (eval (parse (read))) "\n")
   (repl-simple))

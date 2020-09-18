@@ -1,4 +1,4 @@
-.TH TISP 1 "January 2020" "0.0.0" 
+.TH TISP 1 "September 2020" "tisp 0.0.0" 
 .PP
 .SH NAME
 tisp \- tiny lisp
@@ -116,7 +116,7 @@ Lambda functions created within Tisp itself. Called using list syntax where the 
 .PP
 .TP
 \fBPrimitives\fP
-Procedures built in to the language written in C. Called like regular functions, see primitives section for more details. \fBeg\fP 'car', 'cond', 'define', 'write', '+'
+Procedures built in to the language written in C. Called like regular functions, see primitives section for more details. \fBeg\fP 'car', 'cond', 'def', 'write', '+'
 .PP
 .TP
 \fBMacros\fP
@@ -159,7 +159,7 @@ Tests if multiple values are all equal. Returns 'nil' if any are not, and 't' ot
 Evaluates each expression if the given condition corresponding to it is true. Runs through all arguments, each is a list with the first element as the condition which needs to be 't' after evaluated, and the rest of the list is the body to be run if and only if the condition is met. Used for if/elseif/else statements found in C-like languages and 'if','when','unless','switch' macros in Tisp.
 .PP
 .TP
-\fBtype\fP
+\fBtypeof\fP
 Returns a string stating the given argument's type. Used to create 'type?' individual functions.
 .PP
 .TP
@@ -171,8 +171,8 @@ Creates function, first argument is a list of elements representing the symbol n
 Similar to lambda, creates anonymous macro with first argument as macro's argument list and rest as macro's body.
 .PP
 .TP
-\fBdefine\fP
-Create variable with the name of the first argument, with the value of the second. If name given is a list use the first element of this list as a new functions name and rest of list as its arguments.
+\fBdef\fP
+Create variable with the name of the first argument, with the value of the second. If name given is a list use the first element of this list as a new functions name and rest of list as its arguments. If only variable name is given make it self evaluating.
 .PP
 .TP
 \fBset!\fP

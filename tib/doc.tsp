@@ -1,4 +1,4 @@
-(define docstr-reg
+(def docstr-reg
   '((car
       "(car lst)"
       "return first element of list")
@@ -35,9 +35,9 @@
     (macro
       "(macro args . body)"
       "create anonymous macro")
-    (define
-      "(define var . val)"
-      "(define (func . args) . body)"
+    (def
+      "(def var . val)"
+      "(def (func . args) . body)"
       "creates new variable with value, or create new function if argument list given"
       "if value for variable is not given, make it a self-evaluating symbol")
     (set!
@@ -53,11 +53,11 @@
       "(version)"
       "return string of tisp's version number")))
 
-(define (doc proc)
+(def (doc proc)
   "get documentation of function supplied by its doc string"
   (unless (procedure? proc)
     (error 'doc "documentation only exists for procedures"))
-  (define (lookup proc)
+  (def (lookup proc)
     (recur f ((docstr docstr-reg))
       (cond ((nil? docstr)
              (error 'doc (get proc 'name) ": no documentation found"))

@@ -987,21 +987,21 @@ prim_macro(Tsp st, Hash env, Val args)
  * function name and the cdr the function arguments */
 /* TODO if var not func error if more than 2 args */
 static Val
-prim_define(Tsp st, Hash env, Val args)
+prim_def(Tsp st, Hash env, Val args)
 {
 	Val sym, val;
-	tsp_arg_min(args, "define", 1);
+	tsp_arg_min(args, "def", 1);
 	if (car(args)->t == PAIR) { /* create function if given argument list */
 		sym = caar(args); /* first element of argument list is function name */
 		if (sym->t != SYMBOL)
-			tsp_warnf("define: incorrect format,"
+			tsp_warnf("def: incorrect format,"
 			          " expected symbol for function name, received %s",
 			          type_str(sym->t));
 		val = mk_func(FUNCTION, sym->v.s, cdar(args), cdr(args), env);
 	} else if (car(args)->t == SYMBOL) { /* create variable */
 		sym = car(args); /* if only symbol given, make it self evaluating */
 		val = nilp(cdr(args)) ? sym : tisp_eval(st, env, cadr(args));
-	} else tsp_warn("define: incorrect format, no variable name found");
+	} else tsp_warn("def: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
 	/* set procedure name if it was previously anonymous */
@@ -1162,7 +1162,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(get);
 	tsp_env_fn(lambda);
 	tsp_env_fn(macro);
-	tsp_env_fn(define);
+	tsp_env_fn(def);
 	tsp_env_name_fn(set!, set);
 	tsp_env_fn(load);
 	tsp_env_fn(error);

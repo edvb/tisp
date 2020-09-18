@@ -1,11 +1,11 @@
-(define (run file) (eval (parse (read file))))
-(define (print . str) (apply write (list* 'stdout nil str)))
-(define (newline . file)
+(def (run file) (eval (parse (read file))))
+(def (print . str) (apply write (list* 'stdout nil str)))
+(def (newline . file)
   (if (or (nil? file) (nil? (cdr file)))
     (write (car (or file '(stdout))) file "\n")
     (error 'newline "only zero or one file can be given")))
 
-(define (display . str)
+(def (display . str)
   (map (lambda (s)
          (cond
            ((string? s) (print "\"" s "\""))
@@ -14,5 +14,5 @@
            ((pair? s)   (print "'" s))
            (else        (print s))))
        str))
-(define (displayln . str) (apply display str) (newline))
-(define (println . str)   (apply print str) (newline))
+(def (displayln . str) (apply display str) (newline))
+(def (println . str)   (apply print str) (newline))

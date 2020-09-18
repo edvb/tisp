@@ -1,66 +1,66 @@
-(define (list . lst) lst)
+(def (list . lst) lst)
 
-(define defmacro
+(def defmacro
   (macro (args . body)
-         (list 'define (car args) (list 'macro (cdr args) . body))))
+         (list 'def (car args) (list 'macro (cdr args) . body))))
 
 ;;; CXR
-(define (caar x) (car (car x)))
-(define (cadr x) (car (cdr x)))
-(define (cdar x) (cdr (car x)))
-(define (cddr x) (cdr (cdr x)))
-(define (caaar x) (car (car (car x))))
-(define (caadr x) (car (car (cdr x))))
-(define (cadar x) (car (cdr (car x))))
-(define (caddr x) (car (cdr (cdr x))))
-(define (cdaar x) (cdr (car (car x))))
-(define (cdadr x) (cdr (car (cdr x))))
-(define (cddar x) (cdr (cdr (car x))))
-(define (cdddr x) (cdr (cdr (cdr x))))
-(define (caaaar x) (car (car (car (car x)))))
-(define (caaadr x) (car (car (car (cdr x)))))
-(define (caadar x) (car (car (cdr (car x)))))
-(define (caaddr x) (car (car (cdr (cdr x)))))
-(define (cadaar x) (car (cdr (car (car x)))))
-(define (cadadr x) (car (cdr (car (cdr x)))))
-(define (caddar x) (car (cdr (cdr (car x)))))
-(define (cadddr x) (car (cdr (cdr (cdr x)))))
-(define (cdaaar x) (cdr (car (car (car x)))))
-(define (cdaadr x) (cdr (car (car (cdr x)))))
-(define (cdadar x) (cdr (car (cdr (car x)))))
-(define (cdaddr x) (cdr (car (cdr (cdr x)))))
-(define (cddaar x) (cdr (cdr (car (car x)))))
-(define (cddadr x) (cdr (cdr (car (cdr x)))))
-(define (cdddar x) (cdr (cdr (cdr (car x)))))
-(define (cddddr x) (cdr (cdr (cdr (cdr x)))))
+(def (caar x) (car (car x)))
+(def (cadr x) (car (cdr x)))
+(def (cdar x) (cdr (car x)))
+(def (cddr x) (cdr (cdr x)))
+(def (caaar x) (car (car (car x))))
+(def (caadr x) (car (car (cdr x))))
+(def (cadar x) (car (cdr (car x))))
+(def (caddr x) (car (cdr (cdr x))))
+(def (cdaar x) (cdr (car (car x))))
+(def (cdadr x) (cdr (car (cdr x))))
+(def (cddar x) (cdr (cdr (car x))))
+(def (cdddr x) (cdr (cdr (cdr x))))
+(def (caaaar x) (car (car (car (car x)))))
+(def (caaadr x) (car (car (car (cdr x)))))
+(def (caadar x) (car (car (cdr (car x)))))
+(def (caaddr x) (car (car (cdr (cdr x)))))
+(def (cadaar x) (car (cdr (car (car x)))))
+(def (cadadr x) (car (cdr (car (cdr x)))))
+(def (caddar x) (car (cdr (cdr (car x)))))
+(def (cadddr x) (car (cdr (cdr (cdr x)))))
+(def (cdaaar x) (cdr (car (car (car x)))))
+(def (cdaadr x) (cdr (car (car (cdr x)))))
+(def (cdadar x) (cdr (car (cdr (car x)))))
+(def (cdaddr x) (cdr (car (cdr (cdr x)))))
+(def (cddaar x) (cdr (cdr (car (car x)))))
+(def (cddadr x) (cdr (cdr (car (cdr x)))))
+(def (cdddar x) (cdr (cdr (cdr (car x)))))
+(def (cddddr x) (cdr (cdr (cdr (cdr x)))))
 
 ;;; Types
-(define (any? x)       t)
-(define (void? x)      (= (typeof x) "void"))
-(define (nil? x)       (= (typeof x) "nil"))
-(define  empty?        nil?)
-(define (integer? x)   (= (typeof x) "integer"))
-(define (decimal? x)   (= (typeof x) "decimal"))
-(define (ratio? x)     (= (typeof x) "ratio"))
-(define (string? x)    (= (typeof x) "string"))
-(define (symbol? x)    (= (typeof x) "symbol"))
-(define (primitive? x) (= (typeof x) "primitive"))
-(define (function? x)  (= (typeof x) "function"))
-(define (macro? x)     (= (typeof x) "macro"))
-(define (pair? x)      (= (typeof x) "pair"))
-(define (atom? x)      (not (pair? x)))
-(define (cons? x)      (and (pair? x) (not (pair? (cdr x)))))
-(define (list? x)      (if (pair? x) (list? (cdr x)) (not x)))
-(define (boolean? x)   (or (= x t) (nil? x)))
-(define (true? x)      (= x t))
-(define  false?        nil?)
-(define (procedure? x) (or (primitive? x) (or (function? x) (macro? x))))
-(define (rational? x)  (or (integer? x) (ratio? x)))
-(define (number? x)    (or (rational? x) (decimal? x)))
+(def (any? x)       t)
+(def (void? x)      (= (typeof x) "void"))
+(def (nil? x)       (= (typeof x) "nil"))
+(def  empty?        nil?)
+(def (integer? x)   (= (typeof x) "integer"))
+(def (decimal? x)   (= (typeof x) "decimal"))
+(def (ratio? x)     (= (typeof x) "ratio"))
+(def (string? x)    (= (typeof x) "string"))
+(def (symbol? x)    (= (typeof x) "symbol"))
+(def (primitive? x) (= (typeof x) "primitive"))
+(def (function? x)  (= (typeof x) "function"))
+(def (macro? x)     (= (typeof x) "macro"))
+(def (pair? x)      (= (typeof x) "pair"))
+(def (atom? x)      (not (pair? x)))
+(def (cons? x)      (and (pair? x) (not (pair? (cdr x)))))
+(def (list? x)      (if (pair? x) (list? (cdr x)) (not x)))
+(def (boolean? x)   (or (= x t) (nil? x)))
+(def (true? x)      (= x t))
+(def  false?        nil?)
+(def (procedure? x) (or (primitive? x) (or (function? x) (macro? x))))
+(def (rational? x)  (or (integer? x) (ratio? x)))
+(def (number? x)    (or (rational? x) (decimal? x)))
 
-(define (bool x) (if x t nil))
+(def (bool x) (if x t nil))
 ; TODO handle string and sym
-(define (pair x)
+(def (pair x)
   (cond
     ((rational? x)
      (cons (numerator x)
@@ -76,7 +76,7 @@
         (error 'assert "assertion " ',expr " failed")))
 
 ; TODO support any sized list n depending on size of optional val
-(define (default n val)
+(def (default n val)
   (cond
     ((nil? n) val)
     ((and (pair? n) (nil? (cdr n)))
@@ -87,7 +87,7 @@
 ; TODO if b = pair and car b = else use cdr b
 (defmacro (if con a b)
   (list 'cond (list con a) (list t b)))
-(define else t)
+(def else t)
 (defmacro (when con . body)
   (list 'cond (list con (cons 'do body))))
 (defmacro (unless con . body)
@@ -98,7 +98,7 @@
                (append
                  (map
                    (lambda (x)
-                     (list* 'define (car x) (cdr x)))
+                     (list* 'def (car x) (cdr x)))
                    vars)
                  body))))
 
@@ -117,10 +117,10 @@
 
 ; TODO allow for improper lists
 (defmacro (quasiquote x)
-  (define (check x)
+  (def (check x)
     (unless (and (pair? (cdr x)) (nil? (cddr x)))
       (error (car x) "invalid form " x)))
-  (define (quasicons a d)
+  (def (quasicons a d)
     (if (pair? d)
       (if (= (car d) 'quote)
         (if (and (pair? a) (= (car a) 'quote))
@@ -143,9 +143,9 @@
 (defmacro (unquote x) (list error ''unquote "called outside of quasiquote"))
 
 ;;; Logic
-(define true t)
-(define false ())
-(define (not x)
+(def true t)
+(def false ())
+(def (not x)
   (if x nil t))
 ; TODO logic func many arguments
 ; Use a macro so arguments aren't evaluated all at once
@@ -159,28 +159,28 @@
   (list 'not (list 'or a b)))
 
 ;;; Lists
-(define (list* . lst)
+(def (list* . lst)
   (if (cdr lst)
     (cons (car lst) (apply list* (cdr lst)))
     (car lst)))
 
-(define (do  . body) (last body))
-(define (do0 . body) (car body))
+(def (do  . body) (last body))
+(def (do0 . body) (car body))
 
-(define (length lst)
+(def (length lst)
   (recur f ((lst lst) (x 0))
          (if lst
            (f (cdr lst) (+ x 1))
            x)))
 
-(define (last lst)
+(def (last lst)
 ; recur loop ((lst lst) (n (if n (car n) 0)))
   (if (cdr lst)
     (last (cdr lst))
     (car lst)))
 
 ; TODO make nth generic for list str vec, made up of list-ref vec-ref str-ref
-(define (nth lst n)
+(def (nth lst n)
   (cond
     ((atom? lst)
      (error 'nth "index of list out of bounds"))
@@ -189,46 +189,46 @@
 
 ; TODO diff name head/tail since conflicts w/ unix
 ; TODO support negative numers like unix tail/head to count from end backwards
-(define (head lst n)
+(def (head lst n)
   (cond
     ((<= n 0) nil)
     ((atom? lst)
      (error 'name "index of list out of bounds"))
     (else (cons (car lst) (head (cdr lst) (- n 1))))))
 
-(define (tail lst n)
+(def (tail lst n)
   (cond
     ((<= n 0) lst)
     ((atom? lst)
      (error 'tail "index of list out of bounds"))
     (else (tail (cdr lst) (- n 1)))))
 
-(define (count x lst)
+(def (count x lst)
   (cond ((nil? lst) 0)
         ((atom? lst) (error 'count "expected proper list"))
         ((= x (car lst)) (+ 1 (count x (cdr lst))))
         (else (count x (cdr lst)))))
 
 ; TODO many args
-(define (apply proc args)
+(def (apply proc args)
   (eval (map (lambda (x) ; prevent args from being evaluated twice
                (list 'quote x))
              (cons proc args))))
 
 ; TODO many lsts for proc w/ multi arguments
-(define (map proc lst)
+(def (map proc lst)
   (if lst
     (cons (proc (car lst))
           (map proc (cdr lst)))
     nil))
 
-(define (filter proc lst)
+(def (filter proc lst)
   (cond
     ((not (pair? lst)) nil)
     ((proc (car lst)) (cons (car lst) (filter proc (cdr lst))))
     (else (filter proc (cdr lst)))))
 
-(define (compose . procs)
+(def (compose . procs)
   (cond
     ((nil? procs) (lambda x x))
     ((nil? (cdr procs)) (car procs))
@@ -236,20 +236,20 @@
       (lambda x
         ((car procs) (apply (apply compose (cdr procs)) x))))))
 
-(define (reverse l)
+(def (reverse l)
   (recur f ((in l) (out nil))
          (if (pair? in)
            (f (cdr in) (cons (car in) out))
            out)))
 
 ; TODO accept many lists to append
-(define (append x y)
+(def (append x y)
   (cond
     ((pair? x) (cons (car x) (append (cdr x) y)))
     ((nil? x) y)
     (else (error 'append "expected proper list"))))
 
-(define (zip x y)
+(def (zip x y)
   (cond ((and (nil? x) (nil? y)) nil)
         ((or (nil? x) (nil? y)) (error 'zip "given lists of unequal length"))
         ((and (pair? x) (pair? y))
@@ -257,47 +257,47 @@
                (zip (cdr x) (cdr y))))))
 
 ; TODO assoc optional equal? arg
-(define (assoc key table)
+(def (assoc key table)
   (cond ((nil? table) nil)
         ((= key (caar table)) (car table))
         (else (assoc key (cdr table)))))
 
-(define (memp proc lst)
+(def (memp proc lst)
   (cond ((nil? lst) nil)
         ((proc (car lst)) lst)
         (else (memp proc (cdr lst)))))
 
-(define (member mem lst)
+(def (member mem lst)
   (memp (lambda (x) (= mem x)) lst))
 
-; define English list element accessors
-(define rest cdr) ; TODO first and rest are generics for list, vec, str types
-(define first car)
-(let (((def name count)
-       (list 'define (list name 'x) (list 'nth 'x count))))
+; def English list element accessors
+(def rest cdr) ; TODO first and rest are generics for list, vec, str types
+(def first car)
+(let (((defi name count)
+       (list 'def (list name 'x) (list 'nth 'x count))))
   (recur f ((n 1)
             (lst '(second third forth fifth sixth seventh eighth ninth tenth)))
          (when lst
-           (eval (def (car lst) n))
+           (eval (defi (car lst) n))
            (f (+ n 1) (cdr lst)))))
 
 ;;; Stacks
-(define (push stack val)
+(def (push stack val)
   (cons val stack))
 
 (defmacro (push! stack val)
   `(set! ,stack (push ,stack ,val)))
 
-(define pop cdr)
+(def pop cdr)
 
 (defmacro (pop! stack)
   `(do0
      (peek ,stack)
      (set! ,stack (pop ,stack))))
 
-(define peek car)
+(def peek car)
 
-(define (swap stack)
+(def (swap stack)
   (let ((x (peek stack))
         (y (peek (pop stack))))
     (push (push (pop (pop stack)) x) y)))
