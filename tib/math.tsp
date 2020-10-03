@@ -1,9 +1,11 @@
 ;;; Constants
+
 (def pi (* 4 (arctan 1.)))
 (def tau (* 2 pi))
 (def e (exp 1.))
 
 ;;; Functions
+
 (def (inc x) (+ x 1))
 (def (dec x) (- x 1))
 (def (truncate x) (* (floor (abs x)) (sgn x)))
@@ -20,7 +22,8 @@
 (defmacro (-- x . n)
   `(set! ,x (- ,x ,(default n 1))))
 
-; inverse trig functions
+;;; Trig
+
 (def (csc x)     (/ (sin x)))
 (def (arccsc x)  (/ (arcsin x)))
 (def (csch x)    (/ (sinh x)))
@@ -57,4 +60,3 @@
   (if (= n 1)
     1
     (* n (! (- n 1)))))
-

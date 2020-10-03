@@ -83,25 +83,25 @@ char *
 type_str(Type t)
 {
 	switch (t) {
-	case NONE:      return "void";
-	case NIL:       return "nil";
-	case INTEGER:   return "integer";
-	case DECIMAL:   return "decimal";
-	case RATIO:     return "ratio";
-	case STRING:    return "string";
-	case SYMBOL:    return "symbol";
-	case PRIMITIVE: return "primitive";
-	case FUNCTION:  return "function";
-	case MACRO:     return "macro";
-	case PAIR:      return "pair";
+	case NONE:      return "Void";
+	case NIL:       return "Nil";
+	case INTEGER:   return "Int";
+	case DECIMAL:   return "Dec";
+	case RATIO:     return "Ratio";
+	case STRING:    return "Str";
+	case SYMBOL:    return "Sym";
+	case PRIMITIVE: return "Prim";
+	case FUNCTION:  return "Func";
+	case MACRO:     return "Macro";
+	case PAIR:      return "Pair";
 	default:
 		if (t == EXPRESSION)
-			return "expression";
+			return "Expr";
 		if (t == RATIONAL)
-			return "rational";
+			return "Rational";
 		if (t & NUMBER)
-			return "number";
-		return "invalid";
+			return "Num";
+		return "Invalid";
 	}
 }
 
@@ -769,7 +769,7 @@ tisp_print(FILE *f, Val v)
 		fputs("#<void>", f);
 		break;
 	case NIL:
-		fputs("nil", f);
+		fputs("Nil", f);
 		break;
 	case INTEGER:
 		fprintf(f, "%d", (int)num(v));
@@ -1144,11 +1144,11 @@ tisp_env_init(size_t cap)
 	st->none->t = NONE;
 	st->t = emalloc(sizeof(struct Val));
 	st->t->t = SYMBOL;
-	st->t->v.s = "t";
+	st->t->v.s = "True";
 
 	st->global = hash_new(cap, NULL);
-	tisp_env_add(st, "t", st->t);
-	tisp_env_add(st, "nil", st->nil);
+	tisp_env_add(st, "True", st->t);
+	tisp_env_add(st, "Nil", st->nil);
 	tisp_env_add(st, "bt", st->nil);
 	tsp_env_fn(car);
 	tsp_env_fn(cdr);

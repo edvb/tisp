@@ -5,6 +5,7 @@
          (list 'def (car args) (list 'macro (cdr args) . body))))
 
 ;;; CXR
+
 (def (caar x) (car (car x)))
 (def (cadr x) (car (cdr x)))
 (def (cdar x) (cdr (car x)))
@@ -35,30 +36,31 @@
 (def (cddddr x) (cdr (cdr (cdr (cdr x)))))
 
 ;;; Types
-(def (any? x)       t)
-(def (void? x)      (= (typeof x) "void"))
-(def (nil? x)       (= (typeof x) "nil"))
+
+(def (any? x)       True)
+(def (void? x)      (= (typeof x) "Void"))
+(def (nil? x)       (= (typeof x) "Nil"))
 (def  empty?        nil?)
-(def (integer? x)   (= (typeof x) "integer"))
-(def (decimal? x)   (= (typeof x) "decimal"))
-(def (ratio? x)     (= (typeof x) "ratio"))
-(def (string? x)    (= (typeof x) "string"))
-(def (symbol? x)    (= (typeof x) "symbol"))
-(def (primitive? x) (= (typeof x) "primitive"))
-(def (function? x)  (= (typeof x) "function"))
-(def (macro? x)     (= (typeof x) "macro"))
-(def (pair? x)      (= (typeof x) "pair"))
+(def (integer? x)   (= (typeof x) "Int"))
+(def (decimal? x)   (= (typeof x) "Dec"))
+(def (ratio? x)     (= (typeof x) "Ratio"))
+(def (string? x)    (= (typeof x) "Str"))
+(def (symbol? x)    (= (typeof x) "Sym"))
+(def (primitive? x) (= (typeof x) "Prim"))
+(def (function? x)  (= (typeof x) "Func"))
+(def (macro? x)     (= (typeof x) "Macro"))
+(def (pair? x)      (= (typeof x) "Pair"))
 (def (atom? x)      (not (pair? x)))
 (def (cons? x)      (and (pair? x) (not (pair? (cdr x)))))
 (def (list? x)      (if (pair? x) (list? (cdr x)) (not x)))
-(def (boolean? x)   (or (= x t) (nil? x)))
-(def (true? x)      (= x t))
+(def (boolean? x)   (or (= x True) (nil? x)))
+(def (true? x)      (= x True))
 (def  false?        nil?)
 (def (procedure? x) (or (primitive? x) (or (function? x) (macro? x))))
 (def (rational? x)  (or (integer? x) (ratio? x)))
 (def (number? x)    (or (rational? x) (decimal? x)))
 
-(def (bool x) (if x t nil))
+(def (bool x) (if x True Nil))
 ; TODO handle string and sym
 (def (pair x)
   (cond
@@ -84,10 +86,11 @@
     (else (error 'default "expected only 1 optional argument"))))
 
 ;;; Control Flow
+
 ; TODO if b = pair and car b = else use cdr b
 (defmacro (if con a b)
-  (list 'cond (list con a) (list t b)))
-(def else t)
+  (list 'cond (list con a) (list True b)))
+(def else True)
 (defmacro (when con . body)
   (list 'cond (list con (cons 'do body))))
 (defmacro (unless con . body)
@@ -143,14 +146,14 @@
 (defmacro (unquote x) (list error ''unquote "called outside of quasiquote"))
 
 ;;; Logic
-(def true t)
-(def false ())
+
+(def False ())
 (def (not x)
-  (if x nil t))
+  (if x Nil True))
 ; TODO logic func many arguments
 ; Use a macro so arguments aren't evaluated all at once
 (defmacro (and a b)
-  (list 'if a b nil))
+  (list 'if a b Nil))
 (defmacro (nand a b)
   (list 'not (list 'and a b)))
 (defmacro (or a b)
@@ -159,6 +162,7 @@
   (list 'not (list 'or a b)))
 
 ;;; Lists
+
 (def (list* . lst)
   (if (cdr lst)
     (cons (car lst) (apply list* (cdr lst)))
@@ -191,7 +195,7 @@
 ; TODO support negative numers like unix tail/head to count from end backwards
 (def (head lst n)
   (cond
-    ((<= n 0) nil)
+    ((<= n 0) Nil)
     ((atom? lst)
      (error 'name "index of list out of bounds"))
     (else (cons (car lst) (head (cdr lst) (- n 1))))))
@@ -220,11 +224,11 @@
   (if lst
     (cons (proc (car lst))
           (map proc (cdr lst)))
-    nil))
+    Nil))
 
 (def (filter proc lst)
   (cond
-    ((not (pair? lst)) nil)
+    ((not (pair? lst)) Nil)
     ((proc (car lst)) (cons (car lst) (filter proc (cdr lst))))
     (else (filter proc (cdr lst)))))
 
@@ -237,7 +241,7 @@
         ((car procs) (apply (apply compose (cdr procs)) x))))))
 
 (def (reverse l)
-  (recur f ((in l) (out nil))
+  (recur f ((in l) (out Nil))
          (if (pair? in)
            (f (cdr in) (cons (car in) out))
            out)))
@@ -250,7 +254,7 @@
     (else (error 'append "expected proper list"))))
 
 (def (zip x y)
-  (cond ((and (nil? x) (nil? y)) nil)
+  (cond ((and (nil? x) (nil? y)) Nil)
         ((or (nil? x) (nil? y)) (error 'zip "given lists of unequal length"))
         ((and (pair? x) (pair? y))
          (cons (cons (car x) (car y))
@@ -258,12 +262,12 @@
 
 ; TODO assoc optional equal? arg
 (def (assoc key table)
-  (cond ((nil? table) nil)
+  (cond ((nil? table) Nil)
         ((= key (caar table)) (car table))
         (else (assoc key (cdr table)))))
 
 (def (memp proc lst)
-  (cond ((nil? lst) nil)
+  (cond ((nil? lst) Nil)
         ((proc (car lst)) lst)
         (else (memp proc (cdr lst)))))
 
@@ -282,6 +286,7 @@
            (f (+ n 1) (cdr lst)))))
 
 ;;; Stacks
+
 (def (push stack val)
   (cons val stack))
 

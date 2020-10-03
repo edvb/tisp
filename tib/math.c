@@ -99,12 +99,12 @@ prim_##NAME(Tsp st, Hash vars, Val args)                             \
 }
 
 /* define int and dec as identity functions to use them in the same macro */
-#define integer(X) (X)
-PRIM_ROUND(integer,   1)
-#undef integer
-#define decimal(X) (X)
-PRIM_ROUND(decimal,   2)
-#undef decimal
+#define Int(X) (X)
+#define Dec(X) (X)
+PRIM_ROUND(Int,   1)
+PRIM_ROUND(Dec,   2)
+#undef Int
+#undef Dec
 PRIM_ROUND(round, 0)
 PRIM_ROUND(floor, 0)
 PRIM_ROUND(ceil,  0)
@@ -259,8 +259,8 @@ tib_env_math(Tsp st)
 	tsp_env_fn(numerator);
 	tsp_env_fn(denominator);
 
-	tsp_env_fn(integer);
-	tsp_env_fn(decimal);
+	tsp_env_fn(Int);
+	tsp_env_fn(Dec);
 	tsp_env_fn(floor);
 	tsp_env_fn(ceil);
 	tsp_env_fn(round);

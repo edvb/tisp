@@ -85,22 +85,21 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 	return v;
 }
 
-/* TODO string and symbol: multi arguments to concat */
 static Val
-prim_string(Tsp st, Hash env, Val args)
+prim_Str(Tsp st, Hash env, Val args)
 {
 	Val v;
-	tsp_arg_min(args, "string", 1);
+	tsp_arg_min(args, "Str", 1);
 	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	return val_string(st, v, mk_str);
 }
 
 static Val
-prim_symbol(Tsp st, Hash env, Val args)
+prim_Sym(Tsp st, Hash env, Val args)
 {
 	Val v;
-	tsp_arg_min(args, "symbol", 1);
+	tsp_arg_min(args, "Sym", 1);
 	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
 	return val_string(st, v, mk_sym);
@@ -122,7 +121,7 @@ prim_strlen(Tsp st, Hash env, Val args)
 void
 tib_env_string(Tsp st)
 {
-	tsp_env_fn(symbol);
-	tsp_env_fn(string);
+	tsp_env_fn(Sym);
+	tsp_env_fn(Str);
 	tsp_env_fn(strlen);
 }

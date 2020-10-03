@@ -10,6 +10,6 @@
 
 ;; simple repl, only requires io.c tib
 (def (repl-simple)
-  (write 'stdout nil "> ")
-  (write 'stdout nil (eval (parse (read))) "\n")
+  (write 'stdout Nil "> ")
+  (write 'stdout Nil (eval (parse (read))) "\n")
   (repl-simple))
