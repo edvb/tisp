@@ -1105,10 +1105,7 @@ prim_error(Tsp st, Hash env, Val args)
 	tsp_arg_type(car(v), "error", SYMBOL);
 	fprintf(stderr, "tisp: error: %s: ", car(v)->v.s);
 	for (v = cdr(v); !nilp(v); v = cdr(v))
-		if (car(v)->t & STRING) /* don't print quotes around string */
-			fprintf(stderr, "%s", car(v)->v.s);
-		else
-			tisp_print(stderr, car(v));
+		tisp_print(stderr, car(v));
 	fputc('\n', stderr);
 	return NULL;
 }
