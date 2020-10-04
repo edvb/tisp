@@ -8,6 +8,7 @@
 
 #include "tisp.h"
 #ifndef TIB_DYNAMIC
+#  include "tibs.tsp.h"
 	tsp_include_tib(math);
 	tsp_include_tib(io);
 	tsp_include_tib(time);
@@ -26,8 +27,7 @@ main(int argc, char *argv[])
 	tib_env_io(st);
 	tib_env_time(st);
 	tib_env_string(st);
-#  include "tibs.tsp.h"
-	tisp_env_lib(st, libs_tsp);
+	tisp_env_lib(st, tibs);
 #endif
 
 	/* TODO SIGTERM to handle garbage collection */
@@ -66,7 +66,6 @@ readstr:
 	}
 
 	puts("");
-
 
 	return 0;
 }

@@ -572,7 +572,7 @@ main(void)
 	Tsp st = tisp_env_init(1024);
 	tib_env_math(st);
 	tib_env_string(st);
-	tisp_env_lib(st, libs_tsp);
+	tisp_env_lib(st, tibs);
 
 	for (int i = 0; ; i++) {
 		if (!tests[i][1]) {
