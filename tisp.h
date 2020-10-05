@@ -20,11 +20,11 @@
  */
 
 #define tsp_warnf(M, ...) do {                                  \
-	fprintf(stderr, "tisp: error: " M "\n", ##__VA_ARGS__); \
+	fprintf(stderr, "; tisp: error: " M "\n", ##__VA_ARGS__); \
 	return NULL;                                            \
 } while(0)
 #define tsp_warn(M) do {                         \
-	fprintf(stderr, "tisp: error: " M "\n"); \
+	fprintf(stderr, "; tisp: error: " M "\n"); \
 	return NULL;                             \
 } while(0)
 

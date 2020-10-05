@@ -136,8 +136,7 @@ prim_open(Tsp st, Hash env, Val args)
 	struct Val v;
 	Val ret;
 	if (!(ret = malloc(sizeof(struct Val)))) {
-		fprintf(stderr, "malloc: ");
-		perror(NULL);
+		perror("; malloc");
 		exit(1);
 	}
 	tsp_arg_min(args, "open", 1);

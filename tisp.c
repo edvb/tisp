@@ -45,8 +45,7 @@ ecalloc(size_t nmemb, size_t size)
 {
 	void *p;
 	if (!(p = calloc(nmemb, size))) {
-		fprintf(stderr, "calloc: ");
-		perror(NULL);
+		perror("; calloc");
 		exit(1);
 	}
 	return p;
@@ -57,8 +56,7 @@ emalloc(size_t size)
 {
 	void *p;
 	if (!(p = malloc(size))) {
-		fprintf(stderr, "malloc: ");
-		perror(NULL);
+		perror("; malloc");
 		exit(1);
 	}
 	return p;
@@ -68,8 +66,7 @@ static void *
 erealloc(void *p, size_t size)
 {
 	if (!(p = realloc(p, size))) {
-		fprintf(stderr, "realloc: ");
-		perror(NULL);
+		perror("; realloc");
 		exit(1);
 	}
 	return p;
@@ -812,7 +809,7 @@ tisp_print(FILE *f, Val v)
 		putc(')', f);
 		break;
 	default:
-		fprintf(stderr, "tisp: could not print value type %s\n", type_str(v->t));
+		fprintf(stderr, "; tisp: could not print value type %s\n", type_str(v->t));
 	}
 }
 
@@ -1103,7 +1100,7 @@ prim_error(Tsp st, Hash env, Val args)
 	/* TODO have error auto print function name that was pre-defined */
 	tsp_arg_min(v, "error", 2);
 	tsp_arg_type(car(v), "error", SYMBOL);
-	fprintf(stderr, "tisp: error: %s: ", car(v)->v.s);
+	fprintf(stderr, "; tisp: error: %s: ", car(v)->v.s);
 	for (v = cdr(v); !nilp(v); v = cdr(v))
 		tisp_print(stderr, car(v));
 	fputc('\n', stderr);
