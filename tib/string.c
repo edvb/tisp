@@ -109,7 +109,7 @@ static Val
 prim_strlen(Tsp st, Hash env, Val args)
 {
 	Val v;
-	tsp_arg_num(args, "symbol", 1);
+	tsp_arg_num(args, "strlen", 1);
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
 	if (!(v->t & (STRING|SYMBOL)))
