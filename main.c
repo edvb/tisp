@@ -11,7 +11,7 @@
 #  include "tibs.tsp.h"
 	tsp_include_tib(math);
 	tsp_include_tib(io);
-	tsp_include_tib(time);
+	tsp_include_tib(os);
 	tsp_include_tib(string);
 #endif
 
@@ -25,7 +25,7 @@ main(int argc, char *argv[])
 #ifndef TIB_DYNAMIC
 	tib_env_math(st);
 	tib_env_io(st);
-	tib_env_time(st);
+	tib_env_os(st);
 	tib_env_string(st);
 	tisp_env_lib(st, tibs);
 #endif

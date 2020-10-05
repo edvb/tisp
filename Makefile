@@ -10,7 +10,7 @@ endif
 
 EXE = tisp
 SRC = tisp.c main.c
-TIB = tib/math.c tib/io.c tib/time.c tib/string.c
+TIB = tib/math.c tib/io.c tib/os.c tib/string.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
 LIB = tib/libtibmath.so tib/libtibio.so
 TSP = tib/core.tsp tib/io.tsp tib/math.tsp tib/doc.tsp tib/repl.tsp

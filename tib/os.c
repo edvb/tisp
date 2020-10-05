@@ -21,8 +21,38 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
+#include <limits.h>
 
 #include "../tisp.h"
+
+/* change to new directory */
+static Val
+prim_cd(Tsp st, Hash env, Val args)
+{
+	Val v;
+	tsp_arg_num(args, "cd", 1);
+	if (!(v = tisp_eval(st, env, car(args))))
+		return NULL;
+	if (!(v->t & (STRING|SYMBOL)))
+		tsp_warnf("strlen: expected string or symbol, received %s", type_str(v->t));
+	if (chdir(v->v.s)) {
+		perror("; tisp: error: cd");
+		return NULL;
+	}
+	return st->none;
+}
+
+/* print current working directory */
+static Val
+prim_pwd(Tsp st, Hash env, Val args)
+{
+	tsp_arg_num(args, "pwd", 0);
+	char cwd[PATH_MAX];
+	if (!getcwd(cwd, sizeof(cwd)) && cwd[0] != '(')
+		tsp_warn("pwd: could not get current directory");
+	return mk_str(st, cwd);
+}
 
 /* return number of seconds since 1970 (unix time stamp) */
 static Val
@@ -47,8 +77,10 @@ prim_timeit(Tsp st, Hash env, Val args)
 }
 
 void
-tib_env_time(Tsp st)
+tib_env_os(Tsp st)
 {
+	tsp_env_name_fn(cd!, cd);
+	tsp_env_fn(pwd);
 	tsp_env_fn(time);
 	tsp_env_fn(timeit);
 }
