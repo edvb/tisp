@@ -7,7 +7,7 @@
 # compiled files
 tisp
 test
-libs.tsp.h
+tibs.tsp.h
 *.exe
 *.out
 *.app
@@ -20,4 +20,4 @@ libs.tsp.h
 
 # misc
 tags
-config.h
+Session.vim
