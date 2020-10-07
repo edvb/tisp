@@ -44,10 +44,8 @@ static void *
 ecalloc(size_t nmemb, size_t size)
 {
 	void *p;
-	if (!(p = calloc(nmemb, size))) {
-		perror("; calloc");
-		exit(1);
-	}
+	if (!(p = calloc(nmemb, size)))
+		perror("; calloc"), exit(1);
 	return p;
 }
 
@@ -55,20 +53,16 @@ static void *
 emalloc(size_t size)
 {
 	void *p;
-	if (!(p = malloc(size))) {
-		perror("; malloc");
-		exit(1);
-	}
+	if (!(p = malloc(size)))
+		perror("; malloc"), exit(1);
 	return p;
 }
 
 static void *
 erealloc(void *p, size_t size)
 {
-	if (!(p = realloc(p, size))) {
-		perror("; realloc");
-		exit(1);
-	}
+	if (!(p = realloc(p, size)))
+		perror("; realloc"), exit(1);
 	return p;
 }
 

@@ -36,14 +36,13 @@ prim_cd(Tsp st, Hash env, Val args)
 		return NULL;
 	if (!(v->t & (TSP_STR|TSP_SYM)))
 		tsp_warnf("strlen: expected string or symbol, received %s", type_str(v->t));
-	if (chdir(v->v.s)) {
-		perror("; tisp: error: cd");
-		return NULL;
-	}
+	if (chdir(v->v.s))
+		return perror("; error: cd"), NULL;
 	return st->none;
 }
 
-/* print current working directory */
+/* TODO rename to cwd ? */
+/* return string of current working directory */
 static Val
 prim_pwd(Tsp st, Hash env, Val args)
 {

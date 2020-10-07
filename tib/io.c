@@ -135,10 +135,8 @@ prim_open(Tsp st, Hash env, Val args)
 	char *fname;
 	struct Val v;
 	Val ret;
-	if (!(ret = malloc(sizeof(struct Val)))) {
-		perror("; malloc");
-		exit(1);
-	}
+	if (!(ret = malloc(sizeof(struct Val))))
+		perror("; malloc"), exit(1);
 	tsp_arg_min(args, "open", 1);
 	if (!(args = tisp_eval_list(st, env, args)))
 		return NULL;
