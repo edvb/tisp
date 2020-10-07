@@ -63,12 +63,12 @@
       (cond ((nil? docstr)
              (error 'doc (get proc 'name) ": no documentation found"))
             ((= (caar docstr) (get proc 'name))
-             (map disp (cdar docstr)))
+             (map println (cdar docstr)))
             (else (f (cdr docstr))))))
   (if (or (function? proc) (macro? proc))
     (let ((docstr (car (get proc 'body))))
       (if (string? docstr)
-        (disp (cons (get proc 'name) (get proc 'args)) "\n"
+        (println (cons (get proc 'name) (get proc 'args)) "\n"
               docstr)
         (lookup proc)))
     (lookup proc))
