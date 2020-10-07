@@ -34,7 +34,7 @@ prim_cd(Tsp st, Hash env, Val args)
 	tsp_arg_num(args, "cd", 1);
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
-	if (!(v->t & (STRING|SYMBOL)))
+	if (!(v->t & (TSP_STR|TSP_SYM)))
 		tsp_warnf("strlen: expected string or symbol, received %s", type_str(v->t));
 	if (chdir(v->v.s)) {
 		perror("; tisp: error: cd");

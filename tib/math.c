@@ -36,7 +36,7 @@ prim_numerator(Tsp st, Hash vars, Val args)
 {
 	Val a;
 	tsp_arg_num(args, "numerator", 1);
-	EVAL_CHECK(a, car(args), "numerator", RATIONAL);
+	EVAL_CHECK(a, car(args), "numerator", TSP_RATIONAL);
 	return mk_int(num(a));
 }
 
@@ -45,7 +45,7 @@ prim_denominator(Tsp st, Hash vars, Val args)
 {
 	Val a;
 	tsp_arg_num(args, "denominator", 1);
-	EVAL_CHECK(a, car(args), "denominator", RATIONAL);
+	EVAL_CHECK(a, car(args), "denominator", TSP_RATIONAL);
 	return mk_int(den(a));
 }
 
@@ -75,15 +75,15 @@ create_rat(double num, double den)
  * force arg is used to force number to one type:
  *   0 -> no force, 1 -> force ratio/int, 2 -> force decimal */
 static Val
-(*mk_num(Type a, Type b, int force))(double, double)
+(*mk_num(TspType a, TspType b, int force))(double, double)
 {
 	if (force == 1)
 		return &create_rat;
 	if (force == 2)
 		return &create_dec;
-	if (a & DECIMAL || b & DECIMAL)
+	if (a & TSP_DEC || b & TSP_DEC)
 		return &create_dec;
-	if (a & RATIO || b & RATIO)
+	if (a & TSP_RATIO || b & TSP_RATIO)
 		return &create_rat;
 	return &create_int;
 }
@@ -94,7 +94,7 @@ prim_##NAME(Tsp st, Hash vars, Val args)                             \
 {                                                                    \
 	Val a;                                                       \
 	tsp_arg_num(args, #NAME, 1);                                 \
-	EVAL_CHECK(a, car(args), #NAME, NUMBER);                     \
+	EVAL_CHECK(a, car(args), #NAME, TSP_NUM);                    \
 	return (mk_num(a->t, a->t, FORCE))(NAME(num(a)/den(a)), 1.); \
 }
 
@@ -114,9 +114,9 @@ prim_add(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "+", 2);
-	EVAL_CHECK(a, car(args), "+", NUMBER);
-	EVAL_CHECK(b, car(cdr(args)), "+", NUMBER);
-	if (a->t & DECIMAL || b->t & DECIMAL)
+	EVAL_CHECK(a, car(args), "+", TSP_NUM);
+	EVAL_CHECK(b, car(cdr(args)), "+", TSP_NUM);
+	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) + (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 0))
 		(num(a) * den(b) + den(a) * num(b),
@@ -130,14 +130,14 @@ prim_sub(Tsp st, Hash vars, Val args)
 	int len = list_len(args);
 	if (len != 2 && len != 1)
 		tsp_warnf("-: expected 1 or 2 arguments, recieved %d", len);
-	EVAL_CHECK(a, car(args), "-", NUMBER);
+	EVAL_CHECK(a, car(args), "-", TSP_NUM);
 	if (len == 1) {
 		b = a;
 		a = mk_int(0);
 	} else {
-		EVAL_CHECK(b, car(cdr(args)), "-", NUMBER);
+		EVAL_CHECK(b, car(cdr(args)), "-", TSP_NUM);
 	}
-	if (a->t & DECIMAL || b->t & DECIMAL)
+	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) - (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 0))
 		(num(a) * den(b) - den(a) * num(b),
@@ -149,9 +149,9 @@ prim_mul(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "*", 2);
-	EVAL_CHECK(a, car(args), "*", NUMBER);
-	EVAL_CHECK(b, car(cdr(args)), "*", NUMBER);
-	if (a->t & DECIMAL || b->t & DECIMAL)
+	EVAL_CHECK(a, car(args), "*", TSP_NUM);
+	EVAL_CHECK(b, car(cdr(args)), "*", TSP_NUM);
+	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) * (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 0))(num(a) * num(b), den(a) * den(b));
 
@@ -164,14 +164,14 @@ prim_div(Tsp st, Hash vars, Val args)
 	int len = list_len(args);
 	if (len != 2 && len != 1)
 		tsp_warnf("/: expected 1 or 2 arguments, recieved %d", len);
-	EVAL_CHECK(a, car(args), "/", NUMBER);
+	EVAL_CHECK(a, car(args), "/", TSP_NUM);
 	if (len == 1) {
 		b = a;
 		a = mk_int(1);
 	} else {
-		EVAL_CHECK(b, car(cdr(args)), "/", NUMBER);
+		EVAL_CHECK(b, car(cdr(args)), "/", TSP_NUM);
 	}
-	if (a->t & DECIMAL || b->t & DECIMAL)
+	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) / (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 1))(num(a) * den(b), den(a) * num(b));
 }
@@ -181,8 +181,8 @@ prim_mod(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "mod", 2);
-	EVAL_CHECK(a, car(args), "mod", INTEGER);
-	EVAL_CHECK(b, car(cdr(args)), "mod", INTEGER);
+	EVAL_CHECK(a, car(args), "mod", TSP_INT);
+	EVAL_CHECK(b, car(cdr(args)), "mod", TSP_INT);
 	if (num(b) == 0)
 		tsp_warn("division by zero");
 	return mk_int((int)num(a) % abs((int)num(b)));
@@ -195,12 +195,12 @@ prim_pow(Tsp st, Hash vars, Val args)
 	double bnum, bden;
 	Val b, p;
 	tsp_arg_num(args, "pow", 2);
-	EVAL_CHECK(b, car(args), "pow", EXPRESSION);
-	EVAL_CHECK(p, car(cdr(args)), "pow", EXPRESSION);
+	EVAL_CHECK(b, car(args), "pow", TSP_EXPR);
+	EVAL_CHECK(p, car(cdr(args)), "pow", TSP_EXPR);
 	bnum = pow(num(b), num(p)/den(p));
 	bden = pow(den(b), num(p)/den(p));
 	if ((bnum == (int)bnum && bden == (int)bden) ||
-	     b->t & DECIMAL || p->t & DECIMAL)
+	     b->t & TSP_DEC || p->t & TSP_DEC)
 		return mk_num(b->t, p->t, 0)(bnum, bden);
 	return mk_pair(mk_sym(st, "^"), mk_pair(b, mk_pair(p, st->nil)));
 }
@@ -214,8 +214,8 @@ prim_##NAME(Tsp st, Hash vars, Val args)           \
 		return NULL;                       \
 	if (list_len(v) != 2)                      \
 		return st->t;                      \
-	tsp_arg_type(car(v), #OP, NUMBER);         \
-	tsp_arg_type(car(cdr(v)), #OP, NUMBER);    \
+	tsp_arg_type(car(v), #OP, TSP_NUM);        \
+	tsp_arg_type(car(cdr(v)), #OP, TSP_NUM);   \
 	return ((num(car(v))*den(car(cdr(v)))) OP  \
 		(num(car(cdr(v)))*den(car(v)))) ?  \
 		st->t : st->nil;                   \
@@ -232,8 +232,8 @@ prim_##NAME(Tsp st, Hash vars, Val args)                        \
 {                                                               \
 	Val v;                                                  \
 	tsp_arg_num(args, #NAME, 1);                            \
-	EVAL_CHECK(v, car(args), #NAME, EXPRESSION);            \
-	if (v->t & DECIMAL)                                     \
+	EVAL_CHECK(v, car(args), #NAME, TSP_EXPR);              \
+	if (v->t & TSP_DEC)                                     \
 		return mk_dec(NAME(num(v)));                    \
 	return mk_pair(mk_sym(st, #NAME), mk_pair(v, st->nil)); \
 }

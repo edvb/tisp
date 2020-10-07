@@ -38,44 +38,44 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 	for (; !nilp(args); args = cdr(args)) {
 		v = car(args);
 		switch (v->t) {
-		case NONE:
+		case TSP_NONE:
 			len += 5;
 			ret = realloc(ret, len*sizeof(char));
 			strcat(ret, "Void");
 			break;
-		case NIL:
+		case TSP_NIL:
 			len += 4;
 			ret = realloc(ret, len*sizeof(char));
 			strcat(ret, "Nil");
 			break;
-		case INTEGER:
+		case TSP_INT:
 			snprintf(s, 21, "%d", (int)v->v.n.num);
 			len += strlen(s);
 			s[len] = '\0';
 			ret = realloc(ret, len*sizeof(char));
 			strcat(ret, s);
 			break;
-		case DECIMAL:
+		case TSP_DEC:
 			snprintf(s, 17, "%.15g", v->v.n.num);
 			len += strlen(s);
 			s[len] = '\0';
 			ret = realloc(ret, len*sizeof(char));
 			strcat(ret, s);
 			break;
-		case RATIO:
+		case TSP_RATIO:
 			snprintf(s, 43, "%d/%d", (int)v->v.n.num, (int)v->v.n.den);
 			len += strlen(s);
 			s[len] = '\0';
 			ret = realloc(ret, len*sizeof(char));
 			strcat(ret, s);
 			break;
-		case STRING:
-		case SYMBOL:
+		case TSP_STR:
+		case TSP_SYM:
 			len += strlen(v->v.s);
 			ret = realloc(ret, len*sizeof(char));
 			strcat(ret, v->v.s);
 			break;
-		case PAIR:
+		case TSP_PAIR:
 		default:
 			tsp_warnf("could not convert type %s into string", type_str(v->t));
 		}
@@ -112,7 +112,7 @@ prim_strlen(Tsp st, Hash env, Val args)
 	tsp_arg_num(args, "strlen", 1);
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
-	if (!(v->t & (STRING|SYMBOL)))
+	if (!(v->t & (TSP_STR|TSP_SYM)))
 		tsp_warnf("strlen: expected string or symbol, received %s",
 		                   type_str(v->t));
 	return mk_int(strlen(v->v.s));

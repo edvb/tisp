@@ -77,26 +77,26 @@ erealloc(void *p, size_t size)
 /* return named string for each type */
 /* TODO loop through each type bit to print */
 char *
-type_str(Type t)
+type_str(TspType t)
 {
 	switch (t) {
-	case NONE:      return "Void";
-	case NIL:       return "Nil";
-	case INTEGER:   return "Int";
-	case DECIMAL:   return "Dec";
-	case RATIO:     return "Ratio";
-	case STRING:    return "Str";
-	case SYMBOL:    return "Sym";
-	case PRIMITIVE: return "Prim";
-	case FUNCTION:  return "Func";
-	case MACRO:     return "Macro";
-	case PAIR:      return "Pair";
+	case TSP_NONE:  return "Void";
+	case TSP_NIL:   return "Nil";
+	case TSP_INT:   return "Int";
+	case TSP_DEC:   return "Dec";
+	case TSP_RATIO: return "Ratio";
+	case TSP_STR:   return "Str";
+	case TSP_SYM:   return "Sym";
+	case TSP_PRIM:  return "Prim";
+	case TSP_FUNC:  return "Func";
+	case TSP_MACRO: return "Macro";
+	case TSP_PAIR:  return "Pair";
 	default:
-		if (t == EXPRESSION)
+		if (t == TSP_EXPR)
 			return "Expr";
-		if (t == RATIONAL)
+		if (t == TSP_RATIONAL)
 			return "Rational";
-		if (t & NUMBER)
+		if (t & TSP_NUM)
 			return "Num";
 		return "Invalid";
 	}
@@ -158,7 +158,7 @@ int
 list_len(Val v)
 {
 	int len = 0;
-	for (; v->t == PAIR; v = cdr(v))
+	for (; v->t == TSP_PAIR; v = cdr(v))
 		len++;
 	return nilp(v) ? len : -1;
 }
@@ -167,17 +167,17 @@ list_len(Val v)
 static int
 vals_eq(Val a, Val b)
 {
-	if (a->t & NUMBER && b->t & NUMBER) { /* NUMBERs */
+	if (a->t & TSP_NUM && b->t & TSP_NUM) { /* NUMBERs */
 		if (num(a) != num(b) || den(a) != den(b))
 			return 0;
 		return 1;
 	}
 	if (a->t != b->t)
 		return 0;
-	if (a->t == PAIR) /* PAIR */
+	if (a->t == TSP_PAIR) /* PAIR */
 		return vals_eq(car(a), car(b)) && vals_eq(cdr(a), cdr(b));
 	/* TODO function var names should not matter in comparison */
-	if (a->t & (FUNCTION | MACRO)) /* FUNCTION, MACRO */
+	if (a->t & (TSP_FUNC | TSP_MACRO)) /* FUNCTION, MACRO */
 		return vals_eq(a->v.f.args, b->v.f.args) &&
 		       vals_eq(a->v.f.body, b->v.f.body);
 	if (a != b) /* PRIMITIVE, STRING, SYMBOL, NIL, VOID */
@@ -289,18 +289,18 @@ hash_extend(Hash ht, Val args, Val vals)
 {
 	Val arg, val;
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
-		if (args->t == PAIR) {
+		if (args->t == TSP_PAIR) {
 			arg = car(args);
 			val = car(vals);
 		} else {
 			arg = args;
 			val = vals;
 		}
-		if (arg->t != SYMBOL)
+		if (arg->t != TSP_SYM)
 			tsp_warnf("expected symbol for argument of function"
 				  " definition, recieved %s", type_str(arg->t));
 		hash_add(ht, arg->v.s, val);
-		if (args->t != PAIR)
+		if (args->t != TSP_PAIR)
 			break;
 	}
 	return ht;
@@ -312,7 +312,7 @@ Val
 mk_int(int i)
 {
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = INTEGER;
+	ret->t = TSP_INT;
 	num(ret) = i;
 	den(ret) = 1;
 	return ret;
@@ -322,7 +322,7 @@ Val
 mk_dec(double d)
 {
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = DECIMAL;
+	ret->t = TSP_DEC;
 	num(ret) = d;
 	den(ret) = 1;
 	return ret;
@@ -341,7 +341,7 @@ mk_rat(int num, int den)
 	if (den == 1) /* simplify into integer if denominator is 1 */
 		return mk_int(num);
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = RATIO;
+	ret->t = TSP_RATIO;
 	ret->v.n.num = num;
 	ret->v.n.den = den;
 	return ret;
@@ -355,7 +355,7 @@ mk_str(Tsp st, char *s)
 	if ((ret = hash_get(st->strs, s)))
 		return ret;
 	ret = emalloc(sizeof(struct Val));
-	ret->t = STRING;
+	ret->t = TSP_STR;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
 	strcpy(ret->v.s, s);
 	hash_add(st->strs, s, ret);
@@ -369,7 +369,7 @@ mk_sym(Tsp st, char *s)
 	if ((ret = hash_get(st->syms, s)))
 		return ret;
 	ret = emalloc(sizeof(struct Val));
-	ret->t = SYMBOL;
+	ret->t = TSP_SYM;
 	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
 	strcpy(ret->v.s, s);
 	hash_add(st->syms, s, ret);
@@ -380,14 +380,14 @@ Val
 mk_prim(Prim pr, char *name)
 {
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = PRIMITIVE;
+	ret->t = TSP_PRIM;
 	ret->v.pr.name = name;
 	ret->v.pr.pr = pr;
 	return ret;
 }
 
 Val
-mk_func(Type t, char *name, Val args, Val body, Hash env)
+mk_func(TspType t, char *name, Val args, Val body, Hash env)
 {
 	Val ret = emalloc(sizeof(struct Val));
 	ret->t = t;
@@ -402,7 +402,7 @@ Val
 mk_pair(Val a, Val b)
 {
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = PAIR;
+	ret->t = TSP_PAIR;
 	car(ret) = a;
 	cdr(ret) = b;
 	return ret;
@@ -666,7 +666,7 @@ tisp_eval_list(Tsp st, Hash env, Val v)
 	Val cur = mk_pair(NULL, st->none);
 	Val ret = cur, ev;
 	for (; !nilp(v); v = cdr(v), cur = cdr(cur)) {
-		if (v->t != PAIR) {
+		if (v->t != TSP_PAIR) {
 			if (!(ev = tisp_eval(st, env, v)))
 				return NULL;
 			cdr(cur) = ev;
@@ -685,7 +685,7 @@ Val
 tisp_eval_seq(Tsp st, Hash env, Val v)
 {
 	Val ret = st->none;
-	for (; v->t == PAIR; v = cdr(v))
+	for (; v->t == TSP_PAIR; v = cdr(v))
 		if (!(ret = tisp_eval(st, env, car(v))))
 			return NULL;
 	return nilp(v) ? ret : tisp_eval(st, env, v);
@@ -698,7 +698,7 @@ prepend_bt(Tsp st, Hash env, Val f)
 		return;
 	for (; env->next; env = env->next) ; /* bt var located at base env */
 	Entry e = entry_get(env, "bt");
-	if (e->val->t == PAIR && car(e->val)->t == SYMBOL &&
+	if (e->val->t == TSP_PAIR && car(e->val)->t == TSP_SYM &&
 	    !strncmp(f->v.f.name, car(e->val)->v.s, strlen(car(e->val)->v.s)))
 		return; /* don't record same function on recursion */
 	e->val = mk_pair(mk_sym(st, f->v.f.name), e->val);
@@ -711,14 +711,14 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 	Val ret;
 	Hash e;
 	switch (f->t) {
-	case PRIMITIVE:
+	case TSP_PRIM:
 		return (*f->v.pr.pr)(st, env, args);
-	case FUNCTION:
+	case TSP_FUNC:
 		/* tail call into the function body with the extended env */
 		if (!(args = tisp_eval_list(st, env, args)))
 			return NULL;
 		/* FALLTHROUGH */
-	case MACRO:
+	case TSP_MACRO:
 		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anonymous",
 		            list_len(f->v.f.args));
 		e = hash_new(8, f->v.f.env);
@@ -727,7 +727,7 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 			return NULL;
 		if (!(ret = tisp_eval_seq(st, e, f->v.f.body)))
 			return prepend_bt(st, env, f), NULL;
-		if (f->t == MACRO)
+		if (f->t == TSP_MACRO)
 			ret = tisp_eval(st, env, ret);
 		return ret;
 	default:
@@ -741,15 +741,15 @@ tisp_eval(Tsp st, Hash env, Val v)
 {
 	Val f;
 	switch (v->t) {
-	case SYMBOL:
+	case TSP_SYM:
 		if (!(f = hash_get(env, v->v.s)))
 			tsp_warnf("could not find symbol %s", v->v.s);
 		return f;
-	case PAIR:
+	case TSP_PAIR:
 		if (!(f = tisp_eval(st, env, car(v))))
 			return NULL;
 		return eval_proc(st, env, f, cdr(v));
-	case STRING: /* TODO string interpolation */
+	case TSP_STR: /* TODO string interpolation */
 	default:
 		return v;
 	}
@@ -762,42 +762,42 @@ void
 tisp_print(FILE *f, Val v)
 {
 	switch (v->t) {
-	case NONE:
+	case TSP_NONE:
 		fputs("#<void>", f);
 		break;
-	case NIL:
+	case TSP_NIL:
 		fputs("Nil", f);
 		break;
-	case INTEGER:
+	case TSP_INT:
 		fprintf(f, "%d", (int)num(v));
 		break;
-	case DECIMAL:
+	case TSP_DEC:
 		fprintf(f, "%.15g", num(v));
 		if (num(v) == (int)num(v))
 			fprintf(f, ".0");
 		break;
-	case RATIO:
+	case TSP_RATIO:
 		fprintf(f, "%d/%d", (int)num(v), (int)den(v));
 		break;
-	case STRING:
-	case SYMBOL:
+	case TSP_STR:
+	case TSP_SYM:
 		fputs(v->v.s, f);
 		break;
-	case FUNCTION:
-	case MACRO:
+	case TSP_FUNC:
+	case TSP_MACRO:
 		fprintf(f, "#<%s%s%s>", /* if proc name is not null print it */
-		            v->t == FUNCTION ? "function" : "macro",
+		            v->t == TSP_FUNC ? "function" : "macro",
 		            v->v.pr.name ? ":" : "",
 		            v->v.pr.name ? v->v.pr.name : "");
 		break;
-	case PRIMITIVE:
+	case TSP_PRIM:
 		fprintf(f, "#<primitive:%s>", v->v.pr.name);
 		break;
-	case PAIR:
+	case TSP_PAIR:
 		putc('(', f);
 		tisp_print(f, car(v));
 		for (v = cdr(v); !nilp(v); v = cdr(v)) {
-			if (v->t == PAIR) {
+			if (v->t == TSP_PAIR) {
 				putc(' ', f);
 				tisp_print(f, car(v));
 			} else {
@@ -823,7 +823,7 @@ prim_car(Tsp st, Hash env, Val args)
 	tsp_arg_num(args, "car", 1);
 	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
-	tsp_arg_type(car(v), "car", PAIR);
+	tsp_arg_type(car(v), "car", TSP_PAIR);
 	return caar(v);
 }
 
@@ -835,7 +835,7 @@ prim_cdr(Tsp st, Hash env, Val args)
 	tsp_arg_num(args, "cdr", 1);
 	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
-	tsp_arg_type(car(v), "cdr", PAIR);
+	tsp_arg_type(car(v), "cdr", TSP_PAIR);
 	return cdar(v);
 }
 
@@ -925,14 +925,14 @@ prim_get(Tsp st, Hash env, Val args)
 		return NULL;
 	if (!(prop = tisp_eval(st, env, cadr(args))))
 		return NULL;
-	tsp_arg_type(prop, "get", SYMBOL);
+	tsp_arg_type(prop, "get", TSP_SYM);
 	switch (v->t) {
-	case PRIMITIVE:
+	case TSP_PRIM:
 		if (!strncmp(prop->v.s, "name", 4))
 			return mk_sym(st, v->v.pr.name);
 		break;
-	case FUNCTION:
-	case MACRO:
+	case TSP_FUNC:
+	case TSP_MACRO:
 		if (!strncmp(prop->v.s, "name", 4)) /* TODO fix seg fault on anon proc */
 			return mk_sym(st, v->v.f.name);
 		if (!strncmp(prop->v.s, "body", 4))
@@ -940,21 +940,21 @@ prim_get(Tsp st, Hash env, Val args)
 		if (!strncmp(prop->v.s, "args", 4))
 			return v->v.f.args;
 		break;
-	case INTEGER:
-	case RATIO:
+	case TSP_INT:
+	case TSP_RATIO:
 		if (!strncmp(prop->v.s, "num", 3))
 			return mk_int(v->v.n.num);
 		if (!strncmp(prop->v.s, "den", 3))
 			return mk_int(v->v.n.den);
 		break;
-	case PAIR:
+	case TSP_PAIR:
 		if (!strncmp(prop->v.s, "car", 3))
 			return v->v.p.car;
 		if (!strncmp(prop->v.s, "cdr", 3))
 			return v->v.p.cdr;
 		break;
-	case STRING:
-	case SYMBOL:
+	case TSP_STR:
+	case TSP_SYM:
 		if (!strncmp(prop->v.s, "len", 3))
 			return mk_int(strlen(v->v.s));
 	default: break;
@@ -968,7 +968,7 @@ static Val
 prim_lambda(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "lambda", 2);
-	return mk_func(FUNCTION, NULL, car(args), cdr(args), env);
+	return mk_func(TSP_FUNC, NULL, car(args), cdr(args), env);
 }
 
 /* creates new tisp defined macro */
@@ -976,7 +976,7 @@ static Val
 prim_macro(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "macro", 2);
-	return mk_func(MACRO, NULL, car(args), cdr(args), env);
+	return mk_func(TSP_MACRO, NULL, car(args), cdr(args), env);
 }
 
 /* creates new variable of given name and value
@@ -988,21 +988,21 @@ prim_def(Tsp st, Hash env, Val args)
 {
 	Val sym, val;
 	tsp_arg_min(args, "def", 1);
-	if (car(args)->t == PAIR) { /* create function if given argument list */
+	if (car(args)->t == TSP_PAIR) { /* create function if given argument list */
 		sym = caar(args); /* first element of argument list is function name */
-		if (sym->t != SYMBOL)
+		if (sym->t != TSP_SYM)
 			tsp_warnf("def: incorrect format,"
 			          " expected symbol for function name, received %s",
 			          type_str(sym->t));
-		val = mk_func(FUNCTION, sym->v.s, cdar(args), cdr(args), env);
-	} else if (car(args)->t == SYMBOL) { /* create variable */
+		val = mk_func(TSP_FUNC, sym->v.s, cdar(args), cdr(args), env);
+	} else if (car(args)->t == TSP_SYM) { /* create variable */
 		sym = car(args); /* if only symbol given, make it self evaluating */
 		val = nilp(cdr(args)) ? sym : tisp_eval(st, env, cadr(args));
 	} else tsp_warn("def: incorrect format, no variable name found");
 	if (!val)
 		return NULL;
 	/* set procedure name if it was previously anonymous */
-	if (val->t & (FUNCTION|MACRO) && !val->v.f.name)
+	if (val->t & (TSP_FUNC|TSP_MACRO) && !val->v.f.name)
 		val->v.f.name = sym->v.s;
 	hash_add(env, sym->v.s, val);
 	return st->none;
@@ -1016,7 +1016,7 @@ prim_set(Tsp st, Hash env, Val args)
 	Hash h;
 	Entry e = NULL;
 	tsp_arg_num(args, "set!", 2);
-	tsp_arg_type(car(args), "set!", SYMBOL);
+	tsp_arg_type(car(args), "set!", TSP_SYM);
 	if (!(val = tisp_eval(st, env, cadr(args))))
 		return NULL;
 	/* find first occurrence of symbol */
@@ -1048,7 +1048,7 @@ prim_load(Tsp st, Hash env, Val args)
 	tsp_arg_num(args, "load", 1);
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
-	tsp_arg_type(v, "load", STRING);
+	tsp_arg_type(v, "load", TSP_STR);
 
 	name = emalloc(PATH_MAX * sizeof(char));
 	for (int i = 0; paths[i]; i++) {
@@ -1099,8 +1099,8 @@ prim_error(Tsp st, Hash env, Val args)
 		return NULL;
 	/* TODO have error auto print function name that was pre-defined */
 	tsp_arg_min(v, "error", 2);
-	tsp_arg_type(car(v), "error", SYMBOL);
-	fprintf(stderr, "; tisp: error: %s: ", car(v)->v.s);
+	tsp_arg_type(car(v), "error", TSP_SYM);
+	fprintf(stderr, "; tisp: error: %s: ", car(v)->v.s); /* TODO specify error raised by error func */
 	for (v = cdr(v); !nilp(v); v = cdr(v))
 		tisp_print(stderr, car(v));
 	fputc('\n', stderr);
@@ -1133,11 +1133,11 @@ tisp_env_init(size_t cap)
 	st->filec = 0;
 
 	st->nil = emalloc(sizeof(struct Val));
-	st->nil->t = NIL;
+	st->nil->t = TSP_NIL;
 	st->none = emalloc(sizeof(struct Val));
-	st->none->t = NONE;
+	st->none->t = TSP_NONE;
 	st->t = emalloc(sizeof(struct Val));
-	st->t->t = SYMBOL;
+	st->t->t = TSP_SYM;
 	st->t->v.s = "True";
 
 	st->global = hash_new(cap, NULL);

@@ -42,9 +42,9 @@ prim_write(Tsp st, Hash env, Val args)
 		mode = "a";
 	/* first argument can either be the symbol stdout or stderr,
 	 * or the file as a string */
-	if (car(v)->t == SYMBOL)
+	if (car(v)->t == TSP_SYM)
 		f = !strncmp(car(v)->v.s, "stdout", 7) ? stdout : stderr;
-	else if (car(v)->t != STRING)
+	else if (car(v)->t != TSP_STR)
 		tsp_warnf("write: expected file name as string, received %s",
 		           type_str(car(v)->t));
 	else if (!(f = fopen(car(v)->v.s, mode)))
@@ -73,7 +73,7 @@ prim_read(Tsp st, Hash env, Val args)
 	if (list_len(args) == 1) { /* if file name given as string, read it */
 		if (!(v = tisp_eval(st, env, car(args))))
 			return NULL;
-		tsp_arg_type(v, "read", STRING);
+		tsp_arg_type(v, "read", TSP_STR);
 		fname = v->v.s;
 	}
 	if (!(file = tisp_read_file(fname)))
@@ -94,7 +94,7 @@ prim_parse(Tsp st, Hash env, Val args)
 		return NULL;
 	if (nilp(v))
 		return mk_pair(mk_sym(st, "quit"), st->nil);
-	tsp_arg_type(v, "parse", STRING);
+	tsp_arg_type(v, "parse", TSP_STR);
 	st->file = v->v.s;
 	st->filec = 0;
 	v = tisp_read(st);
@@ -115,7 +115,7 @@ prim_save(Tsp st, Hash env, Val args)
 	tsp_arg_min(args, "save", 2);
 	if (!(v = tisp_eval_list(st, env, args)))
 		return NULL;
-	tsp_arg_type(cadr(v), "save", STRING);
+	tsp_arg_type(cadr(v), "save", TSP_STR);
 	fname = cadr(v)->v.s;
 	if (!(f = fopen(fname, "wb")))
 		tsp_warnf("save: could not load file '%s'", fname);
@@ -142,7 +142,7 @@ prim_open(Tsp st, Hash env, Val args)
 	tsp_arg_min(args, "open", 1);
 	if (!(args = tisp_eval_list(st, env, args)))
 		return NULL;
-	tsp_arg_type(car(args), "save", STRING);
+	tsp_arg_type(car(args), "save", TSP_STR);
 	fname = car(args)->v.s;
 	if (!(f = fopen(fname, "rb")))
 		tsp_warnf("save: could not load file '%s'", fname);

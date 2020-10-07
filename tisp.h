@@ -59,7 +59,7 @@
 #define cadr(P) car(cdr(P))
 #define cdar(P) cdr(car(P))
 #define cddr(P) cdr(cdr(P))
-#define nilp(P) ((P)->t == NIL)
+#define nilp(P) ((P)->t == TSP_NIL)
 #define num(P)  ((P)->v.n.num)
 #define den(P)  ((P)->v.n.den)
 
@@ -80,29 +80,29 @@ typedef struct Hash {
 
 /* possible tisp object types */
 typedef enum {
-	NONE      = 1 << 0,
-	NIL       = 1 << 1,
-	INTEGER   = 1 << 2,
-	DECIMAL   = 1 << 3,
-	RATIO     = 1 << 4,
-	STRING    = 1 << 5,
-	SYMBOL    = 1 << 6,
-	PRIMITIVE = 1 << 7,
-	FUNCTION  = 1 << 8,
-	MACRO     = 1 << 9,
-	PAIR      = 1 << 10,
-} Type;
-#define RATIONAL   (INTEGER | RATIO)
-#define NUMBER     (RATIONAL | DECIMAL)
-/* TODO rename to math ? */
-#define EXPRESSION (NUMBER | SYMBOL | PAIR)
+	TSP_NONE  = 1 << 0,
+	TSP_NIL   = 1 << 1,
+	TSP_INT   = 1 << 2,
+	TSP_DEC   = 1 << 3,
+	TSP_RATIO = 1 << 4,
+	TSP_STR   = 1 << 5,
+	TSP_SYM   = 1 << 6,
+	TSP_PRIM  = 1 << 7,
+	TSP_FUNC  = 1 << 8,
+	TSP_MACRO = 1 << 9,
+	TSP_PAIR  = 1 << 10,
+} TspType;
+#define TSP_RATIONAL (TSP_INT | TSP_RATIO)
+#define TSP_NUM      (TSP_RATIONAL | TSP_DEC)
+/* TODO rename to expr type to math ? */
+#define TSP_EXPR     (TSP_NUM | TSP_SYM | TSP_PAIR)
 
 /* bultin function written in C, not tisp */
 typedef Val (*Prim)(Tsp, Hash, Val);
 
 /* tisp object */
 struct Val {
-	Type t; /* NONE, NIL */
+	TspType t; /* NONE, NIL */
 	union {
 		char *s;                                            /* STRING, SYMBOL */
 		struct { double num, den; } n;                      /* NUMBER */
@@ -122,7 +122,7 @@ struct Tsp {
 	size_t libhc;
 };
 
-char *type_str(Type t);
+char *type_str(TspType t);
 int list_len(Val v);
 
 Val mk_int(int i);
@@ -131,7 +131,7 @@ Val mk_rat(int num, int den);
 Val mk_str(Tsp st, char *s);
 Val mk_sym(Tsp st, char *s);
 Val mk_prim(Prim prim, char *name);
-Val mk_func(Type t, char *name, Val args, Val body, Hash env);
+Val mk_func(TspType t, char *name, Val args, Val body, Hash env);
 Val mk_pair(Val a, Val b);
 Val mk_list(Tsp st, int n, Val *a);
 

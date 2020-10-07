@@ -62,7 +62,7 @@ readstr:
 		} else { /* otherwise read as file */
 			v = tisp_eval_seq(st, st->global, tisp_parse_file(st, argv[i]));
 		}
-		if (v && v->t != NONE) tisp_print(stdout, v);
+		if (v && v->t != TSP_NONE) tisp_print(stdout, v);
 	}
 
 	puts("");
