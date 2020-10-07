@@ -860,7 +860,7 @@ prim_quote(Tsp st, Hash env, Val args)
 
 /* returns nothing */
 static Val
-prim_void(Tsp st, Hash env, Val args)
+prim_Void(Tsp st, Hash env, Val args)
 {
 	return st->none;
 }
@@ -1148,7 +1148,7 @@ tisp_env_init(size_t cap)
 	tsp_env_fn(cdr);
 	tsp_env_fn(cons);
 	tsp_env_fn(quote);
-	tsp_env_fn(void);
+	tsp_env_fn(Void);
 	tsp_env_fn(eval);
 	tsp_env_name_fn(=, eq);
 	tsp_env_fn(cond);

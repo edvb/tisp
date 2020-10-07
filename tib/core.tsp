@@ -41,7 +41,7 @@
 (def (void? x)      (= (typeof x) "Void"))
 (def (nil? x)       (= (typeof x) "Nil"))
 (def  empty?        nil?)
-(def (integer? x)   (= (typeof x) "Int"))
+(def (integer? x)   (= (typeof x) "Int")) ; TODO shorten type querry funcs ?
 (def (decimal? x)   (= (typeof x) "Dec"))
 (def (ratio? x)     (= (typeof x) "Ratio"))
 (def (string? x)    (= (typeof x) "Str"))
@@ -60,9 +60,9 @@
 (def (rational? x)  (or (integer? x) (ratio? x)))
 (def (number? x)    (or (rational? x) (decimal? x)))
 
-(def (bool x) (if x True Nil))
+(def (Bool x) (if x True Nil))
 ; TODO handle string and sym
-(def (pair x)
+(def (Pair x)
   (cond
     ((rational? x)
      (cons (numerator x)
@@ -71,7 +71,7 @@
      (cons (integer (truncate x))
            (- x (truncate x))))
     ((or (void? x) (nil? x) (pair? x)) x)
-    (else (list x))))
+    (else (cons x Nil))))
 
 (defmacro (assert expr)
   `(unless ,expr

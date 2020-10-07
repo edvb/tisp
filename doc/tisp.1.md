@@ -177,7 +177,7 @@ as the cdr. Can be chained together to create a list if ending with `nil`.
 
 Returns the given argument unevaluated.
 
-#### void
+#### Void
 
 Returns nothing. Used to insert a void type in a list or force a function not
 to return anything.

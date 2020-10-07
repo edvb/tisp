@@ -102,12 +102,12 @@ char *tests[][2] = {
 	{ "(cdr (cdr (cons 1 (cons 2 3))))",           "3"       },
 
 	{ "void",   NULL      },
-	{ "(void)", "#<void>" },
+	{ "(Void)", "#<void>" },
 
 	{ "do",                                       NULL      },
 	{ "(do (+ 1 2) (+ 2 2))",                     "4"       },
 	{ "(do (+ -4 8) (- 1 2) (* 80 0) (+ 39 -3))", "36"      },
-	{ "(do (mod 80 2) (/ 4 2) (void))",           "#<void>" },
+	{ "(do (mod 80 2) (/ 4 2) (Void))",           "#<void>" },
 
 	{ "eval",                                   NULL        },
 	{ "(eval ''hey)",                           "hey"       },

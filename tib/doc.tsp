@@ -11,9 +11,10 @@
     (quote
       "(quote expr)"
       "return expression unevaluated")
-    (void
-      "(void)"
-      "return void type")
+    (Void
+      "(Void)"
+      "return nothing"
+      "used to insert a void type in a list or force a function not to return anything")
     (eval
       "(eval expr)"
       "evaluate expression, can be dangerous to use in practice")
@@ -71,4 +72,4 @@
               docstr)
         (lookup proc)))
     (lookup proc))
-  (void))
+  (Void))

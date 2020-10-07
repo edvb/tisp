@@ -41,12 +41,12 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 		case NONE:
 			len += 5;
 			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, "void");
+			strcat(ret, "Void");
 			break;
 		case NIL:
 			len += 4;
 			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, "nil");
+			strcat(ret, "Nil");
 			break;
 		case INTEGER:
 			snprintf(s, 21, "%d", (int)v->v.n.num);
