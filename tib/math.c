@@ -31,24 +31,6 @@
 	tsp_arg_type(A, NAME, TYPE);       \
 } while(0)
 
-static Val
-prim_numerator(Tsp st, Hash vars, Val args)
-{
-	Val a;
-	tsp_arg_num(args, "numerator", 1);
-	EVAL_CHECK(a, car(args), "numerator", TSP_RATIONAL);
-	return mk_int(num(a));
-}
-
-static Val
-prim_denominator(Tsp st, Hash vars, Val args)
-{
-	Val a;
-	tsp_arg_num(args, "denominator", 1);
-	EVAL_CHECK(a, car(args), "denominator", TSP_RATIONAL);
-	return mk_int(den(a));
-}
-
 /* wrapper functions to be returned by mk_num, all need same arguments */
 static Val
 create_int(double num, double den)
@@ -256,9 +238,6 @@ PRIM_TRIG(log)
 void
 tib_env_math(Tsp st)
 {
-	tsp_env_fn(numerator);
-	tsp_env_fn(denominator);
-
 	tsp_env_fn(Int);
 	tsp_env_fn(Dec);
 	tsp_env_fn(floor);

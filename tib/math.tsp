@@ -6,6 +6,8 @@
 
 ;;; Functions
 
+(def (numerator x) (get x 'num))
+(def (denominator x) (get x 'den))
 (def (inc x) (+ x 1))
 (def (dec x) (- x 1))
 (def (truncate x) (* (floor (abs x)) (sgn x)))
