@@ -30,31 +30,28 @@
 static Val
 prim_write(Tsp st, Hash env, Val args)
 {
-	Val v;
 	FILE *f;
 	const char *mode = "w";
 	tsp_arg_min(args, "write", 2);
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
 
 	/* if second argument is true, append file don't write over */
-	if (!nilp(cadr(v)))
+	if (!nilp(cadr(args)))
 		mode = "a";
 	/* first argument can either be the symbol stdout or stderr,
 	 * or the file as a string */
-	if (car(v)->t == TSP_SYM)
-		f = !strncmp(car(v)->v.s, "stdout", 7) ? stdout : stderr;
-	else if (car(v)->t != TSP_STR)
+	if (car(args)->t == TSP_SYM)
+		f = !strncmp(car(args)->v.s, "stdout", 7) ? stdout : stderr;
+	else if (car(args)->t != TSP_STR)
 		tsp_warnf("write: expected file name as string, received %s",
-		           type_str(car(v)->t));
-	else if (!(f = fopen(car(v)->v.s, mode)))
-		tsp_warnf("write: could not load file '%s'", car(v)->v.s);
-	if (f == stderr && strncmp(car(v)->v.s, "stderr", 7))
+		           type_str(car(args)->t));
+	else if (!(f = fopen(car(args)->v.s, mode)))
+		tsp_warnf("write: could not load file '%s'", car(args)->v.s);
+	if (f == stderr && strncmp(car(args)->v.s, "stderr", 7))
 		tsp_warn("write: expected file name as string, "
 		                  "or symbol stdout/stderr");
 
-	for (v = cddr(v); !nilp(v); v = cdr(v))
-		tisp_print(f, car(v));
+	for (args = cddr(args); !nilp(args); args = cdr(args))
+		tisp_print(f, car(args));
 	if (f == stdout || f == stderr)
 		fflush(f);
 	else
@@ -66,15 +63,12 @@ prim_write(Tsp st, Hash env, Val args)
 static Val
 prim_read(Tsp st, Hash env, Val args)
 {
-	Val v;
 	char *file, *fname = NULL; /* read from stdin by default */
 	if (list_len(args) > 1)
 		tsp_warnf("read: expected 0 or 1 argument, received %d", list_len(args));
 	if (list_len(args) == 1) { /* if file name given as string, read it */
-		if (!(v = tisp_eval(st, env, car(args))))
-			return NULL;
-		tsp_arg_type(v, "read", TSP_STR);
-		fname = v->v.s;
+		tsp_arg_type(car(args), "read", TSP_STR);
+		fname = car(args)->v.s;
 	}
 	if (!(file = tisp_read_file(fname)))
 		return st->nil;
@@ -86,45 +80,41 @@ prim_read(Tsp st, Hash env, Val args)
 static Val
 prim_parse(Tsp st, Hash env, Val args)
 {
-	Val v;
+	Val expr;
 	char *file = st->file;
 	size_t filec = st->filec;
 	tsp_arg_num(args, "parse", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
-		return NULL;
-	if (nilp(v))
+	expr = car(args);
+	if (nilp(expr))
 		return mk_pair(mk_sym(st, "quit"), st->nil);
-	tsp_arg_type(v, "parse", TSP_STR);
-	st->file = v->v.s;
+	tsp_arg_type(expr, "parse", TSP_STR);
+	st->file = expr->v.s;
 	st->filec = 0;
-	v = tisp_read(st);
-	/* for (; tsp_fget(st) && (v = tisp_read(st));) ; */
+	expr = tisp_read(st);
+	/* for (; tsp_fget(st) && (expr = tisp_read(st));) ; */
 	st->file = file;
 	st->filec = filec;
-	return v ? v : st->none;
-	/* return tisp_parse_file(st, v->v.s); */
+	return expr ? expr : st->none;
+	/* return tisp_parse_file(st, expr->v.s); */
 }
 
 /* save value as binary file to be quickly read again */
 static Val
 prim_save(Tsp st, Hash env, Val args)
 {
-	Val v;
 	char *fname;
 	FILE *f;
 	tsp_arg_min(args, "save", 2);
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
-	tsp_arg_type(cadr(v), "save", TSP_STR);
-	fname = cadr(v)->v.s;
+	tsp_arg_type(cadr(args), "save", TSP_STR);
+	fname = cadr(args)->v.s;
 	if (!(f = fopen(fname, "wb")))
 		tsp_warnf("save: could not load file '%s'", fname);
-	if (!(fwrite(&*car(v), sizeof(struct Val), 1, f))) {
+	if (!(fwrite(&*car(args), sizeof(struct Val), 1, f))) {
 		fclose(f);
 		tsp_warnf("save: could not save file '%s'", fname);
 	}
 	fclose(f);
-	return car(v);
+	return car(args);
 }
 
 /* return read binary value previously saved */
@@ -138,9 +128,7 @@ prim_open(Tsp st, Hash env, Val args)
 	if (!(ret = malloc(sizeof(struct Val))))
 		perror("; malloc"), exit(1);
 	tsp_arg_min(args, "open", 1);
-	if (!(args = tisp_eval_list(st, env, args)))
-		return NULL;
-	tsp_arg_type(car(args), "save", TSP_STR);
+	tsp_arg_type(car(args), "open", TSP_STR);
 	fname = car(args)->v.s;
 	if (!(f = fopen(fname, "rb")))
 		tsp_warnf("save: could not load file '%s'", fname);
@@ -153,9 +141,9 @@ prim_open(Tsp st, Hash env, Val args)
 void
 tib_env_io(Tsp st)
 {
-	tsp_env_fn(write);
-	tsp_env_fn(read);
-	tsp_env_fn(parse);
-	tsp_env_fn(save);
-	tsp_env_fn(open);
+	tsp_env_prim(write);
+	tsp_env_prim(read);
+	tsp_env_prim(parse);
+	tsp_env_prim(save);
+	tsp_env_prim(open);
 }

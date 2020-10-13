@@ -74,10 +74,11 @@ static Val
 static Val                                                           \
 prim_##NAME(Tsp st, Hash vars, Val args)                             \
 {                                                                    \
-	Val a;                                                       \
+	Val n;                                                       \
 	tsp_arg_num(args, #NAME, 1);                                 \
-	EVAL_CHECK(a, car(args), #NAME, TSP_NUM);                    \
-	return (mk_num(a->t, a->t, FORCE))(NAME(num(a)/den(a)), 1.); \
+	n = car(args);                                               \
+	tsp_arg_type(n, #NAME, TSP_NUM);                             \
+	return (mk_num(n->t, n->t, FORCE))(NAME(num(n)/den(n)), 1.); \
 }
 
 /* define int and dec as identity functions to use them in the same macro */
@@ -96,8 +97,9 @@ prim_add(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "+", 2);
-	EVAL_CHECK(a, car(args), "+", TSP_NUM);
-	EVAL_CHECK(b, car(cdr(args)), "+", TSP_NUM);
+	a = car(args), b = cadr(args);
+	tsp_arg_type(a, "+", TSP_NUM);
+	tsp_arg_type(b, "+", TSP_NUM);
 	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) + (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 0))
@@ -112,12 +114,14 @@ prim_sub(Tsp st, Hash vars, Val args)
 	int len = list_len(args);
 	if (len != 2 && len != 1)
 		tsp_warnf("-: expected 1 or 2 arguments, recieved %d", len);
-	EVAL_CHECK(a, car(args), "-", TSP_NUM);
+	a = car(args);
+	tsp_arg_type(a, "-", TSP_NUM);
 	if (len == 1) {
 		b = a;
 		a = mk_int(0);
 	} else {
-		EVAL_CHECK(b, car(cdr(args)), "-", TSP_NUM);
+		b = cadr(args);
+		tsp_arg_type(b, "-", TSP_NUM);
 	}
 	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) - (num(b)/den(b)));
@@ -131,8 +135,9 @@ prim_mul(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "*", 2);
-	EVAL_CHECK(a, car(args), "*", TSP_NUM);
-	EVAL_CHECK(b, car(cdr(args)), "*", TSP_NUM);
+	a = car(args), b = cadr(args);
+	tsp_arg_type(a, "*", TSP_NUM);
+	tsp_arg_type(b, "*", TSP_NUM);
 	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) * (num(b)/den(b)));
 	return (mk_num(a->t, b->t, 0))(num(a) * num(b), den(a) * den(b));
@@ -146,12 +151,14 @@ prim_div(Tsp st, Hash vars, Val args)
 	int len = list_len(args);
 	if (len != 2 && len != 1)
 		tsp_warnf("/: expected 1 or 2 arguments, recieved %d", len);
-	EVAL_CHECK(a, car(args), "/", TSP_NUM);
+	a = car(args);
+	tsp_arg_type(a, "/", TSP_NUM);
 	if (len == 1) {
 		b = a;
 		a = mk_int(1);
 	} else {
-		EVAL_CHECK(b, car(cdr(args)), "/", TSP_NUM);
+		b = cadr(args);
+		tsp_arg_type(b, "/", TSP_NUM);
 	}
 	if (a->t & TSP_DEC || b->t & TSP_DEC)
 		return mk_dec((num(a)/den(a)) / (num(b)/den(b)));
@@ -163,8 +170,9 @@ prim_mod(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "mod", 2);
-	EVAL_CHECK(a, car(args), "mod", TSP_INT);
-	EVAL_CHECK(b, car(cdr(args)), "mod", TSP_INT);
+	a = car(args), b = cadr(args);
+	tsp_arg_type(a, "mod", TSP_INT);
+	tsp_arg_type(b, "mod", TSP_INT);
 	if (num(b) == 0)
 		tsp_warn("division by zero");
 	return mk_int((int)num(a) % abs((int)num(b)));
@@ -174,11 +182,12 @@ prim_mod(Tsp st, Hash vars, Val args)
 static Val
 prim_pow(Tsp st, Hash vars, Val args)
 {
-	double bnum, bden;
 	Val b, p;
+	double bnum, bden;
 	tsp_arg_num(args, "pow", 2);
-	EVAL_CHECK(b, car(args), "pow", TSP_EXPR);
-	EVAL_CHECK(p, car(cdr(args)), "pow", TSP_EXPR);
+	b = car(args), p = cadr(args);
+	tsp_arg_type(b, "pow", TSP_EXPR);
+	tsp_arg_type(p, "pow", TSP_EXPR);
 	bnum = pow(num(b), num(p)/den(p));
 	bden = pow(den(b), num(p)/den(p));
 	if ((bnum == (int)bnum && bden == (int)bden) ||
@@ -187,20 +196,17 @@ prim_pow(Tsp st, Hash vars, Val args)
 	return mk_pair(mk_sym(st, "^"), mk_pair(b, mk_pair(p, st->nil)));
 }
 
-#define PRIM_COMPARE(NAME, OP)                     \
-static Val                                         \
-prim_##NAME(Tsp st, Hash vars, Val args)           \
-{                                                  \
-	Val v;                                     \
-	if (!(v = tisp_eval_list(st, vars, args))) \
-		return NULL;                       \
-	if (list_len(v) != 2)                      \
-		return st->t;                      \
-	tsp_arg_type(car(v), #OP, TSP_NUM);        \
-	tsp_arg_type(car(cdr(v)), #OP, TSP_NUM);   \
-	return ((num(car(v))*den(car(cdr(v)))) OP  \
-		(num(car(cdr(v)))*den(car(v)))) ?  \
-		st->t : st->nil;                   \
+#define PRIM_COMPARE(NAME, OP)                          \
+static Val                                              \
+prim_##NAME(Tsp st, Hash vars, Val args)                \
+{                                                       \
+	if (list_len(args) != 2)                        \
+		return st->t;                           \
+	tsp_arg_type(car(args), #OP, TSP_NUM);          \
+	tsp_arg_type(car(cdr(args)), #OP, TSP_NUM);     \
+	return ((num(car(args))*den(car(cdr(args)))) OP \
+		(num(car(cdr(args)))*den(car(args)))) ? \
+		st->t : st->nil;                        \
 }
 
 PRIM_COMPARE(lt,  <)
@@ -208,16 +214,15 @@ PRIM_COMPARE(gt,  >)
 PRIM_COMPARE(lte, <=)
 PRIM_COMPARE(gte, >=)
 
-#define PRIM_TRIG(NAME)                                         \
-static Val                                                      \
-prim_##NAME(Tsp st, Hash vars, Val args)                        \
-{                                                               \
-	Val v;                                                  \
-	tsp_arg_num(args, #NAME, 1);                            \
-	EVAL_CHECK(v, car(args), #NAME, TSP_EXPR);              \
-	if (v->t & TSP_DEC)                                     \
-		return mk_dec(NAME(num(v)));                    \
-	return mk_pair(mk_sym(st, #NAME), mk_pair(v, st->nil)); \
+#define PRIM_TRIG(NAME)                                                 \
+static Val                                                              \
+prim_##NAME(Tsp st, Hash vars, Val args)                                \
+{                                                                       \
+	tsp_arg_num(args, #NAME, 1);                                    \
+	tsp_arg_type(car(args), #NAME, TSP_EXPR);                       \
+	if (car(args)->t & TSP_DEC)                                     \
+		return mk_dec(NAME(num(car(args))));                    \
+	return mk_pair(mk_sym(st, #NAME), mk_pair(car(args), st->nil)); \
 }
 
 PRIM_TRIG(sin)
@@ -238,36 +243,36 @@ PRIM_TRIG(log)
 void
 tib_env_math(Tsp st)
 {
-	tsp_env_fn(Int);
-	tsp_env_fn(Dec);
-	tsp_env_fn(floor);
-	tsp_env_fn(ceil);
-	tsp_env_fn(round);
+	tsp_env_prim(Int);
+	tsp_env_prim(Dec);
+	tsp_env_prim(floor);
+	tsp_env_prim(ceil);
+	tsp_env_prim(round);
 
-	tsp_env_name_fn(+, add);
-	tsp_env_name_fn(-, sub);
-	tsp_env_name_fn(*, mul);
-	tsp_env_name_fn(/, div);
-	tsp_env_fn(mod);
-	tsp_env_name_fn(^, pow);
+	tsp_env_name_prim(+, add);
+	tsp_env_name_prim(-, sub);
+	tsp_env_name_prim(*, mul);
+	tsp_env_name_prim(/, div);
+	tsp_env_prim(mod);
+	tsp_env_name_prim(^, pow);
 
-	tsp_env_name_fn(<,  lt);
-	tsp_env_name_fn(>,  gt);
-	tsp_env_name_fn(<=, lte);
-	tsp_env_name_fn(>=, gte);
+	tsp_env_name_prim(<,  lt);
+	tsp_env_name_prim(>,  gt);
+	tsp_env_name_prim(<=, lte);
+	tsp_env_name_prim(>=, gte);
 
-	tsp_env_fn(sin);
-	tsp_env_fn(cos);
-	tsp_env_fn(tan);
-	tsp_env_fn(sinh);
-	tsp_env_fn(cosh);
-	tsp_env_fn(tanh);
-	tsp_env_name_fn(arcsin,  asin);
-	tsp_env_name_fn(arccos,  acos);
-	tsp_env_name_fn(arctan,  atan);
-	tsp_env_name_fn(arcsinh, asinh);
-	tsp_env_name_fn(arccosh, acosh);
-	tsp_env_name_fn(arctanh, atanh);
-	tsp_env_fn(exp);
-	tsp_env_fn(log);
+	tsp_env_prim(sin);
+	tsp_env_prim(cos);
+	tsp_env_prim(tan);
+	tsp_env_prim(sinh);
+	tsp_env_prim(cosh);
+	tsp_env_prim(tanh);
+	tsp_env_name_prim(arcsin,  asin);
+	tsp_env_name_prim(arccos,  acos);
+	tsp_env_name_prim(arctan,  atan);
+	tsp_env_name_prim(arcsinh, asinh);
+	tsp_env_name_prim(arccosh, acosh);
+	tsp_env_name_prim(arctanh, atanh);
+	tsp_env_prim(exp);
+	tsp_env_prim(log);
 }

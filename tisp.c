@@ -371,10 +371,10 @@ mk_sym(Tsp st, char *s)
 }
 
 Val
-mk_prim(Prim pr, char *name)
+mk_prim(TspType t, Prim pr, char *name)
 {
 	Val ret = emalloc(sizeof(struct Val));
-	ret->t = TSP_PRIM;
+	ret->t = t;
 	ret->v.pr.name = name;
 	ret->v.pr.pr = pr;
 	return ret;
@@ -704,14 +704,15 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 {
 	Val ret;
 	Hash e;
+	/* evaluate function and primitive arguments before being passed */
+	if (f->t & (TSP_FUNC|TSP_PRIM))
+		if (!(args = tisp_eval_list(st, env, args)))
+			return NULL;
 	switch (f->t) {
+	case TSP_FORM:
 	case TSP_PRIM:
 		return (*f->v.pr.pr)(st, env, args);
 	case TSP_FUNC:
-		/* tail call into the function body with the extended env */
-		if (!(args = tisp_eval_list(st, env, args)))
-			return NULL;
-		/* FALLTHROUGH */
 	case TSP_MACRO:
 		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anonymous",
 		            list_len(f->v.f.args));
@@ -813,40 +814,31 @@ tisp_print(FILE *f, Val v)
 static Val
 prim_car(Tsp st, Hash env, Val args)
 {
-	Val v;
 	tsp_arg_num(args, "car", 1);
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
-	tsp_arg_type(car(v), "car", TSP_PAIR);
-	return caar(v);
+	tsp_arg_type(car(args), "car", TSP_PAIR);
+	return caar(args);
 }
 
 /* return elements of a list after the first */
 static Val
 prim_cdr(Tsp st, Hash env, Val args)
 {
-	Val v;
 	tsp_arg_num(args, "cdr", 1);
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
-	tsp_arg_type(car(v), "cdr", TSP_PAIR);
-	return cdar(v);
+	tsp_arg_type(car(args), "cdr", TSP_PAIR);
+	return cdar(args);
 }
 
 /* return new pair */
 static Val
 prim_cons(Tsp st, Hash env, Val args)
 {
-	Val v;
 	tsp_arg_num(args, "cons", 2);
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
-	return mk_pair(car(v), cadr(v));
+	return mk_pair(car(args), cadr(args));
 }
 
 /* do not evaluate argument */
 static Val
-prim_quote(Tsp st, Hash env, Val args)
+form_quote(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "quote", 1);
 	return car(args);
@@ -854,7 +846,7 @@ prim_quote(Tsp st, Hash env, Val args)
 
 /* returns nothing */
 static Val
-prim_Void(Tsp st, Hash env, Val args)
+form_Void(Tsp st, Hash env, Val args)
 {
 	return st->none;
 }
@@ -865,29 +857,24 @@ prim_eval(Tsp st, Hash env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "eval", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
-		return NULL;
-	return (v = tisp_eval(st, st->global, v)) ? v : st->none;
+	return (v = tisp_eval(st, st->global, car(args))) ? v : st->none;
 }
 
 /* test equality of all values given */
 static Val
 prim_eq(Tsp st, Hash env, Val args)
 {
-	Val v;
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
-	if (nilp(v))
+	if (nilp(args))
 		return st->t;
-	for (; !nilp(cdr(v)); v = cdr(v))
-		if (!vals_eq(car(v), cadr(v)))
+	for (; !nilp(cdr(args)); args = cdr(args))
+		if (!vals_eq(car(args), cadr(args)))
 			return st->nil;
 	return st->t;
 }
 
 /* evaluates all expressions if their conditions are met */
 static Val
-prim_cond(Tsp st, Hash env, Val args)
+form_cond(Tsp st, Hash env, Val args)
 {
 	Val v, cond;
 	for (v = args; !nilp(v); v = cdr(v))
@@ -902,23 +889,19 @@ prim_cond(Tsp st, Hash env, Val args)
 static Val
 prim_typeof(Tsp st, Hash env, Val args)
 {
-	Val v;
 	tsp_arg_num(args, "typeof", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
-		return NULL;
-	return mk_str(st, type_str(v->t));
+	return mk_str(st, type_str(car(args)->t));
 }
 
+/* TODO rename get to getattr like python ? */
 /* get a property of given value */
 static Val
 prim_get(Tsp st, Hash env, Val args)
 {
 	Val v, prop;
 	tsp_arg_num(args, "get", 2);
-	if (!(v = tisp_eval(st, env, car(args))))
-		return NULL;
-	if (!(prop = tisp_eval(st, env, cadr(args))))
-		return NULL;
+	v = car(args);
+	prop = cadr(args);
 	tsp_arg_type(prop, "get", TSP_SYM);
 	switch (v->t) {
 	case TSP_PRIM:
@@ -959,7 +942,7 @@ prim_get(Tsp st, Hash env, Val args)
 
 /* creates new tisp lambda function */
 static Val
-prim_lambda(Tsp st, Hash env, Val args)
+form_lambda(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "lambda", 2);
 	return mk_func(TSP_FUNC, NULL, car(args), cdr(args), env);
@@ -967,7 +950,7 @@ prim_lambda(Tsp st, Hash env, Val args)
 
 /* creates new tisp defined macro */
 static Val
-prim_macro(Tsp st, Hash env, Val args)
+form_macro(Tsp st, Hash env, Val args)
 {
 	tsp_arg_min(args, "macro", 2);
 	return mk_func(TSP_MACRO, NULL, car(args), cdr(args), env);
@@ -978,7 +961,7 @@ prim_macro(Tsp st, Hash env, Val args)
  * function name and the cdr the function arguments */
 /* TODO if var not func error if more than 2 args */
 static Val
-prim_def(Tsp st, Hash env, Val args)
+form_def(Tsp st, Hash env, Val args)
 {
 	Val sym, val;
 	tsp_arg_min(args, "def", 1);
@@ -1004,7 +987,7 @@ prim_def(Tsp st, Hash env, Val args)
 
 /* set symbol to new value */
 static Val
-prim_set(Tsp st, Hash env, Val args)
+form_set(Tsp st, Hash env, Val args)
 {
 	Val val;
 	Hash h;
@@ -1032,7 +1015,7 @@ prim_set(Tsp st, Hash env, Val args)
 static Val
 prim_load(Tsp st, Hash env, Val args)
 {
-	Val v;
+	Val tib;
 	void (*tibenv)(Tsp);
 	char *name;
 	const char *paths[] = {
@@ -1040,14 +1023,13 @@ prim_load(Tsp st, Hash env, Val args)
 	};
 
 	tsp_arg_num(args, "load", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
-		return NULL;
-	tsp_arg_type(v, "load", TSP_STR);
+	tib = car(args);
+	tsp_arg_type(tib, "load", TSP_STR);
 
 	name = emalloc(PATH_MAX * sizeof(char));
 	for (int i = 0; paths[i]; i++) {
 		strcpy(name, paths[i]);
-		strcat(name, v->v.s);
+		strcat(name, tib->v.s);
 		strcat(name, ".tsp");
 		if (access(name, R_OK) != -1) {
 			tisp_eval_seq(st, env, tisp_parse_file(st, name));
@@ -1059,23 +1041,23 @@ prim_load(Tsp st, Hash env, Val args)
 	/* If not tisp file, try loading shared object library */
 	st->libh = erealloc(st->libh, (st->libhc+1)*sizeof(void*));
 
-	name = erealloc(name, (strlen(v->v.s)+10) * sizeof(char));
+	name = erealloc(name, (strlen(tib->v.s)+10) * sizeof(char));
 	strcpy(name, "libtib");
-	strcat(name, v->v.s);
+	strcat(name, tib->v.s);
 	strcat(name, ".so");
 	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY))) {
 		free(name);
-		tsp_warnf("load: could not load '%s':\n%s", v->v.s, dlerror());
+		tsp_warnf("load: could not load '%s':\n%s", tib->v.s, dlerror());
 	}
 	dlerror();
 
-	name = erealloc(name, (strlen(v->v.s)+9) * sizeof(char));
+	name = erealloc(name, (strlen(tib->v.s)+9) * sizeof(char));
 	strcpy(name, "tib_env_");
-	strcat(name, v->v.s);
+	strcat(name, tib->v.s);
 	tibenv = dlsym(st->libh[st->libhc], name);
 	if (dlerror()) {
 		free(name);
-		tsp_warnf("load: could not run '%s':\n%s", v->v.s, dlerror());
+		tsp_warnf("load: could not run '%s':\n%s", tib->v.s, dlerror());
 	}
 	(*tibenv)(st);
 	free(name);
@@ -1088,22 +1070,20 @@ prim_load(Tsp st, Hash env, Val args)
 static Val
 prim_error(Tsp st, Hash env, Val args)
 {
-	Val v;
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
 	/* TODO have error auto print function name that was pre-defined */
-	tsp_arg_min(v, "error", 2);
-	tsp_arg_type(car(v), "error", TSP_SYM);
-	fprintf(stderr, "; tisp: error: %s: ", car(v)->v.s); /* TODO specify error raised by error func */
-	for (v = cdr(v); !nilp(v); v = cdr(v))
-		tisp_print(stderr, car(v));
+	tsp_arg_min(args, "error", 2);
+	tsp_arg_type(car(args), "error", TSP_SYM);
+	/* TODO specify error raised by error func */
+	fprintf(stderr, "; tisp: error: %s: ", car(args)->v.s);
+	for (args = cdr(args); !nilp(args); args = cdr(args))
+		tisp_print(stderr, car(args));
 	fputc('\n', stderr);
 	return NULL;
 }
 
 /* list tisp version */
 static Val
-prim_version(Tsp st, Hash env, Val args)
+form_version(Tsp st, Hash env, Val args)
 {
 	return mk_str(st, "0.0");
 }
@@ -1138,23 +1118,23 @@ tisp_env_init(size_t cap)
 	tisp_env_add(st, "True", st->t);
 	tisp_env_add(st, "Nil", st->nil);
 	tisp_env_add(st, "bt", st->nil);
-	tsp_env_fn(car);
-	tsp_env_fn(cdr);
-	tsp_env_fn(cons);
-	tsp_env_fn(quote);
-	tsp_env_fn(Void);
-	tsp_env_fn(eval);
-	tsp_env_name_fn(=, eq);
-	tsp_env_fn(cond);
-	tsp_env_fn(typeof);
-	tsp_env_fn(get);
-	tsp_env_fn(lambda);
-	tsp_env_fn(macro);
-	tsp_env_fn(def);
-	tsp_env_name_fn(set!, set);
-	tsp_env_fn(load);
-	tsp_env_fn(error);
-	tsp_env_fn(version);
+	tsp_env_prim(car);
+	tsp_env_prim(cdr);
+	tsp_env_prim(cons);
+	tsp_env_form(quote);
+	tsp_env_form(Void);
+	tsp_env_prim(eval);
+	tsp_env_name_prim(=, eq);
+	tsp_env_form(cond);
+	tsp_env_prim(typeof);
+	tsp_env_prim(get);
+	tsp_env_form(lambda);
+	tsp_env_form(macro);
+	tsp_env_form(def);
+	tsp_env_name_form(set!, set);
+	tsp_env_prim(load);
+	tsp_env_prim(error);
+	tsp_env_form(version);
 
 	st->strs = hash_new(cap, NULL);
 	st->syms = hash_new(cap, NULL);

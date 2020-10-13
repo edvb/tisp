@@ -26,7 +26,7 @@
 
 typedef Val (*MkFn)(Tsp, char*);
 
-/* TODO string tib: lower upper strpos strsub */
+/* TODO string tib: lower upper capitalize strpos strsub (python: dir(str))*/
 
 /* TODO simplify by using fmemopen/funopen and tisp_print */
 static Val
@@ -88,40 +88,33 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 static Val
 prim_Str(Tsp st, Hash env, Val args)
 {
-	Val v;
 	tsp_arg_min(args, "Str", 1);
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
-	return val_string(st, v, mk_str);
+	return val_string(st, args, mk_str);
 }
 
 static Val
 prim_Sym(Tsp st, Hash env, Val args)
 {
-	Val v;
 	tsp_arg_min(args, "Sym", 1);
-	if (!(v = tisp_eval_list(st, env, args)))
-		return NULL;
-	return val_string(st, v, mk_sym);
+	return val_string(st, args, mk_sym);
 }
 
 static Val
 prim_strlen(Tsp st, Hash env, Val args)
 {
-	Val v;
+	Val str;
 	tsp_arg_num(args, "strlen", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
-		return NULL;
-	if (!(v->t & (TSP_STR|TSP_SYM)))
+	str = car(args);
+	if (!(str->t & (TSP_STR|TSP_SYM)))
 		tsp_warnf("strlen: expected string or symbol, received %s",
-		                   type_str(v->t));
-	return mk_int(strlen(v->v.s));
+		                   type_str(str->t));
+	return mk_int(strlen(str->v.s));
 }
 
 void
 tib_env_string(Tsp st)
 {
-	tsp_env_fn(Sym);
-	tsp_env_fn(Str);
-	tsp_env_fn(strlen);
+	tsp_env_prim(Sym);
+	tsp_env_prim(Str);
+	tsp_env_prim(strlen);
 }

@@ -30,13 +30,12 @@
 static Val
 prim_cd(Tsp st, Hash env, Val args)
 {
-	Val v;
+	Val dir;
 	tsp_arg_num(args, "cd", 1);
-	if (!(v = tisp_eval(st, env, car(args))))
-		return NULL;
-	if (!(v->t & (TSP_STR|TSP_SYM)))
-		tsp_warnf("strlen: expected string or symbol, received %s", type_str(v->t));
-	if (chdir(v->v.s))
+	dir = car(args);
+	if (!(dir->t & (TSP_STR|TSP_SYM)))
+		tsp_warnf("strlen: expected string or symbol, received %s", type_str(dir->t));
+	if (chdir(dir->v.s))
 		return perror("; error: cd"), NULL;
 	return st->none;
 }
@@ -44,7 +43,7 @@ prim_cd(Tsp st, Hash env, Val args)
 /* TODO rename to cwd ? */
 /* return string of current working directory */
 static Val
-prim_pwd(Tsp st, Hash env, Val args)
+form_pwd(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "pwd", 0);
 	char cwd[PATH_MAX];
@@ -55,7 +54,7 @@ prim_pwd(Tsp st, Hash env, Val args)
 
 /* return number of seconds since 1970 (unix time stamp) */
 static Val
-prim_time(Tsp st, Hash env, Val args)
+form_time(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "time", 0);
 	return mk_int(time(NULL));
@@ -63,7 +62,7 @@ prim_time(Tsp st, Hash env, Val args)
 
 /* return time taken to run command given */
 static Val
-prim_timeit(Tsp st, Hash env, Val args)
+form_timeit(Tsp st, Hash env, Val args)
 {
 	Val v;
 	clock_t t;
@@ -78,8 +77,8 @@ prim_timeit(Tsp st, Hash env, Val args)
 void
 tib_env_os(Tsp st)
 {
-	tsp_env_name_fn(cd!, cd);
-	tsp_env_fn(pwd);
-	tsp_env_fn(time);
-	tsp_env_fn(timeit);
+	tsp_env_name_prim(cd!, cd);
+	tsp_env_form(pwd);
+	tsp_env_form(time);
+	tsp_env_form(timeit);
 }
