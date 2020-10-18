@@ -64,8 +64,7 @@ static Val
 prim_read(Tsp st, Hash env, Val args)
 {
 	char *file, *fname = NULL; /* read from stdin by default */
-	if (list_len(args) > 1)
-		tsp_warnf("read: expected 0 or 1 argument, received %d", list_len(args));
+	tsp_arg_max(args, "read", 1);
 	if (list_len(args) == 1) { /* if file name given as string, read it */
 		tsp_arg_type(car(args), "read", TSP_STR);
 		fname = car(args)->v.s;
