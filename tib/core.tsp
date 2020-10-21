@@ -1,4 +1,5 @@
 (def (list . lst) lst)
+(def quit "type (quit) or press CTRL-D to exit REPL")
 
 (def defmacro
   (macro (args . body)
