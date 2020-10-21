@@ -29,6 +29,7 @@ typedef Val (*MkFn)(Tsp, char*);
 /* TODO string tib: lower upper capitalize strpos strsub (python: dir(str))*/
 
 /* TODO simplify by using fmemopen/funopen and tisp_print */
+/* TODO NULL check allocs */
 static Val
 val_string(Tsp st, Val args, MkFn mk_fn)
 {

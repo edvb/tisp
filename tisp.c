@@ -37,35 +37,6 @@
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
 
-/* general utility wrappers */
-
-/* TODO remove ealloc funcs */
-static void *
-ecalloc(size_t nmemb, size_t size)
-{
-	void *p;
-	if (!(p = calloc(nmemb, size)))
-		perror("; calloc"), exit(1);
-	return p;
-}
-
-static void *
-emalloc(size_t size)
-{
-	void *p;
-	if (!(p = malloc(size)))
-		perror("; malloc"), exit(1);
-	return p;
-}
-
-static void *
-erealloc(void *p, size_t size)
-{
-	if (!(p = realloc(p, size)))
-		perror("; realloc"), exit(1);
-	return p;
-}
-
 /* utility functions */
 
 /* return named string for each type */
@@ -211,10 +182,12 @@ static Hash
 hash_new(size_t cap, Hash next)
 {
 	if (cap < 1) return NULL;
-	Hash ht = emalloc(sizeof(struct Hash));
+	Hash ht = malloc(sizeof(struct Hash));
+	if (!ht) perror("; malloc"), exit(1);
 	ht->size = 0;
 	ht->cap = cap;
-	ht->items = ecalloc(cap, sizeof(struct Entry));
+	ht->items = calloc(cap, sizeof(struct Entry));
+	if (!ht->items) perror("; calloc"), exit(1);
 	ht->next = next;
 	return ht;
 }
@@ -254,7 +227,8 @@ hash_grow(Hash ht)
 	int i, ocap = ht->cap;
 	Entry oitems = ht->items;
 	ht->cap *= 2;
-	ht->items = ecalloc(ht->cap, sizeof(struct Entry));
+	ht->items = calloc(ht->cap, sizeof(struct Entry));
+	if (!ht->items) perror("; calloc"), exit(1);
 	for (i = 0; i < ocap; i++) /* repopulate new hash table with old values */
 		if (oitems[i].key)
 			hash_add(ht, oitems[i].key, oitems[i].val);
@@ -303,10 +277,18 @@ hash_extend(Hash ht, Val args, Val vals)
 /* make types */
 
 Val
+mk_val(TspType t)
+{
+	Val ret = malloc(sizeof(struct Val));
+	if (!ret) perror("; malloc"), exit(1);
+	ret->t = t;
+	return ret;
+}
+
+Val
 mk_int(int i)
 {
-	Val ret = emalloc(sizeof(struct Val));
-	ret->t = TSP_INT;
+	Val ret = mk_val(TSP_INT);
 	num(ret) = i;
 	den(ret) = 1;
 	return ret;
@@ -315,8 +297,7 @@ mk_int(int i)
 Val
 mk_dec(double d)
 {
-	Val ret = emalloc(sizeof(struct Val));
-	ret->t = TSP_DEC;
+	Val ret = mk_val(TSP_DEC);
 	num(ret) = d;
 	den(ret) = 1;
 	return ret;
@@ -325,6 +306,7 @@ mk_dec(double d)
 Val
 mk_rat(int num, int den)
 {
+	Val ret;
 	if (den == 0)
 		tsp_warn("division by zero");
 	frac_reduce(&num, &den);
@@ -334,8 +316,7 @@ mk_rat(int num, int den)
 	}
 	if (den == 1) /* simplify into integer if denominator is 1 */
 		return mk_int(num);
-	Val ret = emalloc(sizeof(struct Val));
-	ret->t = TSP_RATIO;
+	ret = mk_val(TSP_RATIO);
 	ret->v.n.num = num;
 	ret->v.n.den = den;
 	return ret;
@@ -348,10 +329,9 @@ mk_str(Tsp st, char *s)
 	Val ret;
 	if ((ret = hash_get(st->strs, s)))
 		return ret;
-	ret = emalloc(sizeof(struct Val));
-	ret->t = TSP_STR;
-	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
-	strcpy(ret->v.s, s);
+	ret = mk_val(TSP_STR);
+	ret->v.s = strndup(s, strlen(s));
+	if (!ret->v.s) perror("; strndup"), exit(1);
 	hash_add(st->strs, s, ret);
 	return ret;
 }
@@ -362,10 +342,9 @@ mk_sym(Tsp st, char *s)
 	Val ret;
 	if ((ret = hash_get(st->syms, s)))
 		return ret;
-	ret = emalloc(sizeof(struct Val));
-	ret->t = TSP_SYM;
-	ret->v.s = emalloc((strlen(s)+1) * sizeof(char));
-	strcpy(ret->v.s, s);
+	ret = mk_val(TSP_SYM);
+	ret->v.s = strndup(s, strlen(s));
+	if (!ret->v.s) perror("; strndup"), exit(1);
 	hash_add(st->syms, s, ret);
 	return ret;
 }
@@ -373,8 +352,7 @@ mk_sym(Tsp st, char *s)
 Val
 mk_prim(TspType t, Prim pr, char *name)
 {
-	Val ret = emalloc(sizeof(struct Val));
-	ret->t = t;
+	Val ret = mk_val(t);
 	ret->v.pr.name = name;
 	ret->v.pr.pr = pr;
 	return ret;
@@ -383,8 +361,7 @@ mk_prim(TspType t, Prim pr, char *name)
 Val
 mk_func(TspType t, char *name, Val args, Val body, Hash env)
 {
-	Val ret = emalloc(sizeof(struct Val));
-	ret->t = t;
+	Val ret = mk_val(t);
 	ret->v.f.name = name;
 	ret->v.f.args = args;
 	ret->v.f.body = body;
@@ -395,8 +372,7 @@ mk_func(TspType t, char *name, Val args, Val body, Hash env)
 Val
 mk_pair(Val a, Val b)
 {
-	Val ret = emalloc(sizeof(struct Val));
-	ret->t = TSP_PAIR;
+	Val ret = mk_val(TSP_PAIR);
 	car(ret) = a;
 	cdr(ret) = b;
 	return ret;
@@ -495,7 +471,8 @@ esc_char(char c)
 static char *
 esc_str(char *s)
 {
-	char *c, *ret = emalloc((strlen(s)+1) * sizeof(char));
+	char *c, *ret = malloc((strlen(s)+1) * sizeof(char));
+	if (!ret) perror("; malloc"), exit(1);
 	for (c = ret; *s != '\0'; c++, s++)
 		if (*s == '\\')
 			*c = esc_char(*(++s));
@@ -526,12 +503,13 @@ static Val
 read_sym(Tsp st)
 {
 	int n = 1, i = 0;
-	char *sym = emalloc(n);
+	char *sym = malloc(n);
 	for (; tsp_fget(st) && issym(tsp_fget(st)); tsp_finc(st)) {
+		if (!sym) perror("; alloc"), exit(1);
 		sym[i++] = tsp_fget(st);
 		if (i == n) {
 			n *= 2;
-			sym = erealloc(sym, n);
+			sym = realloc(sym, n);
 		}
 	}
 	sym[i] = '\0';
@@ -619,7 +597,8 @@ tisp_read_file(char *fname)
 	else if ((fd = open(fname, O_RDONLY)) < 0)
 		tsp_warnf("could not load file '%s'", fname);
 	while ((n = read(fd, buf, sizeof(buf))) > 0) {
-		file = erealloc(file, len + n + 1);
+		file = realloc(file, len + n + 1);
+		if (!file) perror("; realloc"), exit(1);
 		memcpy(file + len, buf, n);
 		len += n;
 		file[len] = '\0';
@@ -844,6 +823,7 @@ form_quote(Tsp st, Hash env, Val args)
 	return car(args);
 }
 
+/* TODO make Void variable like Nil, True, False or like Str, Int ? */
 /* returns nothing */
 static Val
 form_Void(Tsp st, Hash env, Val args)
@@ -1017,7 +997,7 @@ prim_load(Tsp st, Hash env, Val args)
 {
 	Val tib;
 	void (*tibenv)(Tsp);
-	char *name;
+	char name[PATH_MAX];
 	const char *paths[] = {
 		"/usr/local/share/tisp/", "/usr/share/tisp/", "./", NULL
 	};
@@ -1026,41 +1006,35 @@ prim_load(Tsp st, Hash env, Val args)
 	tib = car(args);
 	tsp_arg_type(tib, "load", TSP_STR);
 
-	name = emalloc(PATH_MAX * sizeof(char));
 	for (int i = 0; paths[i]; i++) {
 		strcpy(name, paths[i]);
 		strcat(name, tib->v.s);
 		strcat(name, ".tsp");
 		if (access(name, R_OK) != -1) {
 			tisp_eval_seq(st, env, tisp_parse_file(st, name));
-			free(name);
 			return st->none;
 		}
 	}
 
 	/* If not tisp file, try loading shared object library */
-	st->libh = erealloc(st->libh, (st->libhc+1)*sizeof(void*));
+	st->libh = realloc(st->libh, (st->libhc+1)*sizeof(void*));
+	if (!st->libh) perror("; realloc"), exit(1);
 
-	name = erealloc(name, (strlen(tib->v.s)+10) * sizeof(char));
+	memset(name, 0, sizeof(name));
 	strcpy(name, "libtib");
 	strcat(name, tib->v.s);
 	strcat(name, ".so");
-	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY))) {
-		free(name);
+	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY)))
 		tsp_warnf("load: could not load '%s':\n%s", tib->v.s, dlerror());
-	}
 	dlerror();
 
-	name = erealloc(name, (strlen(tib->v.s)+9) * sizeof(char));
+	memset(name, 0, sizeof(name));
 	strcpy(name, "tib_env_");
 	strcat(name, tib->v.s);
 	tibenv = dlsym(st->libh[st->libhc], name);
-	if (dlerror()) {
-		free(name);
+	if (dlerror())
 		tsp_warnf("load: could not run '%s':\n%s", tib->v.s, dlerror());
-	}
 	(*tibenv)(st);
-	free(name);
 
 	st->libhc++;
 	return st->none;
@@ -1101,17 +1075,15 @@ tisp_env_add(Tsp st, char *key, Val v)
 Tsp
 tisp_env_init(size_t cap)
 {
-	Tsp st = emalloc(sizeof(struct Tsp));
+	Tsp st = malloc(sizeof(struct Tsp));
+	if (!st) perror("; malloc"), exit(1);
 
 	st->file = NULL;
 	st->filec = 0;
 
-	st->nil = emalloc(sizeof(struct Val));
-	st->nil->t = TSP_NIL;
-	st->none = emalloc(sizeof(struct Val));
-	st->none->t = TSP_NONE;
-	st->t = emalloc(sizeof(struct Val));
-	st->t->t = TSP_SYM;
+	st->nil = mk_val(TSP_NIL);
+	st->none = mk_val(TSP_NONE);
+	st->t = mk_val(TSP_SYM);
 	st->t->v.s = "True";
 
 	st->global = hash_new(cap, NULL);
