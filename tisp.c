@@ -53,6 +53,7 @@ type_str(TspType t)
 	case TSP_STR:   return "Str";
 	case TSP_SYM:   return "Sym";
 	case TSP_PRIM:  return "Prim";
+	case TSP_FORM:  return "Form";
 	case TSP_FUNC:  return "Func";
 	case TSP_MACRO: return "Macro";
 	case TSP_PAIR:  return "Pair";
@@ -767,6 +768,9 @@ tisp_print(FILE *f, Val v)
 	case TSP_PRIM:
 		fprintf(f, "#<primitive:%s>", v->v.pr.name);
 		break;
+	case TSP_FORM:
+		fprintf(f, "#<form:%s>", v->v.pr.name);
+		break;
 	case TSP_PAIR:
 		putc('(', f);
 		tisp_print(f, car(v));
@@ -884,6 +888,7 @@ prim_get(Tsp st, Hash env, Val args)
 	prop = cadr(args);
 	tsp_arg_type(prop, "get", TSP_SYM);
 	switch (v->t) {
+	case TSP_FORM:
 	case TSP_PRIM:
 		if (!strncmp(prop->v.s, "name", 4))
 			return mk_sym(st, v->v.pr.name);
