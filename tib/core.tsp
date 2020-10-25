@@ -7,6 +7,7 @@
 
 ;;; CXR
 
+; TODO def car cdr with get syntax ?
 (def (caar x) (car (car x)))
 (def (cadr x) (car (cdr x)))
 (def (cdar x) (cdr (car x)))
@@ -278,13 +279,11 @@
 ; def English list element accessors
 (def rest cdr) ; TODO first and rest are generics for list, vec, str types
 (def first car)
-(let (((defi name count)
-       (list 'def (list name 'x) (list 'nth 'x count))))
-  (recur f ((n 1)
-            (lst '(second third forth fifth sixth seventh eighth ninth tenth)))
-         (when lst
-           (eval (defi (car lst) n))
-           (f (+ n 1) (cdr lst)))))
+(recur f ((n 1)
+          (lst '(second third forth fifth sixth seventh eighth ninth tenth)))
+  (when lst
+    (eval `(def (,(car lst) x) (nth x ,n)))
+    (f (+ n 1) (cdr lst))))
 
 ;;; Stacks
 
