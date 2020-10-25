@@ -1,9 +1,15 @@
+;;; core.tsp
 (def (list . lst) lst)
 (def quit "type (quit) or press CTRL-D to exit REPL")
 
 (def defmacro
   (macro (args . body)
-         (list 'def (car args) (list 'macro (cdr args) . body))))
+         (cond
+           ((pair? args)
+            (list 'def (car args) (list 'macro (cdr args) . body)))
+           (else
+             (error 'defmacro "expected macro name and argument List, recieved "
+                    (typeof args))))))
 
 ;;; CXR
 
