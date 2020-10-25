@@ -906,9 +906,9 @@ prim_get(Tsp st, Hash env, Val args)
 		break;
 	case TSP_INT:
 	case TSP_RATIO:
-		if (!strncmp(prop->v.s, "num", 3))
+		if (!strncmp(prop->v.s, "numerator", 3))
 			return mk_int(v->v.n.num);
-		if (!strncmp(prop->v.s, "den", 3))
+		if (!strncmp(prop->v.s, "denominator", 3))
 			return mk_int(v->v.n.den);
 		break;
 	case TSP_PAIR:
