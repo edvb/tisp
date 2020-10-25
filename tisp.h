@@ -141,7 +141,7 @@ Val mk_sym(Tsp st, char *s);
 Val mk_prim(TspType t, Prim prim, char *name);
 Val mk_func(TspType t, char *name, Val args, Val body, Hash env);
 Val mk_pair(Val a, Val b);
-Val mk_list(Tsp st, int n, Val *a);
+Val mk_list(Tsp st, int n, ...);
 
 Val tisp_read(Tsp st);
 Val tisp_read_line(Tsp st);

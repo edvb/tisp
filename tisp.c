@@ -380,13 +380,16 @@ mk_pair(Val a, Val b)
 }
 
 Val
-mk_list(Tsp st, int n, Val *a)
+mk_list(Tsp st, int n, ...)
 {
-	int i;
-	Val b = st->nil;
-	for (i = n-1; i >= 0; i--)
-		b = mk_pair(a[i], b);
-	return b;
+	Val lst, cur;
+	va_list argp;
+	va_start(argp, n);
+	lst = mk_pair(va_arg(argp, Val), st->nil);
+	for (cur = lst; n > 1; n--, cur = cdr(cur))
+		cdr(cur) = mk_pair(va_arg(argp, Val), st->nil);
+	va_end(argp);
+	return lst;
 }
 
 /* read */
@@ -574,8 +577,7 @@ tisp_read(Tsp st)
 			tsp_finc(st);
 			if (!(v = tisp_read(st)))
 				return NULL;
-			return mk_pair(mk_sym(st, shorthands[i+1]),
-			               mk_pair(v, st->nil));
+			return mk_list(st, 2, mk_sym(st, shorthands[i+1]), v);
 		}
 	}
 	if (issym(tsp_fget(st)))

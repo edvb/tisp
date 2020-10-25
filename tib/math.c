@@ -193,7 +193,7 @@ prim_pow(Tsp st, Hash vars, Val args)
 	if ((bnum == (int)bnum && bden == (int)bden) ||
 	     b->t & TSP_DEC || p->t & TSP_DEC)
 		return mk_num(b->t, p->t, 0)(bnum, bden);
-	return mk_pair(mk_sym(st, "^"), mk_pair(b, mk_pair(p, st->nil)));
+	return mk_list(st, 3, mk_sym(st, "^"), b, p);
 }
 
 #define PRIM_COMPARE(NAME, OP)                          \
@@ -214,15 +214,15 @@ PRIM_COMPARE(gt,  >)
 PRIM_COMPARE(lte, <=)
 PRIM_COMPARE(gte, >=)
 
-#define PRIM_TRIG(NAME)                                                 \
-static Val                                                              \
-prim_##NAME(Tsp st, Hash vars, Val args)                                \
-{                                                                       \
-	tsp_arg_num(args, #NAME, 1);                                    \
-	tsp_arg_type(car(args), #NAME, TSP_EXPR);                       \
-	if (car(args)->t & TSP_DEC)                                     \
-		return mk_dec(NAME(num(car(args))));                    \
-	return mk_pair(mk_sym(st, #NAME), mk_pair(car(args), st->nil)); \
+#define PRIM_TRIG(NAME)                                      \
+static Val                                                   \
+prim_##NAME(Tsp st, Hash vars, Val args)                     \
+{                                                            \
+	tsp_arg_num(args, #NAME, 1);                         \
+	tsp_arg_type(car(args), #NAME, TSP_EXPR);            \
+	if (car(args)->t & TSP_DEC)                          \
+		return mk_dec(NAME(num(car(args))));         \
+	return mk_list(st, 2, mk_sym(st, #NAME), car(args)); \
 }
 
 PRIM_TRIG(sin)
