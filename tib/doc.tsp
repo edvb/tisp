@@ -1,75 +1,75 @@
 (def docstr-reg
   '((car
       "(car lst)"
-      "return first element of list")
+      "First element of list")
     (cdr
       "(cdr lst)"
-      "return rest of list after first element")
+      "Rest of list after first element")
     (cons
       "(cons a d)"
-      "create new pair with a car of a and cdr of d")
+      "Create new pair with a car of a and cdr of d")
     (quote
       "(quote expr)"
-      "return expression unevaluated")
+      "Return expression unevaluated")
     (Void
       "(Void)"
-      "return nothing"
-      "used to insert a void type in a list or force a function not to return anything")
+      "Return nothing"
+      "Used to insert a void type in a list or force a function not to return anything")
     (eval
       "(eval expr)"
-      "evaluate expression, can be dangerous to use in practice")
+      "Evaluate expression, can be dangerous to use in practice")
     (=
       "(= . vals)"
-      "return boolean depending on if multiple values are all equal")
+      "Return boolean depending on if multiple values are all equal")
     (cond
       "(cond . (expr . body))"
-      "conditional statement")
+      "Conditional statement")
     (typeof
       "(typeof val)"
-      "return a string stating the argument's type")
+      "Get string stating the argument's type")
     (get
       "(get val prop)"
-      "get the property of the given value depending on its type")
+      "Get the property of the given value depending on its type")
     (lambda
       "(lambda args . body)"
-      "create anonymous function")
+      "Create anonymous function")
     (macro
       "(macro args . body)"
-      "create anonymous macro")
+      "Create anonymous macro")
     (def
       "(def var . val)"
       "(def (func . args) . body)"
-      "creates new variable with value, or create new function if argument list given"
-      "if value for variable is not given, make it a self-evaluating symbol")
+      "Create new variable with value, or create new function if argument list given"
+      "  If value for variable is not given, make it a self-evaluating symbol")
     (set!
       "(set! var val)"
       "change the variable var to val")
     (load
       "(load lib)"
-      "loads the library given as a string")
+      "Loads the library given as a string")
     (error
       "(error func msg)"
-      "throw error, print message with function name given as symbol")
+      "Throw error, print message with function name given as symbol")
     (version
       "(version)"
-      "return string of tisp's version number")))
+      "Tisp's version number as a string")))
 
 (def (doc proc)
   "get documentation of function supplied by its doc string"
   (unless (procedure? proc)
     (error 'doc "documentation only exists for procedures"))
   (def (lookup proc)
-    (recur f ((docstr docstr-reg))
-      (cond ((nil? docstr)
+    (recur f ((docstrs docstr-reg))
+      (cond ((empty? docstrs)
              (error 'doc (get proc 'name) ": no documentation found"))
-            ((= (caar docstr) (get proc 'name))
-             (map println (cdar docstr)))
-            (else (f (cdr docstr))))))
+            ((= (caar docstrs) (get proc 'name))
+             (map println (cdar docstrs)))
+            (else (f (cdr docstrs))))))
   (if (or (function? proc) (macro? proc))
     (let ((docstr (car (get proc 'body))))
+      (println (cons (get proc 'name) (get proc 'args)))
       (if (string? docstr)
-        (println (cons (get proc 'name) (get proc 'args)) "\n"
-              docstr)
+        (println docstr)
         (lookup proc)))
     (lookup proc))
   (Void))
