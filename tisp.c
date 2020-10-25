@@ -586,7 +586,7 @@ tisp_read(Tsp st)
 		tsp_finc(st);
 		return read_pair(st);
 	}
-	tsp_warnf("could not read given input '%s'", st->file+st->filec);
+	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
 }
 
 /* return string containing contents of file name */
