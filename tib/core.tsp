@@ -127,10 +127,16 @@
                  body)))
 
 ; TODO allow for improper lists
-(defmacro (quasiquote x)
-  (def (check x)
-    (unless (and (pair? (cdr x)) (nil? (cddr x)))
-      (error (car x) "invalid form " x)))
+; TODO `(0 ,@1) => (0 . 1)
+(defmacro (quasiquote expr)
+  "Recursively quote the given expression
+  Automatically quotes each element in the expression, but evaluates the
+  element if it is labeled with the unquoted macro.
+  Can be shortened with the ` prefix.
+  Also see quote, unquote, and unquote-splice"
+  (def (check form)
+    (unless (and (pair? (cdr form)) (nil? (cddr form)))
+      (error (car form) "invalid form " form)))
   (def (quasicons a d)
     (if (pair? d)
       (if (= (car d) 'quote)
@@ -143,15 +149,43 @@
           (list* (car d) a (cdr d))
           (list list* a d)))
       (list list* a d)))
-  (recur f ((x x))
-         (cond
-           ((atom? x) (list 'quote x))
-           ((= (car x) 'unquote)
-            (check x)
-            (cadr x))
-           (else (quasicons (f (car x)) (f (cdr x)))))))
+  (recur f ((expr expr) (n 0))
+    (cond
+      ((atom? expr) (list 'quote expr))
+      ((= (car expr) 'quasiquote)
+       (check expr)
+       (quasicons ''quasiquote (f (cdr x) (+ n 1))))
+      ((= (car expr) 'unquote)
+       (check expr)
+       (if (= n 0)
+         (cadr expr)
+         (quasicons ''unquote (f (cdr expr) (- n 1)))))
+      ((= (car expr) 'unquote-splice)
+       (check expr)
+       (if (= n 0)
+         (error 'unquote-splice "invalid context for " (cadr expr))
+         (quasicons ''unquote-splice (f (cdr expr) (- n 1)))))
+      ((and (= n 0) (and (pair? (car expr)) (= (caar expr) 'unquote-splice)))
+       (check (car expr))
+       (let ((d (f (cdr expr) n)))
+         (if (= d '(quote nil))
+           (cadar expr)
+           (list 'append (cadar expr) d))))
+      (else (quasicons (f (car expr) n) (f (cdr expr) n))))))
 
-(defmacro (unquote x) (list error ''unquote "called outside of quasiquote"))
+(defmacro (unquote expr)
+  "Unquote expression so its evaluated before placed into the quasiquote
+  Can be shortened with the , prefix
+  Errors if called outside quasiquote
+  Also see quote, unquote, and unquote-splice"
+  (error 'unquote "called outside of quasiquote"))
+(defmacro (unquote-splice expr)
+  "Unquote and splice the expression into the quasiquote
+  If the value evaluated is a list, embedded each element into the quasiquote
+  Can be shortened with the ,@ prefix
+  Errors if called outside a quasiquote of a list
+  Also see quote, unquote, and unquote-splice"
+  (error 'unquote-splice "called outside of quasiquote"))
 
 ;;; Logic
 

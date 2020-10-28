@@ -559,33 +559,32 @@ Val
 tisp_read(Tsp st)
 {
 	char *shorthands[] = {
-		"'", "quote",
-		"`", "quasiquote",
-		",", "unquote",
+		"'",  "quote",
+		"`",  "quasiquote",
+		",@", "unquote-splice", /* always check before , */
+		",",  "unquote",
 	};
 	skip_ws(st, 1);
-	if (strlen(st->file+st->filec) == 0)
+	if (strlen(st->file+st->filec) == 0) /* empty list */
 		return st->none;
-	if (isnum(st->file+st->filec))
+	if (isnum(st->file+st->filec)) /* number */
 		return read_num(st);
 	/* TODO support | for symbols */
-	if (tsp_fget(st) == '"')
+	if (tsp_fget(st) == '"') /* strings */
 		return read_str(st);
-	for (int i = 0; i < LEN(shorthands); i += 2) {
-		if (tsp_fget(st) == *shorthands[i]) {
+	for (int i = 0; i < LEN(shorthands); i += 2) { /* character prefixes */
+		if (!strncmp(st->file+st->filec, shorthands[i], strlen(shorthands[i]))) {
 			Val v;
-			tsp_finc(st);
+			tsp_fincn(st, strlen(shorthands[i]));
 			if (!(v = tisp_read(st)))
 				return NULL;
 			return mk_list(st, 2, mk_sym(st, shorthands[i+1]), v);
 		}
 	}
-	if (issym(tsp_fget(st)))
+	if (issym(tsp_fget(st))) /* symbols */
 		return read_sym(st);
-	if (tsp_fget(st) == '(') {
-		tsp_finc(st);
-		return read_pair(st);
-	}
+	if (tsp_fget(st) == '(')
+		return tsp_finc(st), read_pair(st, ')');
 	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
 }
 

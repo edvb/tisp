@@ -57,6 +57,7 @@
 #define tsp_include_tib(NAME)       void tib_env_##NAME(Tsp)
 
 #define tsp_finc(ST) ST->filec++
+#define tsp_fincn(ST, N) ST->filec += N
 #define tsp_fgetat(ST, O) ST->file[ST->filec+O]
 #define tsp_fget(ST) tsp_fgetat(ST,0)
 

@@ -10,7 +10,9 @@
       "Create new pair with a car of a and cdr of d")
     (quote
       "(quote expr)"
-      "Return expression unevaluated")
+      "Return expression unevaluated"
+      "  Can be shortened with the ' prefix"
+      "  Also see quote, unquote, and unquote-splice")
     (Void
       "(Void)"
       "Return nothing"
