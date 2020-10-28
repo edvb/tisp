@@ -199,11 +199,11 @@ static Rec
 rec_new(size_t cap, Rec next)
 {
 	Rec rec;
-	if (!(rec = malloc(sizeof(struct Rec))))
+	if (!(rec = malloc(sizeof(struct Rec_))))
 		perror("; malloc"), exit(1);
 	rec->size = 0;
 	rec->cap = cap;
-	if (!(rec->items = calloc(cap, sizeof(struct Entry))))
+	if (!(rec->items = calloc(cap, sizeof(struct Entry_))))
 		perror("; calloc"), exit(1);
 	rec->next = next;
 	return rec;
@@ -245,7 +245,7 @@ rec_grow(Rec rec)
 	int i, ocap = rec->cap;
 	Entry oitems = rec->items;
 	rec->cap *= TSP_REC_FACTOR;
-	if (!(rec->items = calloc(rec->cap, sizeof(struct Entry))))
+	if (!(rec->items = calloc(rec->cap, sizeof(struct Entry_))))
 		perror("; calloc"), exit(1);
 	for (i = 0; i < ocap; i++) /* repopulate new record with old values */
 		if (oitems[i].key)
@@ -299,7 +299,7 @@ Val
 mk_val(TspType t)
 {
 	Val ret;
-	if (!(ret = malloc(sizeof(struct Val))))
+	if (!(ret = malloc(sizeof(struct Val_))))
 		perror("; malloc"), exit(1);
 	ret->t = t;
 	return ret;
@@ -1029,7 +1029,7 @@ Tsp
 tisp_env_init(size_t cap)
 {
 	Tsp st;
-	if (!(st = malloc(sizeof(struct Tsp))))
+	if (!(st = malloc(sizeof(struct Tsp_))))
 		perror("; malloc"), exit(1);
 
 	st->file = NULL;

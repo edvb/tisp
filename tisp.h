@@ -18,6 +18,11 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
+#ifndef TISP_H
+#define TISP_H
+
+#include <stdlib.h>
+#include <stdio.h>
 
 #define TSP_REC_FACTOR 2
 
@@ -65,19 +70,19 @@
 #define tsp_finc(ST) ST->filec++
 #define tsp_fincn(ST, N) ST->filec += N
 
-struct Val;
-typedef struct Val *Val;
-typedef struct Tsp *Tsp;
+struct Val_;
+typedef struct Val_ *Val;
+typedef struct Tsp_ *Tsp;
 
-typedef struct Entry *Entry;
+typedef struct Entry_ *Entry;
 
-typedef struct Rec {
+typedef struct Rec_ {
 	int size, cap;
-	struct Entry {
+	struct Entry_ {
 		char *key;
 		Val val;
 	} *items;
-	struct Rec *next;
+	struct Rec_ *next;
 } *Rec;
 
 /* possible tisp object types */
@@ -119,7 +124,7 @@ typedef struct TspTypeVal {
 typedef Val (*Prim)(Tsp, Rec, Val);
 
 /* tisp object */
-struct Val {
+struct Val_ {
 	TspType t; /* NONE, NIL */
 	union {
 		char *s;                                           /* STRING, SYMBOL */
@@ -133,7 +138,7 @@ struct Val {
 };
 
 /* tisp state and global environment */
-struct Tsp {
+struct Tsp_ {
 	char *file;
 	size_t filec;
 	Val none, nil, t;
@@ -176,3 +181,4 @@ void tib_env_string(Tsp);
 void tib_env_math(Tsp);
 void tib_env_io(Tsp);
 void tib_env_os(Tsp);
+#endif // TISP_H
