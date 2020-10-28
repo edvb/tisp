@@ -183,11 +183,11 @@ static Hash
 hash_new(size_t cap, Hash next)
 {
 	if (cap < 1) return NULL;
-	Hash ht = malloc(sizeof(struct Hash));
+	Hash ht = malloc(sizeof(struct Hash_));
 	if (!ht) perror("; malloc"), exit(1);
 	ht->size = 0;
 	ht->cap = cap;
-	ht->items = calloc(cap, sizeof(struct Entry));
+	ht->items = calloc(cap, sizeof(struct Entry_));
 	if (!ht->items) perror("; calloc"), exit(1);
 	ht->next = next;
 	return ht;
@@ -228,7 +228,7 @@ hash_grow(Hash ht)
 	int i, ocap = ht->cap;
 	Entry oitems = ht->items;
 	ht->cap *= 2;
-	ht->items = calloc(ht->cap, sizeof(struct Entry));
+	ht->items = calloc(ht->cap, sizeof(struct Entry_));
 	if (!ht->items) perror("; calloc"), exit(1);
 	for (i = 0; i < ocap; i++) /* repopulate new hash table with old values */
 		if (oitems[i].key)
@@ -280,7 +280,7 @@ hash_extend(Hash ht, Val args, Val vals)
 Val
 mk_val(TspType t)
 {
-	Val ret = malloc(sizeof(struct Val));
+	Val ret = malloc(sizeof(struct Val_));
 	if (!ret) perror("; malloc"), exit(1);
 	ret->t = t;
 	return ret;
@@ -1082,7 +1082,7 @@ tisp_env_add(Tsp st, char *key, Val v)
 Tsp
 tisp_env_init(size_t cap)
 {
-	Tsp st = malloc(sizeof(struct Tsp));
+	Tsp st = malloc(sizeof(struct Tsp_));
 	if (!st) perror("; malloc"), exit(1);
 
 	st->file = NULL;

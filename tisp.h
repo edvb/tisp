@@ -18,6 +18,11 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
+#ifndef TISP_H
+#define TISP_H
+
+#include <stdlib.h>
+#include <stdio.h>
 
 #define tsp_warnf(M, ...) do {                                  \
 	fprintf(stderr, "; tisp: error: " M "\n", ##__VA_ARGS__); \
@@ -70,19 +75,19 @@
 #define num(P)  ((P)->v.n.num)
 #define den(P)  ((P)->v.n.den)
 
-struct Val;
-typedef struct Val *Val;
-typedef struct Tsp *Tsp;
+struct Val_;
+typedef struct Val_ *Val;
+typedef struct Tsp_ *Tsp;
 
-typedef struct Entry *Entry;
+typedef struct Entry_ *Entry;
 
-typedef struct Hash {
+typedef struct Hash_ {
 	int size, cap;
-	struct Entry {
+	struct Entry_ {
 		char *key;
 		Val val;
 	} *items;
-	struct Hash *next;
+	struct Hash_ *next;
 } *Hash;
 
 /* possible tisp object types */
@@ -109,7 +114,7 @@ typedef enum {
 typedef Val (*Prim)(Tsp, Hash, Val);
 
 /* tisp object */
-struct Val {
+struct Val_ {
 	TspType t; /* NONE, NIL */
 	union {
 		char *s;                                            /* STRING, SYMBOL */
@@ -121,7 +126,7 @@ struct Val {
 };
 
 /* tisp state and global environment */
-struct Tsp {
+struct Tsp_ {
 	char *file;
 	size_t filec;
 	Val none, nil, t;
@@ -156,3 +161,5 @@ Val tisp_parse_file(Tsp st, char *fname);
 void tisp_env_add(Tsp st, char *key, Val v);
 Tsp  tisp_env_init(size_t cap);
 void tisp_env_lib(Tsp st, char* lib);
+
+#endif // TISP_H
