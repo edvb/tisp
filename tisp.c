@@ -558,11 +558,12 @@ read_pair(Tsp st)
 Val
 tisp_read(Tsp st)
 {
-	char *shorthands[] = {
+	char *prefix[] = {
 		"'",  "quote",
 		"`",  "quasiquote",
 		",@", "unquote-splice", /* always check before , */
 		",",  "unquote",
+		"@",  "lambda",
 	};
 	skip_ws(st, 1);
 	if (strlen(st->file+st->filec) == 0) /* empty list */
@@ -572,19 +573,19 @@ tisp_read(Tsp st)
 	/* TODO support | for symbols */
 	if (tsp_fget(st) == '"') /* strings */
 		return read_str(st);
-	for (int i = 0; i < LEN(shorthands); i += 2) { /* character prefixes */
-		if (!strncmp(st->file+st->filec, shorthands[i], strlen(shorthands[i]))) {
+	for (int i = 0; i < LEN(prefix); i += 2) { /* character prefix */
+		if (!strncmp(st->file+st->filec, prefix[i], strlen(prefix[i]))) {
 			Val v;
-			tsp_fincn(st, strlen(shorthands[i]));
+			tsp_fincn(st, strlen(prefix[i]));
 			if (!(v = tisp_read(st)))
 				return NULL;
-			return mk_list(st, 2, mk_sym(st, shorthands[i+1]), v);
+			return mk_list(st, 2, mk_sym(st, prefix[i+1]), v);
 		}
 	}
 	if (issym(tsp_fget(st))) /* symbols */
 		return read_sym(st);
-	if (tsp_fget(st) == '(')
-		return tsp_finc(st), read_pair(st, ')');
+	if (tsp_fget(st) == '(') /* list */
+		return tsp_finc(st), read_pair(st);
 	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
 }
 
@@ -930,8 +931,16 @@ prim_get(Tsp st, Hash env, Val args)
 static Val
 form_lambda(Tsp st, Hash env, Val args)
 {
-	tsp_arg_min(args, "lambda", 2);
-	return mk_func(TSP_FUNC, NULL, car(args), cdr(args), env);
+	Val params, body;
+	tsp_arg_min(args, "lambda", 1);
+	if (nilp(cdr(args))) { /* if only 1 argument is given, auto fill func parameters */
+		params = mk_pair(mk_sym(st, "it"), st->nil);
+		body = args;
+	} else {
+		params = car(args);
+		body = cdr(args);
+	}
+	return mk_func(TSP_FUNC, NULL, params, body, env);
 }
 
 /* creates new tisp defined macro */

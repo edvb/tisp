@@ -34,7 +34,9 @@
       "Get the property of the given value depending on its type")
     (lambda
       "(lambda args . body)"
-      "Create anonymous function")
+      "(lambda body)"
+      "Create anonymous function"
+      "  If only body is given, create function with one argument labeled 'it'")
     (macro
       "(macro args . body)"
       "Create anonymous macro")
