@@ -523,32 +523,29 @@ read_sym(Tsp st)
 /* return read string containing a list */
 /* TODO read pair after as well, allow lambda((x) (* x 2))(4) */
 static Val
-read_pair(Tsp st)
+read_pair(Tsp st, char endchar)
 {
 	Val a, b;
 	skip_ws(st, 1);
-	if (tsp_fget(st) == ')') {
-		tsp_finc(st);
-		skip_ws(st, 1);
-		return st->nil;
-	}
+	if (tsp_fget(st) == endchar)
+		return tsp_finc(st), st->nil;
 	/* TODO simplify read_pair by supporting (. x) => x */
 	if (!(a = tisp_read(st)))
 		return NULL;
 	skip_ws(st, 1);
 	if (!tsp_fget(st))
-		tsp_warn("reached end before closing ')'");
+		tsp_warnf("reached end before closing '%c'", endchar);
 	if (tsp_fget(st) == '.' && isdelim(tsp_fgetat(st,1))) {
 		tsp_finc(st);
 		if (!(b = tisp_read(st)))
 			return NULL;
 		skip_ws(st, 1);
-		if (tsp_fget(st) != ')')
-			tsp_warn("did not find closing ')'");
+		if (tsp_fget(st) != endchar)
+			tsp_warnf("did not find closing '%c'", endchar);
 		tsp_finc(st);
 		skip_ws(st, 1);
 	} else {
-		if (!(b = read_pair(st)))
+		if (!(b = read_pair(st, endchar)))
 			return NULL;
 	}
 	return mk_pair(a, b);
@@ -585,7 +582,7 @@ tisp_read(Tsp st)
 	if (issym(tsp_fget(st))) /* symbols */
 		return read_sym(st);
 	if (tsp_fget(st) == '(') /* list */
-		return tsp_finc(st), read_pair(st);
+		return tsp_finc(st), read_pair(st, ')');
 	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
 }
 
