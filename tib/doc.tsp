@@ -42,9 +42,11 @@
       "Create anonymous macro")
     (def
       "(def var . val)"
+      "Create new variable with value"
+      "  If value is not given, make variable a self-evaluating symbol"
+      ""
       "(def (func . args) . body)"
-      "Create new variable with value, or create new function if argument list given"
-      "  If value for variable is not given, make it a self-evaluating symbol")
+      "Create new function with arguments list and body list")
     (set!
       "(set! var val)"
       "change the variable var to val")
