@@ -205,6 +205,12 @@ char *tests[][2] = {
 	{ "add2",                        "2"       },
 	{ "(set! add2 \"2\")",           "2"       },
 	{ "add2",                        "2"       },
+	{ "defined?",                    NULL      },
+	{ "(defined? invalid-var)",      "Nil"     },
+	{ "(defined? defined?)",         "True"    },
+	{ "(defined? car)",              "True"    },
+	{ "(defined? when)",             "True"    },
+	{ "(defined? apply)",            "True"    },
 
 	{ "lambda",                       NULL },
 	{ "((lambda (x) x) 3)",           "3"  },

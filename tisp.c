@@ -1000,6 +1000,20 @@ form_set(Tsp st, Hash env, Val args)
 	return val;
 }
 
+static Val
+form_definedp(Tsp st, Hash env, Val args)
+{
+	Entry e = NULL;
+	tsp_arg_min(args, "defined?", 1);
+	tsp_arg_type(car(args), "defined?", TSP_SYM);
+	for (Hash h = env; h; h = h->next) {
+		e = entry_get(h, car(args)->v.s);
+		if (e->key)
+			break;
+	}
+	return (!e || !e->key) ? st->nil : st->t;
+}
+
 /* loads tisp file or C dynamic library */
 /* TODO lua like error listing places load looked */
 /* TODO only use dlopen if -ldl is given with TIB_DYNAMIC */
@@ -1117,6 +1131,7 @@ tisp_env_init(size_t cap)
 	tsp_env_form(def);
 	tsp_env_name_form(set!, set);
 	tsp_env_prim(load);
+	tsp_env_name_form(defined?, definedp);
 	tsp_env_prim(error);
 	tsp_env_form(version);
 
