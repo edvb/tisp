@@ -130,11 +130,11 @@
 ; TODO `(0 ,@1) => (0 . 1)
 (defmacro (quasiquote expr)
   "Recursively quote the given expression
-  Automatically quotes each element in the expression, but evaluates the
-  element if it is labeled with the unquoted macro.
+  Automatically quotes each element within the expression, but evaluates the
+  element if it is labeled with the unquote macro.
   Can be shortened with the ` prefix.
   Also see quote, unquote, and unquote-splice"
-  (def (check form)
+  (def (check form) ; TODO don't redefine functions every call
     (unless (and (pair? (cdr form)) (nil? (cddr form)))
       (error (car form) "invalid form " form)))
   (def (quasicons a d)
@@ -151,6 +151,7 @@
       (list list* a d)))
   (recur f ((expr expr) (n 0))
     (cond
+      ((nil? expr) Nil)
       ((atom? expr) (list 'quote expr))
       ((= (car expr) 'quasiquote)
        (check expr)
@@ -168,9 +169,9 @@
       ((and (= n 0) (and (pair? (car expr)) (= (caar expr) 'unquote-splice)))
        (check (car expr))
        (let ((d (f (cdr expr) n)))
-         (if (= d '(quote nil))
-           (cadar expr)
-           (list 'append (cadar expr) d))))
+         (if d
+           (list 'append (cadar expr) d)
+           (cadar expr))))
       (else (quasicons (f (car expr) n) (f (cdr expr) n))))))
 
 (defmacro (unquote expr)
