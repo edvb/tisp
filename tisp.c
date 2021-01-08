@@ -737,7 +737,7 @@ tisp_print(FILE *f, Val v)
 {
 	switch (v->t) {
 	case TSP_NONE:
-		fputs("#<void>", f);
+		fputs("(Void)", f);
 		break;
 	case TSP_NIL:
 		fputs("Nil", f);
