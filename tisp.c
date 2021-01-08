@@ -693,7 +693,7 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 		return (*f->v.pr.pr)(st, env, args);
 	case TSP_FUNC:
 	case TSP_MACRO:
-		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anonymous",
+		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anon",
 		            list_len(f->v.f.args));
 		e = hash_new(8, f->v.f.env);
 		/* TODO call hash_extend in hash_new to know new hash size */
@@ -883,8 +883,7 @@ prim_get(Tsp st, Hash env, Val args)
 {
 	Val v, prop;
 	tsp_arg_num(args, "get", 2);
-	v = car(args);
-	prop = cadr(args);
+	v = car(args), prop = cadr(args);
 	tsp_arg_type(prop, "get", TSP_SYM);
 	switch (v->t) {
 	case TSP_FORM:
@@ -894,8 +893,8 @@ prim_get(Tsp st, Hash env, Val args)
 		break;
 	case TSP_FUNC:
 	case TSP_MACRO:
-		if (!strncmp(prop->v.s, "name", 4)) /* TODO fix seg fault on anon proc */
-			return mk_sym(st, v->v.f.name);
+		if (!strncmp(prop->v.s, "name", 4))
+			return mk_sym(st, v->v.f.name ? v->v.f.name : "anon");
 		if (!strncmp(prop->v.s, "body", 4))
 			return v->v.f.body;
 		if (!strncmp(prop->v.s, "args", 4))
@@ -908,7 +907,7 @@ prim_get(Tsp st, Hash env, Val args)
 		if (!strncmp(prop->v.s, "denominator", 3))
 			return mk_int(v->v.n.den);
 		break;
-	case TSP_PAIR:
+	case TSP_PAIR: /* TODO get nth element if number */
 		if (!strncmp(prop->v.s, "car", 3))
 			return v->v.p.car;
 		if (!strncmp(prop->v.s, "cdr", 3))
