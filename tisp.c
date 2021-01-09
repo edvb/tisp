@@ -1082,12 +1082,6 @@ prim_error(Tsp st, Hash env, Val args)
 	return NULL;
 }
 
-/* list tisp version */
-static Val
-form_version(Tsp st, Hash env, Val args)
-{
-	return mk_str(st, "0.0");
-}
 
 /* environment */
 
@@ -1108,6 +1102,9 @@ tisp_env_init(size_t cap)
 	st->file = NULL;
 	st->filec = 0;
 
+	st->strs = hash_new(cap, NULL);
+	st->syms = hash_new(cap, NULL);
+
 	st->nil = mk_val(TSP_NIL);
 	st->none = mk_val(TSP_NONE);
 	st->t = mk_val(TSP_SYM);
@@ -1117,6 +1114,7 @@ tisp_env_init(size_t cap)
 	tisp_env_add(st, "True", st->t);
 	tisp_env_add(st, "Nil", st->nil);
 	tisp_env_add(st, "bt", st->nil);
+	tisp_env_add(st, "version", mk_str(st, "0.0.0"));
 	tsp_env_prim(car);
 	tsp_env_prim(cdr);
 	tsp_env_prim(cons);
@@ -1134,10 +1132,6 @@ tisp_env_init(size_t cap)
 	tsp_env_prim(load);
 	tsp_env_name_form(defined?, definedp);
 	tsp_env_prim(error);
-	tsp_env_form(version);
-
-	st->strs = hash_new(cap, NULL);
-	st->syms = hash_new(cap, NULL);
 
 	st->libh = NULL;
 	st->libhc = 0;
