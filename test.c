@@ -405,16 +405,6 @@ char *tests[][2] = {
 	{ "(Int 3/-2)",         "-1"   },
 	{ "(Int 1)",            "1"    },
 	{ "(Int 3.14)",         "3"    },
-	{ "(numerator 3/2)",    "3"    },
-	{ "(numerator 1/2)",    "1"    },
-	{ "(numerator -4/2)",   "-2"   },
-	{ "(numerator 24)",     "24"   },
-	{ "(denominator 1/4)",  "4"    },
-	{ "(denominator 4/3)",  "3"    },
-	{ "(denominator 4/2)",  "1"    },
-	{ "(denominator 14/8)", "4"    },
-	{ "(denominator -4)",   "1"    },
-
 
 	{ "round",               NULL    },
 	{ "(round 7/3)",         "2"     },
