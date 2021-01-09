@@ -3,10 +3,10 @@
 (def quit "type (quit) or press CTRL-D to exit REPL")
 
 (def defmacro
-  (macro (args . body)
+  (Macro (args . body)
          (cond
            ((pair? args)
-            (list 'def (car args) (list 'macro (cdr args) . body)))
+            (list 'def (car args) (list 'Macro (cdr args) . body)))
            (else
              (error 'defmacro "expected macro name and argument List, recieved "
                     (typeof args))))))
@@ -107,10 +107,10 @@
   (list 'cond (list (list not con) (cons 'do body))))
 
 (defmacro (let vars . body)
-  (list (list* 'lambda ()
+  (list (list* 'Func ()
                (append
                  (map
-                   (lambda (x)
+                   (Func (x)
                      (list* 'def (car x) (cdr x)))
                    vars)
                  body))))
@@ -118,13 +118,13 @@
 (defmacro (recur proc vars . body)
   (list 'let
         (list*
-          (list proc (list* 'lambda (map car vars) body))
+          (list proc (list* 'Func (map car vars) body))
           vars)
         (list* proc (map car vars))))
 
 (defmacro (switch val . body)
   (list* 'cond (map
-                 (lambda (line)
+                 (Func (line)
                    `((= ,val ,(car line)) ,(cadr line)))
                  body)))
 
@@ -260,7 +260,7 @@
 
 ; TODO many args
 (def (apply proc args)
-  (eval (map (lambda (x) ; prevent args from being evaluated twice
+  (eval (map (Func (x) ; prevent args from being evaluated twice
                (list 'quote x))
              (cons proc args))))
 
@@ -279,10 +279,10 @@
 
 (def (compose . procs)
   (cond
-    ((nil? procs) (lambda x x))
+    ((nil? procs) (Func x x))
     ((nil? (cdr procs)) (car procs))
     (else
-      (lambda x
+      (Func x
         ((car procs) (apply (apply compose (cdr procs)) x))))))
 
 (def (reverse l)
@@ -317,9 +317,9 @@
         (else (memp proc (cdr lst)))))
 
 (def (member mem lst)
-  (memp (lambda (x) (= mem x)) lst))
+  (memp (Func (x) (= mem x)) lst))
 
-; def English list element accessors
+; define English list element accessors
 (def rest cdr) ; TODO first and rest are generics for list, vec, str types
 (def first car)
 (recur f ((n 1)

@@ -32,14 +32,15 @@
     (get
       "(get val prop)"
       "Get the property of the given value depending on its type")
-    (lambda
-      "(lambda args . body)"
-      "(lambda body)"
+    (Func
+      "(Func args . body)"
+      "(Func body)"
       "Create anonymous function"
       "  If only body is given, create function with one argument labeled 'it'")
-    (macro
-      "(macro args . body)"
-      "Create anonymous macro")
+    (Macro
+      "(Macro args . body)"
+      "Create anonymous macro, arguments are not evaluated before given to body"
+      "  If only body is given, create macro with one argument labeled 'it'")
     (def
       "(def var . val)"
       "Create new variable with value"

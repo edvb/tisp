@@ -560,7 +560,7 @@ tisp_read(Tsp st)
 		"`",  "quasiquote",
 		",@", "unquote-splice", /* always check before , */
 		",",  "unquote",
-		"@",  "lambda",
+		"@",  "Func",
 	};
 	skip_ws(st, 1);
 	if (strlen(st->file+st->filec) == 0) /* empty list */
@@ -923,12 +923,12 @@ prim_get(Tsp st, Hash env, Val args)
 		   prop->v.s, type_str(v->t));
 }
 
-/* creates new tisp lambda function */
+/* creates new tisp function */
 static Val
-form_lambda(Tsp st, Hash env, Val args)
+form_Func(Tsp st, Hash env, Val args)
 {
 	Val params, body;
-	tsp_arg_min(args, "lambda", 1);
+	tsp_arg_min(args, "Func", 1);
 	if (nilp(cdr(args))) { /* if only 1 argument is given, auto fill func parameters */
 		params = mk_pair(mk_sym(st, "it"), st->nil);
 		body = args;
@@ -941,10 +941,12 @@ form_lambda(Tsp st, Hash env, Val args)
 
 /* creates new tisp defined macro */
 static Val
-form_macro(Tsp st, Hash env, Val args)
+form_Macro(Tsp st, Hash env, Val args)
 {
-	tsp_arg_min(args, "macro", 2);
-	return mk_func(TSP_MACRO, NULL, car(args), cdr(args), env);
+	tsp_arg_min(args, "Macro", 1);
+	Val ret = form_Func(st, env, args);
+	ret->t = TSP_MACRO;
+	return ret;
 }
 
 /* creates new variable of given name and value
@@ -1125,8 +1127,8 @@ tisp_env_init(size_t cap)
 	tsp_env_form(cond);
 	tsp_env_prim(typeof);
 	tsp_env_prim(get);
-	tsp_env_form(lambda);
-	tsp_env_form(macro);
+	tsp_env_form(Func);
+	tsp_env_form(Macro);
 	tsp_env_form(def);
 	tsp_env_name_form(set!, set);
 	tsp_env_prim(load);
