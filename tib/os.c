@@ -26,6 +26,8 @@
 
 #include "../tisp.h"
 
+/* TODO sys ls, mv, cp, rm, mkdir, exit */
+
 /* change to new directory */
 static Val
 prim_cd(Tsp st, Hash env, Val args)
@@ -43,7 +45,7 @@ prim_cd(Tsp st, Hash env, Val args)
 /* TODO rename to cwd ? */
 /* return string of current working directory */
 static Val
-form_pwd(Tsp st, Hash env, Val args)
+prim_pwd(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "pwd", 0);
 	char cwd[PATH_MAX];
@@ -52,21 +54,23 @@ form_pwd(Tsp st, Hash env, Val args)
 	return mk_str(st, cwd);
 }
 
+/* TODO time formating */
 /* return number of seconds since 1970 (unix time stamp) */
 static Val
-form_time(Tsp st, Hash env, Val args)
+prim_now(Tsp st, Hash env, Val args)
 {
-	tsp_arg_num(args, "time", 0);
+	tsp_arg_num(args, "now", 0);
 	return mk_int(time(NULL));
 }
 
+/* TODO time-avg: run timeit N times and take average */
 /* return time taken to run command given */
 static Val
-form_timeit(Tsp st, Hash env, Val args)
+form_time(Tsp st, Hash env, Val args)
 {
 	Val v;
 	clock_t t;
-	tsp_arg_num(args, "timeit", 1);
+	tsp_arg_num(args, "time", 1);
 	t = clock();
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
@@ -78,7 +82,7 @@ void
 tib_env_os(Tsp st)
 {
 	tsp_env_name_prim(cd!, cd);
-	tsp_env_form(pwd);
+	tsp_env_prim(pwd);
+	tsp_env_prim(now);
 	tsp_env_form(time);
-	tsp_env_form(timeit);
 }

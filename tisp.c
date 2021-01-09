@@ -829,7 +829,7 @@ form_quote(Tsp st, Hash env, Val args)
 /* TODO make Void variable like Nil, True, False or like Str, Int ? */
 /* returns nothing */
 static Val
-form_Void(Tsp st, Hash env, Val args)
+prim_Void(Tsp st, Hash env, Val args)
 {
 	return st->none;
 }
@@ -1121,7 +1121,7 @@ tisp_env_init(size_t cap)
 	tsp_env_prim(cdr);
 	tsp_env_prim(cons);
 	tsp_env_form(quote);
-	tsp_env_form(Void);
+	tsp_env_prim(Void);
 	tsp_env_prim(eval);
 	tsp_env_name_prim(=, eq);
 	tsp_env_form(cond);
