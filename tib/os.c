@@ -64,7 +64,7 @@ prim_now(Tsp st, Hash env, Val args)
 }
 
 /* TODO time-avg: run timeit N times and take average */
-/* return time taken to run command given */
+/* return time in miliseconds taken to run command given */
 static Val
 form_time(Tsp st, Hash env, Val args)
 {
@@ -75,7 +75,7 @@ form_time(Tsp st, Hash env, Val args)
 	if (!(v = tisp_eval(st, env, car(args))))
 		return NULL;
 	t = clock() - t;
-	return mk_dec(((double)t)/CLOCKS_PER_SEC);
+	return mk_dec(((double)t)/CLOCKS_PER_SEC*100);
 }
 
 void
