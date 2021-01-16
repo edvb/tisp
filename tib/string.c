@@ -100,22 +100,9 @@ prim_Sym(Tsp st, Hash env, Val args)
 	return val_string(st, args, mk_sym);
 }
 
-static Val
-prim_strlen(Tsp st, Hash env, Val args)
-{
-	Val str;
-	tsp_arg_num(args, "strlen", 1);
-	str = car(args);
-	if (!(str->t & (TSP_STR|TSP_SYM)))
-		tsp_warnf("strlen: expected string or symbol, received %s",
-		                   type_str(str->t));
-	return mk_int(strlen(str->v.s));
-}
-
 void
 tib_env_string(Tsp st)
 {
 	tsp_env_prim(Sym);
 	tsp_env_prim(Str);
-	tsp_env_prim(strlen);
 }
