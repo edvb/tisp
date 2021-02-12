@@ -108,7 +108,7 @@ prim_save(Tsp st, Hash env, Val args)
 	fname = cadr(args)->v.s;
 	if (!(f = fopen(fname, "wb")))
 		tsp_warnf("save: could not load file '%s'", fname);
-	if (!(fwrite(&*car(args), sizeof(struct Val), 1, f))) {
+	if (!(fwrite(&*car(args), sizeof(struct Val_), 1, f))) {
 		fclose(f);
 		tsp_warnf("save: could not save file '%s'", fname);
 	}
@@ -122,18 +122,18 @@ prim_open(Tsp st, Hash env, Val args)
 {
 	FILE *f;
 	char *fname;
-	struct Val v;
+	struct Val_ v;
 	Val ret;
-	if (!(ret = malloc(sizeof(struct Val))))
+	if (!(ret = malloc(sizeof(struct Val_))))
 		perror("; malloc"), exit(1);
 	tsp_arg_min(args, "open", 1);
 	tsp_arg_type(car(args), "open", TSP_STR);
 	fname = car(args)->v.s;
 	if (!(f = fopen(fname, "rb")))
 		tsp_warnf("save: could not load file '%s'", fname);
-	while (fread(&v, sizeof(struct Val), 1, f)) ;
+	while (fread(&v, sizeof(struct Val_), 1, f)) ;
 	fclose(f);
-	memcpy(ret, &v, sizeof(struct Val));
+	memcpy(ret, &v, sizeof(struct Val_));
 	return ret;
 }
 
