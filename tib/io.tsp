@@ -1,3 +1,15 @@
+(docstr-add!
+  '((write
+      "(write file . vals)"
+      "Writes to file given as string all values"
+      "  File can also be symbol 'stdout or 'stderr")
+    (read
+      "(read . file)"
+      "Return string read from optional file, if not given read from stdin")
+    (parse
+      "(parse string)"
+      "Parse Tisp object from given string")))
+
 (def (run file) (eval (parse (read file))))
 (def (print . str) (apply write (list* 'stdout Nil str)))
 (def (newline . file) ; TODO space and tab functions, accept number of instead

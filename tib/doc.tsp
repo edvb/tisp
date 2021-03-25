@@ -61,6 +61,11 @@
       "(version)"
       "Tisp's version number as a string")))
 
+(def (docstr-add! . docstrs)
+  "Add given docstrs to the global doc string registry"
+  (set! docstr-reg (apply @(append docstr-reg it) docstrs))
+  (Void))
+
 (def (doc proc)
   "Get documentation of procedure"
   (unless (procedure? proc)
