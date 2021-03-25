@@ -1,1 +1,1 @@
-doc/tisp.1.md
+doc/tisp.7.md

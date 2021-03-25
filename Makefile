@@ -14,6 +14,8 @@ TIB = tib/math.c tib/io.c tib/os.c tib/string.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
 LIB = tib/libtibmath.so tib/libtibio.so
 TSP = tib/core.tsp tib/io.tsp tib/math.tsp tib/doc.tsp tib/repl.tsp
+DOC = doc/tisp.1.md doc/tisp.7.md
+MAN = $(DOC:.md=)
 
 all: options $(EXE)
 
@@ -98,9 +100,11 @@ test: $(OBJ) $(LIB) test.o
 	@$(CC) -o test tisp.o $(TIB:.c=.o) test.o $(LDFLAGS)
 	@./test
 
-man: $(EXE)
-	@echo updating man page doc/$(EXE).1
+man: $(MAN)
+
+$(MAN): $(DOC) $(EXE)
+	@echo updating man page $@
 	@markman -nCD -t TISP -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`" \
-		-s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" doc/$(EXE).1.md > doc/$(EXE).1
+		-s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" $@.md > $@
 
 .PHONY: all options clean dist install uninstall test man
