@@ -110,8 +110,7 @@
   (list (list* 'Func ()
                (append
                  (map
-                   (Func (x)
-                     (list* 'def (car x) (cdr x)))
+                   @(list* 'def (car it) (cdr it))
                    vars)
                  body))))
 
@@ -260,8 +259,7 @@
 
 ; TODO many args
 (def (apply proc args)
-  (eval (map (Func (x) ; prevent args from being evaluated twice
-               (list 'quote x))
+  (eval (map @(list 'quote it) ; prevent proc and args from being evaluated twice
              (cons proc args))))
 
 ; TODO many lsts for proc w/ multi arguments
@@ -317,7 +315,7 @@
         (else (memp proc (cdr lst)))))
 
 (def (member mem lst)
-  (memp (Func (x) (= mem x)) lst))
+  (memp @(= mem it) lst))
 
 ; define English list element accessors
 (def rest cdr) ; TODO first and rest are generics for list, vec, str types
