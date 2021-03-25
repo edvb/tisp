@@ -997,6 +997,8 @@ form_set(Tsp st, Hash env, Val args)
 	}
 	if (!e || !e->key)
 		tsp_warnf("set!: variable %s is not defined", car(args)->v.s);
+	if (e->val->t == TSP_PRIM) /* TODO hard code other values */
+		tsp_warnf("set!: can not modify %s, is primitive procedure", e->val->v.pr.name);
 	e->val = val;
 	return val;
 }
