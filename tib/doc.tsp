@@ -62,7 +62,7 @@
       "Tisp's version number as a string")))
 
 (def (doc proc)
-  "get documentation of function supplied by its doc string"
+  "Get documentation of procedure"
   (unless (procedure? proc)
     (error 'doc "documentation only exists for procedures"))
   (def (lookup proc)

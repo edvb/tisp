@@ -1,15 +1,18 @@
 ;;; core.tsp
-(def (list . lst) lst)
+(def (list . lst) "Create list" lst)
 (def quit "type (quit) or press CTRL-D to exit REPL")
 
 (def defmacro
   (Macro (args . body)
-         (cond
-           ((pair? args)
-            (list 'def (car args) (list 'Macro (cdr args) . body)))
-           (else
-             (error 'defmacro "expected macro name and argument List, recieved "
-                    (typeof args))))))
+    "Define named macro, with argument list and body
+  First element of arguments is name of macro
+  Also see def"
+    (cond
+      ((pair? args)
+      (list 'def (car args) (list 'Macro (cdr args) . body)))
+      (else
+        (error 'defmacro "expected macro name and argument List, recieved "
+              (typeof args))))))
 
 ;;; CXR
 
@@ -99,14 +102,19 @@
 
 ; TODO if b = pair and car b = else use cdr b
 (defmacro (if con a b)
+  "Execute a if condition con is true, otherwise run b"
   (list 'cond (list con a) (list True b)))
 (def else True)
 (defmacro (when con . body)
+  "Execute body if condition con is true"
   (list 'cond (list con (cons 'do body))))
 (defmacro (unless con . body)
+  "Execute body unless condition, con, is true"
   (list 'cond (list (list not con) (cons 'do body))))
 
 (defmacro (let vars . body)
+  "Execute body with new local variables in vars
+  vars is a list of name and value pairs"
   (list (list* 'Func ()
                (append
                  (map
@@ -115,6 +123,8 @@
                  body))))
 
 (defmacro (recur proc vars . body)
+  "Do recursion within body by calling proc with values for vars
+  Also see let"
   (list 'let
         (list*
           (list proc (list* 'Func (map car vars) body))
@@ -122,9 +132,9 @@
         (list* proc (map car vars))))
 
 (defmacro (switch val . body)
+  "Compare value to first element in each body statement, only running line where they are equal"
   (list* 'cond (map
-                 (Func (line)
-                   `((= ,val ,(car line)) ,(cadr line)))
+                 @`((= ,val ,(car it)) ,(cadr it))
                  body)))
 
 ; TODO allow for improper lists
@@ -197,31 +207,44 @@
 ; TODO logic func many arguments
 ; Use a macro so arguments aren't evaluated all at once
 (defmacro (and a b)
+  "Return b if a is not nil, else return nil"
   (list 'if a b Nil))
 (defmacro (nand a b)
+  "Not and, only true if both a and b are nil, else true"
   (list 'not (list 'and a b)))
 (defmacro (or a b)
+  "Return a if not nil, else return b"
   (list 'if a a b))
 (defmacro (nor a b)
+  "Not or, only nil if both a and b are not nil, else true"
   (list 'not (list 'or a b)))
 
 ;;; Lists
 
 (def (list* . lst)
+  "Create improper list, last element is not Nil"
   (if (cdr lst)
     (cons (car lst) (apply list* (cdr lst)))
     (car lst)))
 
-(def (do  . body) (last body))
-(def (do0 . body) (car body))
+(def (do  . body)
+  "Evaluate each expression in body, returning last
+  Also see do0"
+  (last body))
+(def (do0 . body)
+  "Evaluate each expression in body, returning first
+  Also see do"
+  (car body))
 
 (def (length lst)
+  "Number of elements in given list"
   (recur f ((lst lst) (x 0))
          (if lst
            (f (cdr lst) (+ x 1))
            x)))
 
 (def (last lst)
+  "Last element of list"
 ; recur loop ((lst lst) (n (if n (car n) 0)))
   (if (cdr lst)
     (last (cdr lst))
@@ -229,6 +252,7 @@
 
 ; TODO make nth generic for list str vec, made up of list-ref vec-ref str-ref
 (def (nth lst n)
+  "Element number n of list"
   (cond
     ((atom? lst)
      (error 'nth "index of list out of bounds"))
@@ -238,6 +262,7 @@
 ; TODO diff name head/tail since conflicts w/ unix
 ; TODO support negative numers like unix tail/head to count from end backwards
 (def (head lst n)
+  "First n elements of list"
   (cond
     ((<= n 0) Nil)
     ((atom? lst)
@@ -245,37 +270,61 @@
     (else (cons (car lst) (head (cdr lst) (- n 1))))))
 
 (def (tail lst n)
+  "Last n elements of list"
   (cond
     ((<= n 0) lst)
     ((atom? lst)
      (error 'tail "index of list out of bounds"))
     (else (tail (cdr lst) (- n 1)))))
 
-(def (count x lst)
+(def (count elem lst) ; TODO swap arg order?
   (cond ((nil? lst) 0)
         ((atom? lst) (error 'count "expected proper list"))
-        ((= x (car lst)) (+ 1 (count x (cdr lst))))
-        (else (count x (cdr lst)))))
+        ((= elem (car lst)) (+ 1 (count elem (cdr lst))))
+        (else (count elem (cdr lst)))))
+        ; (else (Binary[(elem = car[lst])] + count[elem cdr[lst]]))
 
-; TODO many args
-(def (apply proc args)
+(def (apply proc args) ; TODO many args
+  "Run procedure with given arguments list"
   (eval (map @(list 'quote it) ; prevent proc and args from being evaluated twice
              (cons proc args))))
 
-; TODO many lsts for proc w/ multi arguments
-(def (map proc lst)
+(def (map proc lst) ; TODO many lsts for proc w/ multi arguments
+  "Evaluate each element of list by giving it to the procedure, returning new list"
   (if lst
     (cons (proc (car lst))
           (map proc (cdr lst)))
     Nil))
 
+(def (assoc key table)
+  "Return first list in table where the first element matches the key
+  If not found, return nil"
+  (cond ((nil? table) Nil)
+        ((= key (caar table)) (car table))
+        (else (assoc key (cdr table)))))
+
 (def (filter proc lst)
+  "Only keep elements of list where applying proc returns true
+  Also see member, memp"
   (cond
     ((not (pair? lst)) Nil)
     ((proc (car lst)) (cons (car lst) (filter proc (cdr lst))))
     (else (filter proc (cdr lst)))))
 
+(def (memp proc lst)
+  "Return list of elements after first time procedure applied to each is not nil
+  Also see member, filter"
+  (cond ((nil? lst) Nil)
+        ((proc (car lst)) lst)
+        (else (memp proc (cdr lst)))))
+
+(def (member elem lst)
+  "Return list of elements after first matching elem
+  Also see memp, filter"
+  (memp @(= elem it) lst))
+
 (def (compose . procs)
+  "Create function made from chaining procedures given"
   (cond
     ((nil? procs) (Func x x))
     ((nil? (cdr procs)) (car procs))
@@ -283,43 +332,33 @@
       (Func x
         ((car procs) (apply (apply compose (cdr procs)) x))))))
 
-(def (reverse l)
-  (recur f ((in l) (out Nil))
+(def (reverse lst)
+  "Reverse order of list"
+  (recur f ((in lst) (out Nil))
          (if (pair? in)
            (f (cdr in) (cons (car in) out))
            out)))
 
 ; TODO accept many lists to append
 (def (append x y)
+  "Append list y to end of list x"
   (cond
     ((pair? x) (cons (car x) (append (cdr x) y)))
     ((nil? x) y)
     (else (error 'append "expected proper list"))))
 
-(def (zip x y)
+; TODO zip to proper pairs (def zip' (zip args (nil list)))
+(def (zip x y) ; TODO many args to create longer pairs
+  "Create list of pairs made up of elements of both lists"
   (cond ((and (nil? x) (nil? y)) Nil)
         ((or (nil? x) (nil? y)) (error 'zip "given lists of unequal length"))
         ((and (pair? x) (pair? y))
          (cons (cons (car x) (car y))
                (zip (cdr x) (cdr y))))))
 
-; TODO assoc optional equal? arg
-(def (assoc key table)
-  (cond ((nil? table) Nil)
-        ((= key (caar table)) (car table))
-        (else (assoc key (cdr table)))))
-
-(def (memp proc lst)
-  (cond ((nil? lst) Nil)
-        ((proc (car lst)) lst)
-        (else (memp proc (cdr lst)))))
-
-(def (member mem lst)
-  (memp @(= mem it) lst))
-
 ; define English list element accessors
 (def rest cdr) ; TODO first and rest are generics for list, vec, str types
-(def first car)
+(def first car) ; TODO rename func to new name
 (recur f ((n 1)
           (lst '(second third forth fifth sixth seventh eighth ninth tenth)))
   (when lst
@@ -329,27 +368,47 @@
 ;;; Stacks
 
 (def (push stack val)
+  "Add value to front of stack
+  Also see push!, pop, peek"
   (cons val stack))
 
 (defmacro (push! stack val)
+  "Add value to front of stack, modifying stack
+  Also see push, pop!"
   `(set! ,stack (push ,stack ,val)))
 
-(def pop cdr)
+(def (pop stack)
+  "Get stack without first element
+  Also see pop!, push, peek"
+  (if stack
+    (cdr stack)
+    (error 'pop "Improper stack")))
 
 (defmacro (pop! stack)
+  "Get value at front of stack, removing value
+  Also see pop, push!"
   `(do0
      (peek ,stack)
      (set! ,stack (pop ,stack))))
 
-(def peek car)
+(def (peek stack)
+  "Get value at front of stack
+  Also see push, pop"
+  (if (pair? stack)
+    (car stack)
+    (error 'peak "Improper stack")))
 
 (def (swap stack)
+  "Get stack where the first 2 values are swapped
+  Also see swap!, push, pop, peek"
   (let ((x (peek stack))
         (y (peek (pop stack))))
     (push (push (pop (pop stack)) x) y)))
 
 ; TODO swap! use gen sym instead of x and y ?
 (defmacro (swap! stack)
+  "Modify stack, swapping the first 2 values
+  Also see swap, push!, pop!"
   `(let ((x (pop! ,stack))
          (y (pop! ,stack)))
      (set! ,stack (push (push ,stack x) y))))
