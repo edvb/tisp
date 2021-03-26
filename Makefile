@@ -13,7 +13,7 @@ SRC = tisp.c main.c
 TIB = tib/math.c tib/io.c tib/os.c tib/string.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
 LIB = tib/libtibmath.so tib/libtibio.so
-TSP = tib/core.tsp tib/io.tsp tib/math.tsp tib/doc.tsp tib/repl.tsp
+TSP = tib/core.tsp tib/doc.tsp tib/io.tsp tib/math.tsp tib/os.tsp
 DOC = doc/tisp.1.md doc/tisp.7.md
 MAN = $(DOC:.md=)
 
