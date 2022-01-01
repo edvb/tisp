@@ -289,6 +289,7 @@
   (eval (map @(list 'quote it) ; prevent proc and args from being evaluated twice
              (cons proc args))))
 
+; TODO allow for map proc to access index and lst
 (def (map proc lst) ; TODO many lsts for proc w/ multi arguments
   "Evaluate each element of list by giving it to the procedure, returning new list"
   (if lst
@@ -296,6 +297,11 @@
           (map proc (cdr lst)))
     Nil))
 
+(def (convert from to lst)
+  "Convert every member from of list into to"
+  (map @(if (= from it) to it) lst))
+
+; TODO assoc memp procedure equivalent
 (def (assoc key table)
   "Return first list in table where the first element matches the key
   If not found, return nil"
