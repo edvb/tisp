@@ -340,6 +340,18 @@
   Also see memp, filter"
   (memp @(= elem it) lst))
 
+(def (everyp? proc lst)
+  "Return boolean if every element in list passes proc"
+  (if (pair? lst)
+    (if (proc (car lst))
+      (everyp? proc (cdr lst))
+      False)
+    True))
+
+(def (every? elem lst)
+  "Return boolean if every element in list is equal to elem"
+  (everyp? @(= elem it) lst))
+
 (def (compose . procs)
   "Create function made from chaining procedures given"
   (cond
@@ -373,7 +385,7 @@
          (cons (cons (car x) (car y))
                (zip (cdr x) (cdr y))))))
 
-; define English list element accessors
+; English list element accessors
 (def rest cdr) ; TODO first and rest are generics for list, vec, str types
 (def first car) ; TODO rename func to new name
 (recur f ((n 1)
