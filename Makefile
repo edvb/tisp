@@ -27,7 +27,7 @@ options:
 tibs.tsp.h: $(TSP)
 	@echo xxd $@
 	@echo "char tibs[] = { 0x28, " > $@
-	@cat $(TSP) | xxd -i - >> $@
+	@cat $^ | xxd -i - >> $@
 	@echo ", 0x29, 0x00};" >> $@
 
 .o:
