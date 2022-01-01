@@ -305,11 +305,22 @@
 
 (def (filter proc lst)
   "Only keep elements of list where applying proc returns true
-  Also see member, memp"
+  Also see keep, remove, member, memp"
   (cond
     ((not (pair? lst)) Nil)
     ((proc (car lst)) (cons (car lst) (filter proc (cdr lst))))
     (else (filter proc (cdr lst)))))
+
+; TODO keep* remove*
+(def (keep elem lst)
+  "Return list with only elements matching elem
+  Also see filter, remove"
+  (filter @(= elem it) lst))
+
+(def (remove elem lst)
+  "Return list without elements matching elem
+  Also see filter, keep"
+  (filter @(/= elem it) lst))
 
 (def (memp proc lst)
   "Return list of elements after first time procedure applied to each is not nil
