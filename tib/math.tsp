@@ -6,6 +6,8 @@
 
 ;;; Functions
 
+; TODO rem
+(def /= (compose not =))
 (def (inc x) (+ x 1))
 (def (dec x) (- x 1))
 (def (truncate x) (* (floor (abs x)) (sgn x)))
