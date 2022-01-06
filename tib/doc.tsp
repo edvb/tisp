@@ -14,7 +14,7 @@
       "  Can be shortened with the ' prefix"
       "  Also see quote, unquote, and unquote-splice")
     (Void
-      "(Void)"
+      "Void"
       "Return nothing"
       "Used to insert a void type in a list or force a function not to return anything")
     (eval
@@ -64,7 +64,7 @@
 (def (docstr-add! . docstrs)
   "Add given docstrs to the global doc string registry"
   (set! docstr-reg (apply @(append docstr-reg it) docstrs))
-  (Void))
+  Void)
 
 (def (doc proc)
   "Get documentation of procedure"
@@ -82,4 +82,4 @@
         (println docstr)
         (lookup proc)))
     (lookup proc))
-  (Void))
+  Void)

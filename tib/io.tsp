@@ -25,6 +25,6 @@
           ((pair? it)   (print "'" it))
           (else         (print it)))
        str)
-  (Void))
+  Void)
 (def (displayln . str) (apply display str) (newline))
 (def (println . str)   (apply print str) (newline))

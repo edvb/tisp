@@ -737,7 +737,7 @@ tisp_print(FILE *f, Val v)
 {
 	switch (v->t) {
 	case TSP_NONE:
-		fputs("(Void)", f);
+		fputs("Void", f);
 		break;
 	case TSP_NIL:
 		fputs("Nil", f);
@@ -824,14 +824,6 @@ form_quote(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "quote", 1);
 	return car(args);
-}
-
-/* TODO make Void variable like Nil, True, False or like Str, Int ? */
-/* returns nothing */
-static Val
-prim_Void(Tsp st, Hash env, Val args)
-{
-	return st->none;
 }
 
 /* evaluate argument given */
@@ -1115,13 +1107,13 @@ tisp_env_init(size_t cap)
 	st->global = hash_new(cap, NULL);
 	tisp_env_add(st, "True", st->t);
 	tisp_env_add(st, "Nil", st->nil);
+	tisp_env_add(st, "Void", st->none);
 	tisp_env_add(st, "bt", st->nil);
 	tisp_env_add(st, "version", mk_str(st, "0.0.0"));
 	tsp_env_prim(car);
 	tsp_env_prim(cdr);
 	tsp_env_prim(cons);
 	tsp_env_form(quote);
-	tsp_env_prim(Void);
 	tsp_env_prim(eval);
 	tsp_env_name_prim(=, eq);
 	tsp_env_form(cond);
