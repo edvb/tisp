@@ -179,7 +179,7 @@
          (quasicons ''unquote-splice (f (cdr expr) (- n 1)))))
       ((and (= n 0) (and (pair? (car expr)) (= (caar expr) 'unquote-splice)))
        (check (car expr))
-       (let ((d (f (cdr expr) n)))
+       (let (d: (f (cdr expr) n))
          (if d
            (list 'append (cadar expr) d)
            (cadar expr))))
@@ -221,6 +221,7 @@
 
 ;;; Lists
 
+; TODO rename to remove *
 (def (list* . lst)
   "Create improper list, last element is not Nil"
   (if (cdr lst)
@@ -238,8 +239,8 @@
 
 (def (length lst)
   "Number of elements in given list"
-  (recur f ((lst lst) (x 0))
-         (if lst
+  (recur f (lst: lst x: 0)
+         (if pair?[lst]
            (f (cdr lst) (+ x 1))
            x)))
 
@@ -363,7 +364,7 @@
 
 (def (reverse lst)
   "Reverse order of list"
-  (recur f ((in lst) (out Nil))
+  (recur f (in: lst out: Nil)
          (if (pair? in)
            (f (cdr in) (cons (car in) out))
            out)))
@@ -388,8 +389,8 @@
 ; English list element accessors
 (def rest cdr) ; TODO first and rest are generics for list, vec, str types
 (def first car) ; TODO rename func to new name
-(recur f ((n 1)
-          (lst '(second third forth fifth sixth seventh eighth ninth tenth)))
+(recur f (n: 1
+          lst: '(second third forth fifth sixth seventh eighth ninth tenth))
   (when lst
     (eval `(def (,(car lst) x) (nth x ,n)))
     (f (+ n 1) (cdr lst))))
@@ -430,14 +431,14 @@
 (def (swap stack)
   "Get stack where the first 2 values are swapped
   Also see swap!, push, pop, peek"
-  (let ((x (peek stack))
-        (y (peek (pop stack))))
+  (let (x: (peek stack)
+        y: (peek (pop stack)))
     (push (push (pop (pop stack)) x) y)))
 
 ; TODO swap! use gen sym instead of x and y ?
 (defmacro (swap! stack)
   "Modify stack, swapping the first 2 values
   Also see swap, push!, pop!"
-  `(let ((x (pop! ,stack))
-         (y (pop! ,stack)))
+  `(let (x: (pop! ,stack)
+         y: (pop! ,stack))
      (set! ,stack (push (push ,stack x) y))))
