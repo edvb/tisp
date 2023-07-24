@@ -16,10 +16,10 @@
   "Read, evaluate, print, loop
   To exit enter (quit) or CTRL-D"
   (print "> ")
-  (let ((expr (parse (read))))
+  (let (expr: (parse (read)))
     (unless (and (pair? expr) (= (car expr) 'quit))
       ; TODO push! ans to stack of outputs
-      (let ((ans (eval expr)))
+      (let (ans: (eval expr))
         (unless (void? ans)
           (displayln ans))
         (repl)))))

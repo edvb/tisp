@@ -549,7 +549,7 @@ read_pair(Tsp st, char endchar)
 
 /* reads given string returning its tisp value */
 Val
-tisp_read(Tsp st)
+tisp_read_val(Tsp st)
 {
 	char *prefix[] = {
 		"'",  "quote",
@@ -580,6 +580,40 @@ tisp_read(Tsp st)
 	if (tsp_fget(st) == '(') /* list */
 		return tsp_finc(st), read_pair(st, ')');
 	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
+}
+
+/* read extra syntax sugar to reduce s expressions */
+Val
+tisp_read(Tsp st)
+{
+	Val v, lst, w;
+	if (!(v = tisp_read_val(st))) return NULL;
+	if (tsp_fget(st) == '[') { /* func[x y] => (func x y) */
+		/* TODO fix @it[3] */
+		tsp_finc(st);
+		if (!(lst = read_pair(st, ']'))) return NULL;
+		return mk_pair(v, lst);
+	} else if (tsp_fget(st) == ':') {
+		tsp_finc(st);
+		switch (tsp_fget(st)) {
+		case '[': /* var:[val] => (get var val) */
+			tsp_finc(st);
+			if (!(w = read_pair(st, ']'))) return NULL;
+			if (!nilp(cdr(w))) tsp_warn("get: only expected 1 argument");
+			return mk_list(st, 3, mk_sym(st, "get"), v, car(w));
+		case ':': /* var::prop => (get var 'prop) */
+			tsp_finc(st);
+			if (!(w = read_sym(st, 0))) return NULL;
+			return mk_list(st, 3, mk_sym(st, "get"), v,
+				       mk_list(st, 2, mk_sym(st, "quote"), w));
+		}
+		skip_ws(st, 1);
+		if (!(w = tisp_read(st))) return NULL;
+		/* TODO make pair for use in assoc list ? */
+		return mk_list(st, 2, v, w); /* key: val => (key val) */
+	}
+	/* return mk_pair(v, tisp_read(st)); */
+	return v;
 }
 
 /* return string containing contents of file name */
