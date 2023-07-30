@@ -995,6 +995,23 @@ form_set(Tsp st, Hash env, Val args)
 	return val;
 }
 
+/* TODO fix crashing if try to undefine builtin */
+static Val
+form_undefine(Tsp st, Hash env, Val args)
+{
+	tsp_arg_min(args, "undefine!", 1);
+	tsp_arg_type(car(args), "undefine!", TSP_SYM);
+	for (Hash h = env; h; h = h->next) {
+		Entry e = entry_get(h, car(args)->v.s);
+		if (e->key) {
+			e->key = NULL;
+			/* TODO tsp_free(e->val); */
+			return st->none;
+		}
+	}
+	tsp_warnf("undefine!: could not find symbol %s to undefine", car(args)->v.s);
+}
+
 static Val
 form_definedp(Tsp st, Hash env, Val args)
 {
@@ -1124,6 +1141,7 @@ tisp_env_init(size_t cap)
 	tsp_env_form(def);
 	tsp_env_name_form(set!, set);
 	tsp_env_prim(load);
+	tsp_env_name_form(undefine!, undefine);
 	tsp_env_name_form(defined?, definedp);
 	tsp_env_prim(error);
 
