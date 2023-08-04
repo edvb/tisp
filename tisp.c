@@ -70,10 +70,18 @@ tsp_type_str(TspType t)
 
 /* check if character can be a part of a symbol */
 static int
-issym(char c)
+is_sym(char c)
 {
+	/* TODO expand for all UTF: if c > 255 */
 	return BETWEEN(c, 'a', 'z') || BETWEEN(c, 'A', 'Z') ||
-	       BETWEEN(c, '0', '9') || strchr("_+-*/=<>!?$&^#@:~", c);
+	       BETWEEN(c, '0', '9') || strchr(TSP_SYM_CHARS, c);
+}
+
+/* check if character can be a part of an operator */
+static int
+is_op(char c)
+{
+	return strchr(TSP_OP_CHARS, c) != NULL;
 }
 
 /* check if character is start of a number */
@@ -198,10 +206,11 @@ entry_get(Hash ht, char *key)
 {
 	int i = hash(key) % ht->cap;
 	char *s;
+	/* look for key starting at hash until empty entry is found */
 	while ((s = ht->items[i].key)) {
 		if (!strcmp(s, key))
 			break;
-		if (++i == ht->cap)
+		if (++i == ht->cap) /* loop back around if end is reached */
 			i = 0;
 	}
 	return &ht->items[i]; /* returns entry if found or empty one to be filled */
@@ -500,11 +509,11 @@ read_str(Tsp st)
 
 /* return read symbol */
 static Val
-read_sym(Tsp st)
+read_sym(Tsp st, int (*is_char)(char))
 {
 	int n = 1, i = 0;
 	char *sym = malloc(n);
-	for (; tsp_fget(st) && issym(tsp_fget(st)); tsp_finc(st)) {
+	for (; tsp_fget(st) && is_char(tsp_fget(st)); tsp_finc(st)) {
 		if (!sym) perror("; alloc"), exit(1);
 		sym[i++] = tsp_fget(st);
 		if (i == n) {
@@ -549,7 +558,7 @@ read_pair(Tsp st, char endchar)
 
 /* reads given string returning its tisp value */
 Val
-tisp_read_val(Tsp st)
+tisp_read_sexpr(Tsp st)
 {
 	char *prefix[] = {
 		"'",  "quote",
@@ -575,19 +584,21 @@ tisp_read_val(Tsp st)
 			return mk_list(st, 2, mk_sym(st, prefix[i+1]), v);
 		}
 	}
-	if (issym(tsp_fget(st))) /* symbols */
-		return read_sym(st);
+	if (is_op(tsp_fget(st))) /* operators */
+		return read_sym(st, &is_op);
+	if (is_sym(tsp_fget(st))) /* symbols */
+		return read_sym(st, &is_sym);
 	if (tsp_fget(st) == '(') /* list */
 		return tsp_finc(st), read_pair(st, ')');
 	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
 }
 
-/* read extra syntax sugar to reduce s expressions */
+/* read extra syntax sugar on top of s-expressions */
 Val
 tisp_read(Tsp st)
 {
 	Val v, lst, w;
-	if (!(v = tisp_read_val(st))) return NULL;
+	if (!(v = tisp_read_sexpr(st))) return NULL;
 	if (tsp_fget(st) == '[') { /* func[x y] => (func x y) */
 		/* TODO fix @it[3] */
 		tsp_finc(st);
@@ -603,7 +614,7 @@ tisp_read(Tsp st)
 			return mk_list(st, 3, mk_sym(st, "get"), v, car(w));
 		case ':': /* var::prop => (get var 'prop) */
 			tsp_finc(st);
-			if (!(w = read_sym(st, 0))) return NULL;
+			if (!(w = read_sym(st, &is_sym))) return NULL;
 			return mk_list(st, 3, mk_sym(st, "get"), v,
 				       mk_list(st, 2, mk_sym(st, "quote"), w));
 		}
@@ -778,6 +789,7 @@ tisp_print(FILE *f, Val v)
 		fprintf(f, "%d", (int)v->v.n.num);
 		break;
 	case TSP_DEC:
+		/* TODO fix 1.e-5 print as int 1e-05 */
 		fprintf(f, "%.15g", v->v.n.num);
 		if (v->v.n.num == (int)v->v.n.num)
 			fprintf(f, ".0");

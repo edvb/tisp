@@ -19,6 +19,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#define TSP_OP_CHARS "_+-*/\\|=^<>.:"
+#define TSP_SYM_CHARS "_!?" "@#$%&~" "*-"
+
 #define tsp_warnf(M, ...) do {                                    \
 	fprintf(stderr, "; tisp: error: " M "\n", ##__VA_ARGS__); \
 	return NULL;                                              \
