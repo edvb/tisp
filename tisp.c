@@ -86,19 +86,12 @@ is_op(char c)
 
 /* check if character is start of a number */
 /* TODO only if -/+ is not followed by a delim */
+/* TODO use XOR '0' < 10 */
 static int
 isnum(char *str)
 {
-	return isdigit(*str) || (*str == '.' && isdigit(str[1])) ||
+	return isdigit(*str) || (*str == '.' &&  isdigit(str[1])) ||
 	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
-}
-
-/* check if character is a symbol delimiter */
-static char
-isdelim(int c)
-{
-	/* add .{}[]`', */
-	return isspace(c) || c == '(' || c == ')' || c == '"' || c == ';';
 }
 
 /* skip over comments and white space */
@@ -527,32 +520,29 @@ read_sym(Tsp st, int (*is_char)(char))
 
 /* return read string containing a list */
 /* TODO read pair after as well, allow lambda((x) (* x 2))(4) */
+/* TODO new arg: read_func to set either tisp_read or tisp_read_sexpr for quote */
 static Val
 read_pair(Tsp st, char endchar)
 {
 	Val a, b;
 	skip_ws(st, 1);
-	if (tsp_fget(st) == endchar)
-		return tsp_finc(st), st->nil;
-	/* TODO simplify read_pair by supporting (. x) => x */
-	if (!(a = tisp_read(st)))
-		return NULL;
-	skip_ws(st, 1);
 	if (!tsp_fget(st))
 		tsp_warnf("reached end before closing '%c'", endchar);
-	if (tsp_fget(st) == '.' && isdelim(tsp_fgetat(st,1))) {
-		tsp_finc(st);
+	if (tsp_fget(st) == endchar) /* if empty list or at end, return nil */
+		return tsp_finc(st), st->nil;
+	if (!(a = tisp_read(st)))
+		return NULL;
+	/* TODO implement as infix op? */
+	if (a->t == TSP_SYM && !strncmp(a->v.s, ".", 2)) { /* improper list, end with non-nil */
 		if (!(b = tisp_read(st)))
 			return NULL;
 		skip_ws(st, 1);
 		if (tsp_fget(st) != endchar)
 			tsp_warnf("did not find closing '%c'", endchar);
-		tsp_finc(st);
-		skip_ws(st, 1);
-	} else {
-		if (!(b = read_pair(st, endchar)))
-			return NULL;
+		return tsp_finc(st), b;
 	}
+	if (!(b = read_pair(st, endchar)))
+		return NULL;
 	return mk_pair(a, b);
 }
 
@@ -766,7 +756,6 @@ tisp_eval(Tsp st, Hash env, Val v)
 		if (!(f = tisp_eval(st, env, car(v))))
 			return NULL;
 		return eval_proc(st, env, f, cdr(v));
-	case TSP_STR: /* TODO string interpolation */
 	default:
 		return v;
 	}
