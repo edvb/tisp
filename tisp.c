@@ -490,18 +490,19 @@ esc_str(char *s)
 
 /* return read string */
 static Val
-read_str(Tsp st)
+read_str(Tsp st, Val (*mk_fn)(Tsp, char*))
 {
 	int len = 0;
 	char *s = st->file + ++st->filec; /* skip starting open quote */
-	for (; tsp_fget(st) != '"'; tsp_finc(st), len++)
+	char endchar = mk_fn == &mk_str ? '"' : '~';
+	for (; tsp_fget(st) != endchar; tsp_finc(st), len++) /* get length of new escaped string */
 		if (!tsp_fget(st))
-			tsp_warn("reached end before closing double quote");
-		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, 1) == '"')
-			tsp_finc(st), len++;
+			tsp_warnf("reached end before closing %c", endchar);
+		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, 1) == endchar) /* FIXME end backslash "\\" */
+			tsp_finc(st), len++; /* skip over break condition */
 	tsp_finc(st); /* skip last closing quote */
 	s[len] = '\0'; /* TODO remember string length */
-	return mk_str(st, esc_str(s));
+	return mk_fn(st, esc_str(s));
 }
 
 /* return read symbol */
@@ -524,7 +525,6 @@ read_sym(Tsp st, int (*is_char)(char))
 
 /* return read string containing a list */
 /* TODO read pair after as well, allow lambda((x) (* x 2))(4) */
-/* TODO new arg: read_func to set either tisp_read or tisp_read_sexpr for quote */
 static Val
 read_pair(Tsp st, char endchar)
 {
@@ -566,9 +566,10 @@ tisp_read_sexpr(Tsp st)
 		return st->none;
 	if (isnum(st->file+st->filec)) /* number */
 		return read_num(st);
-	/* TODO support | for symbols */
-	if (tsp_fget(st) == '"') /* strings */
-		return read_str(st);
+	if (tsp_fget(st) == '"') /* string */
+		return read_str(st, mk_str);
+	if (tsp_fget(st) == '~') /* explicit symbol */
+		return read_str(st, mk_sym);
 	for (int i = 0; i < LEN(prefix); i += 2) { /* character prefix */
 		if (!strncmp(st->file+st->filec, prefix[i], strlen(prefix[i]))) {
 			Val v;
