@@ -383,11 +383,11 @@ mk_pair(Val a, Val b)
 Val
 mk_list(Tsp st, int n, ...)
 {
-	Val lst, cur;
+	Val lst;
 	va_list argp;
 	va_start(argp, n);
 	lst = mk_pair(va_arg(argp, Val), st->nil);
-	for (cur = lst; n > 1; n--, cur = cdr(cur))
+	for (Val cur = lst; n > 1; n--, cur = cdr(cur))
 		cdr(cur) = mk_pair(va_arg(argp, Val), st->nil);
 	va_end(argp);
 	return lst;
@@ -505,17 +505,15 @@ read_str(Tsp st, Val (*mk_fn)(Tsp, char*))
 static Val
 read_sym(Tsp st, int (*is_char)(char))
 {
-	int n = 1, i = 0;
+	int n = 16, len = 0;
 	char *sym = malloc(n);
-	for (; tsp_fget(st) && is_char(tsp_fget(st)); tsp_finc(st)) {
+	for (; is_char(tsp_fget(st)); tsp_finc(st)) {
 		if (!sym) perror("; alloc"), exit(1);
-		sym[i++] = tsp_fget(st);
-		if (i == n) {
-			n *= 2;
-			sym = realloc(sym, n);
-		}
+		sym[len++] = tsp_fget(st);
+		if (len == n)
+			sym = realloc(sym, n *= 2);
 	}
-	sym[i] = '\0';
+	sym[len] = '\0';
 	return mk_sym(st, sym);
 }
 
@@ -532,7 +530,6 @@ read_pair(Tsp st, char endchar)
 		return tsp_finc(st), st->nil;
 	if (!(a = tisp_read(st)))
 		return NULL;
-	/* TODO implement as infix op? */
 	if (a->t == TSP_SYM && !strncmp(a->v.s, ".", 2)) { /* improper list, end with non-nil */
 		if (!(b = tisp_read(st)))
 			return NULL;
@@ -550,7 +547,7 @@ read_pair(Tsp st, char endchar)
 Val
 tisp_read_sexpr(Tsp st)
 {
-	char *prefix[] = {
+	static char *prefix[] = {
 		"'",  "quote",
 		"`",  "quasiquote",
 		",@", "unquote-splice", /* always check before , */
@@ -945,7 +942,7 @@ prim_get(Tsp st, Hash env, Val args)
 			return mk_int(strlen(v->v.s));
 	default: break;
 	}
-	tsp_warnf("get: can not access %s from type %s", prop->v.s, tsp_type_str(v->t));
+	tsp_warnf("get: can not access '%s' from type '%s'", prop->v.s, tsp_type_str(v->t));
 }
 
 /* creates new tisp function */
@@ -1031,7 +1028,7 @@ form_definedp(Tsp st, Hash env, Val args)
 		if (e->key)
 			break;
 	}
-	return (!e || !e->key) ? st->nil : st->t;
+	return (e && e->key) ? st->t : st->nil;
 }
 
 /* loads tisp file or C dynamic library */
