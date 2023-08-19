@@ -66,7 +66,19 @@
       "Throw error, print message with function name given as symbol")
     (version
       "(version)"
-      "Tisp's version number as a string")))
+      "Tisp's version number as a string")
+    (Str
+      "(Str . vals)"
+      "Convert all values into single string")
+    (Sym
+      "(Sym . vals)"
+      "Convert all values into single symbol")
+    (strformat
+      "(strformat str)"
+      "Perform interpolation on explicit string"
+      "  Evaluate expression inside curly braces"
+      "  Double curly braces are not evaluated, inserting a single one."
+      "  Equivalent to f\"str\"")))
 
 (def (docstr-add! . docstrs)
   "Add given docstrs to the global doc string registry"

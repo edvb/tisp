@@ -82,6 +82,7 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 	return v;
 }
 
+/* convert all args to a string */
 static Val
 prim_Str(Tsp st, Hash env, Val args)
 {
@@ -89,6 +90,7 @@ prim_Str(Tsp st, Hash env, Val args)
 	return val_string(st, args, mk_str);
 }
 
+/* convert all args to a symbol */
 static Val
 prim_Sym(Tsp st, Hash env, Val args)
 {
@@ -96,9 +98,57 @@ prim_Sym(Tsp st, Hash env, Val args)
 	return val_string(st, args, mk_sym);
 }
 
+/* perform interpolation on explicit string, evaluating anything inside curly braces */
+static Val
+form_strformat(Tsp st, Hash env, Val args)
+{
+	char *ret, *str;
+	int ret_len, ret_cap, pos = 0;
+	Val v;
+	tsp_arg_num(args, "strformat", 1);
+	tsp_arg_type(car(args), "strformat", TSP_STR);
+
+	str = car(args)->v.s;
+	ret_len = strlen(str), ret_cap = 2*ret_len;
+	if (!(ret = malloc(sizeof(char) * ret_cap)))
+		perror("; malloc"), exit(1);
+
+	while (*str)
+		if (*str == '{' && str[1] != '{') {
+			int l;
+			char *file = st->file;
+			size_t filec = st->filec;
+			st->file = ++str, st->filec = 0;
+			if (!(v = read_pair(st, '}')))
+				return NULL;
+			str += st->filec;
+			st->file = file, st->filec = filec;
+
+			if (!(v = tisp_eval_list(st, env, v))) /* TODO sandboxed eval, no mutable procs */
+				return NULL;
+			if (!(v = val_string(st, v, mk_str)))
+				return NULL;
+			/* TODO if last = !d run display converter on it */
+			l = strlen(v->v.s);
+			ret_len += l;
+
+			if (ret_len >= ret_cap) /* resize output if necessary */
+				if (!(ret = realloc(ret, ret_cap *= 2)))
+					perror("; realloc"), exit(1);
+			memcpy(ret + pos, v->v.s, l);
+			pos += l;
+		} else {
+			if (*str == '{' || *str == '}') str++; /* only add 1 curly brace when escaped */
+			ret[pos++] = *str++;
+		}
+	ret[pos] = '\0';
+	return mk_str(st, ret);
+}
+
 void
 tib_env_string(Tsp st)
 {
 	tsp_env_prim(Sym);
 	tsp_env_prim(Str);
+	tsp_env_form(strformat);
 }

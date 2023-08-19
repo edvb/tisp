@@ -553,6 +553,7 @@ tisp_read_sexpr(Tsp st)
 		",@", "unquote-splice", /* always check before , */
 		",",  "unquote",
 		"@",  "Func",
+		"f\"",  "strformat",
 	};
 	skip_ws(st, 1);
 	if (strlen(st->file+st->filec) == 0) /* empty list */
@@ -566,9 +567,8 @@ tisp_read_sexpr(Tsp st)
 	for (int i = 0; i < LEN(prefix); i += 2) { /* character prefix */
 		if (!strncmp(st->file+st->filec, prefix[i], strlen(prefix[i]))) {
 			Val v;
-			tsp_fincn(st, strlen(prefix[i]));
-			if (!(v = tisp_read(st)))
-				return NULL;
+			tsp_fincn(st, strlen(prefix[i]) - (prefix[i][1] == '"'));
+			if (!(v = tisp_read(st))) return NULL;
 			return mk_list(st, 2, mk_sym(st, prefix[i+1]), v);
 		}
 	}
