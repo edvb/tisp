@@ -56,6 +56,7 @@ tsp_type_str(TspType t)
 	case TSP_FORM:  return "Form";
 	case TSP_FUNC:  return "Func";
 	case TSP_MACRO: return "Macro";
+	case TSP_TABLE: return "Table";
 	case TSP_PAIR:  return "Pair";
 	default:
 		if (t == TSP_EXPR)
@@ -332,8 +333,9 @@ mk_str(Tsp st, char *s)
 	if ((ret = hash_get(st->strs, s)))
 		return ret;
 	ret = mk_val(TSP_STR);
-	ret->v.s = strndup(s, strlen(s));
-	if (!ret->v.s) perror("; strndup"), exit(1);
+	/* TODO remove strndup, POSIX extension */
+	if (!(ret->v.s = strndup(s, strlen(s))))
+		perror("; strndup"), exit(1);
 	hash_add(st->strs, s, ret);
 	return ret;
 }
@@ -368,6 +370,27 @@ mk_func(TspType t, char *name, Val args, Val body, Hash env)
 	ret->v.f.args = args;
 	ret->v.f.body = body;
 	ret->v.f.env  = env;
+	return ret;
+}
+
+Val
+mk_table(Tsp st, Hash env, Val assoc)
+{
+	Val v, ret = mk_val(TSP_TABLE);
+	if (!assoc) return ret->v.tb = env, ret;
+	ret->v.tb = hash_new(64, NULL);
+	Hash h = hash_new(4, env);
+	hash_add(h, "this", ret);
+	for (Val cur = assoc; cur->t == TSP_PAIR; cur = cdr(cur))
+		if (car(cur)->t == TSP_PAIR && caar(cur)->t & (TSP_SYM|TSP_STR)) {
+			if (!(v = tisp_eval(st, h, cdar(cur)->v.p.car)))
+				return NULL;
+			hash_add(ret->v.tb, caar(cur)->v.s, v);
+		} else if (car(cur)->t == TSP_SYM) {
+			if (!(v = tisp_eval(st, h, car(cur))))
+				return NULL;
+			hash_add(ret->v.tb, car(cur)->v.s, v);
+		} else tsp_warn("table: missing key symbol or string");
 	return ret;
 }
 
@@ -578,6 +601,11 @@ tisp_read_sexpr(Tsp st)
 		return read_sym(st, &is_sym);
 	if (tsp_fget(st) == '(') /* list */
 		return tsp_finc(st), read_pair(st, ')');
+	if (tsp_fget(st) == '{') { /* table */
+		Val v; tsp_finc(st);
+		if (!(v = read_pair(st, '}'))) return NULL;
+		return mk_pair(mk_sym(st, "Table"), v);
+	}
 	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
 }
 
@@ -735,6 +763,10 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 		if (f->t == TSP_MACRO)
 			ret = tisp_eval(st, env, ret);
 		return ret;
+	case TSP_TABLE:
+		if (!(ret = hash_get(f->v.tb, "@")))
+			tsp_warn("could not evaluate table as procedure, missing @ function");
+		return eval_proc(st, env, ret, args);
 	default:
 		tsp_warnf("attempt to evaluate non procedural type %s", tsp_type_str(f->t));
 	}
@@ -800,6 +832,17 @@ tisp_print(FILE *f, Val v)
 		break;
 	case TSP_FORM:
 		fprintf(f, "#<form:%s>", v->v.pr.name);
+		break;
+	case TSP_TABLE:
+		putc('{', f);
+		for (Hash h = v->v.tb; h; h = h->next)
+			for (int i = 0, c = 0; c < h->size; i++)
+				if (h->items[i].key) {
+					c++;
+					fprintf(f, " %s: ", h->items[i].key);
+					tisp_print(f, h->items[i].val);
+				}
+		fputs(" }", f);
 		break;
 	case TSP_PAIR:
 		putc('(', f);
@@ -923,6 +966,10 @@ prim_get(Tsp st, Hash env, Val args)
 		if (!strncmp(prop->v.s, "args", 4))
 			return v->v.f.args;
 		break;
+	case TSP_TABLE:
+		if (!(v = hash_get(v->v.tb, prop->v.s)))
+			tsp_warnf("could not find element '%s' in table", prop->v.s);
+		return v;
 	case TSP_INT:
 	case TSP_RATIO:
 		if (!strncmp(prop->v.s, "numerator", 9))
@@ -968,6 +1015,15 @@ form_Macro(Tsp st, Hash env, Val args)
 	tsp_arg_min(args, "Macro", 1);
 	Val ret = form_Func(st, env, args);
 	ret->t = TSP_MACRO;
+	return ret;
+}
+
+/* TODO support { var := 'hey } */
+/* create new table */
+static Val
+form_Table(Tsp st, Hash env, Val args)
+{
+	Val ret = mk_table(st, env, args);
 	return ret;
 }
 
@@ -1143,10 +1199,11 @@ tisp_env_init(size_t cap)
 	tsp_env_prim(get);
 	tsp_env_form(Func);
 	tsp_env_form(Macro);
+	tsp_env_form(Table);
 	tsp_env_form(def);
-	tsp_env_prim(load);
 	tsp_env_name_form(undefine!, undefine);
 	tsp_env_name_form(defined?, definedp);
+	tsp_env_prim(load);
 	tsp_env_prim(error);
 
 	st->libh = NULL;

@@ -59,10 +59,10 @@
 #define tsp_env_form(NAME)          tsp_env_name_form(NAME, NAME)
 #define tsp_include_tib(NAME)       void tib_env_##NAME(Tsp)
 
-#define tsp_finc(ST) ST->filec++
-#define tsp_fincn(ST, N) ST->filec += N
 #define tsp_fgetat(ST, O) ST->file[ST->filec+O]
 #define tsp_fget(ST) tsp_fgetat(ST,0)
+#define tsp_finc(ST) ST->filec++
+#define tsp_fincn(ST, N) ST->filec += N
 
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
@@ -100,7 +100,8 @@ typedef enum {
 	TSP_FORM  = 1 << 8,  /* special form: built-in macro */
 	TSP_FUNC  = 1 << 9,  /* function: procedure written is tisp */
 	TSP_MACRO = 1 << 10, /* macro: function without evaluated arguments */
-	TSP_PAIR  = 1 << 11, /* pair: building block for lists */
+	TSP_TABLE = 1 << 11, /* table: hash table */
+	TSP_PAIR  = 1 << 12, /* pair: building block for lists */
 } TspType;
 #define TSP_RATIONAL (TSP_INT | TSP_RATIO)
 #define TSP_NUM      (TSP_RATIONAL | TSP_DEC)
@@ -118,6 +119,7 @@ struct Val {
 		struct { double num, den; } n;                      /* NUMBER */
 		struct { char *name; Prim pr; } pr;                 /* PRIMITIVE, FORM */
 		struct { char *name; Val args, body; Hash env; } f; /* FUNCTION, MACRO */
+		Hash tb; /* TABLE */
 		struct { Val car, cdr; } p;                         /* PAIR */
 	} v;
 };
@@ -145,6 +147,7 @@ Val mk_func(TspType t, char *name, Val args, Val body, Hash env);
 Val mk_pair(Val a, Val b);
 Val mk_list(Tsp st, int n, ...);
 
+Val read_pair(Tsp st, char endchar);
 Val tisp_read(Tsp st);
 Val tisp_read_line(Tsp st);
 Val tisp_eval_list(Tsp st, Hash env, Val v);
