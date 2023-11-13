@@ -252,11 +252,13 @@
 
 ; TODO make nth generic for list str vec, made up of list-ref vec-ref str-ref
 (def (nth lst n)
-  "Element number n of list"
+  "Element number n of list, starting from 0
+  If negative get number from end of list"
   (cond
     ((atom? lst)
      (error 'nth "index of list out of bounds"))
-    ((<= n 0) (car lst))
+    ((< n 0) (nth lst (+ (length lst) n)))
+    ((= n 0) (car lst))
     (else (nth (cdr lst) (- n 1)))))
 
 ; TODO diff name head/tail since conflicts w/ unix
