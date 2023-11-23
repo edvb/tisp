@@ -464,10 +464,10 @@ esc_char(char c)
 	switch (c) {
 	case 'n': return '\n';
 	case 't': return '\t';
+	case '\n': return ' ';
 	case '\\':
 	case '"':
-	default:
-		return c;
+	default:  return c;
 	}
 }
 
