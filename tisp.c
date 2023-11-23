@@ -473,16 +473,13 @@ esc_char(char c)
 
 /* replace all encoded escape characters in string with their actual character */
 static char *
-esc_str(char *s)
+esc_str(char *s, int len)
 {
-	char *c, *ret = malloc((strlen(s)+1) * sizeof(char));
+	char *pos, *ret = malloc((len+1) * sizeof(char));
 	if (!ret) perror("; malloc"), exit(1);
-	for (c = ret; *s != '\0'; c++, s++)
-		if (*s == '\\')
-			*c = esc_char(*(++s));
-		else
-			*c = *s;
-	*c = '\0';
+	for (pos = ret; pos-ret < len; pos++, s++)
+		*pos = (*s == '\\') ? esc_char(*(++s)) : *s;
+	*pos = '\0';
 	return ret;
 }
 
@@ -495,11 +492,10 @@ read_str(Tsp st)
 	for (; tsp_fget(st) != '"'; tsp_finc(st), len++)
 		if (!tsp_fget(st))
 			tsp_warn("reached end before closing double quote");
-		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, 1) == '"')
-			tsp_finc(st), len++;
+		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, -1) != '\\')
+			tsp_finc(st); /* skip over break condition */
 	tsp_finc(st); /* skip last closing quote */
-	s[len] = '\0'; /* TODO remember string length */
-	return mk_str(st, esc_str(s));
+	return mk_str(st, esc_str(s, len));
 }
 
 /* return read symbol */
@@ -592,10 +588,10 @@ tisp_read_file(char *fname)
 {
 	char buf[BUFSIZ], *file = NULL;
 	int len = 0, n, fd, parens = 0;
-	if (!fname)
+	if (!fname) /* read from stdin if no file given */
 		fd = 0;
 	else if ((fd = open(fname, O_RDONLY)) < 0)
-		tsp_warnf("could not load file '%s'", fname);
+		tsp_warnf("could not find file '%s'", fname);
 	while ((n = read(fd, buf, sizeof(buf))) > 0) {
 		file = realloc(file, len + n + 1);
 		if (!file) perror("; realloc"), exit(1);
@@ -605,7 +601,7 @@ tisp_read_file(char *fname)
 		if (fd == 0 && !(parens += count_parens(buf, n)))
 			break;
 	}
-	if (fd)
+	if (fd) /* close file if not stdin */
 		close(fd);
 	if (n < 0)
 		tsp_warnf("could not read file '%s'", fname);
