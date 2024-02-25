@@ -246,8 +246,7 @@ hash_add(Hash ht, char *key, Val val)
 	e->val = val;
 	if (!e->key) {
 		e->key = key;
-		ht->size++;
-		if (ht->size > ht->cap / 2) /* grow table if it is more than half full */
+		if (++ht->size > ht->cap / 2) /* grow table if it is more than half full */
 			hash_grow(ht);
 	}
 }
@@ -259,6 +258,8 @@ static Hash
 hash_extend(Hash ht, Val args, Val vals)
 {
 	Val arg, val;
+	int argnum = tsp_lstlen(args);
+	Hash ret = hash_new(argnum > 0 ? 2*argnum : 8, ht);
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
 		if (args->t == TSP_PAIR) {
 			arg = car(args);
@@ -270,11 +271,11 @@ hash_extend(Hash ht, Val args, Val vals)
 		if (arg->t != TSP_SYM)
 			tsp_warnf("expected symbol for argument of function"
 				  " definition, recieved %s", tsp_type_str(arg->t));
-		hash_add(ht, arg->v.s, val);
+		hash_add(ret, arg->v.s, val);
 		if (args->t != TSP_PAIR)
 			break;
 	}
-	return ht;
+	return ret;
 }
 
 /* make types */
@@ -508,7 +509,7 @@ esc_str(char *s, int len)
 	return ret;
 }
 
-/* return read string */
+/* return read string or symbol, depending on mk_fn */
 static Val
 read_str(Tsp st, Val (*mk_fn)(Tsp, char*))
 {
@@ -542,7 +543,7 @@ read_sym(Tsp st, int (*is_char)(char))
 
 /* return read string containing a list */
 /* TODO read pair after as well, allow lambda((x) (* x 2))(4) */
-static Val
+Val
 read_pair(Tsp st, char endchar)
 {
 	Val a, b;
@@ -735,11 +736,12 @@ prepend_bt(Tsp st, Hash env, Val f)
 }
 
 /* evaluate procedure f with arguments */
+/* TODO Val f -> Func f */
 static Val
 eval_proc(Tsp st, Hash env, Val f, Val args)
 {
 	Val ret;
-	Hash e;
+	Hash fenv;
 	/* evaluate function and primitive arguments before being passed */
 	switch (f->t) {
 	case TSP_PRIM:
@@ -753,14 +755,12 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 			return NULL;
 		/* FALLTHROUGH */
 	case TSP_MACRO:
-		e = hash_new(8, f->v.f.env);
-		/* TODO call hash_extend in hash_new to know new hash size */
 		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anon", tsp_lstlen(f->v.f.args));
-		if (!(hash_extend(e, f->v.f.args, args)))
+		if (!(fenv = hash_extend(f->v.f.env, f->v.f.args, args)))
 			return NULL;
-		if (!(ret = tisp_eval_seq(st, e, f->v.f.body)))
+		if (!(ret = tisp_eval_seq(st, fenv, f->v.f.body)))
 			return prepend_bt(st, env, f), NULL;
-		if (f->t == TSP_MACRO)
+		if (f->t == TSP_MACRO) /* TODO remove w/ expand_macro */
 			ret = tisp_eval(st, env, ret);
 		return ret;
 	case TSP_TABLE:
@@ -818,14 +818,14 @@ tisp_print(FILE *f, Val v)
 		break;
 	case TSP_STR:
 	case TSP_SYM:
-		fputs(v->v.s, f);
+		fputs(v->v.s, f); /* TODO fflush? */
 		break;
 	case TSP_FUNC:
 	case TSP_MACRO:
 		fprintf(f, "#<%s%s%s>", /* if proc name is not null print it */
 		            v->t == TSP_FUNC ? "function" : "macro",
-		            v->v.pr.name ? ":" : "",
-		            v->v.pr.name ? v->v.pr.name : "");
+		            v->v.f.name ? ":" : "", /* TODO dont work for anon funcs */
+		            v->v.f.name ? v->v.f.name : "");
 		break;
 	case TSP_PRIM:
 		fprintf(f, "#<primitive:%s>", v->v.pr.name);
