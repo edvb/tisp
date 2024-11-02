@@ -571,6 +571,7 @@ read_pair(Tsp st, char endchar)
 Val
 tisp_read_sexpr(Tsp st)
 {
+	/* TODO merge w/ infix */
 	static char *prefix[] = {
 		"'",  "quote",
 		"`",  "quasiquote",
@@ -602,6 +603,8 @@ tisp_read_sexpr(Tsp st)
 		return read_sym(st, &is_sym);
 	if (tsp_fget(st) == '(') /* list */
 		return tsp_finc(st), read_pair(st, ')');
+	if (tsp_fget(st) == '[') /* list */
+		return tsp_finc(st), mk_pair(mk_sym(st, "list"), read_pair(st, ']'));
 	if (tsp_fget(st) == '{') { /* table */
 		Val v; tsp_finc(st);
 		if (!(v = read_pair(st, '}'))) return NULL;
@@ -1116,8 +1119,8 @@ prim_load(Tsp st, Hash env, Val args)
 	}
 
 	/* If not tisp file, try loading shared object library */
-	st->libh = realloc(st->libh, (st->libhc+1)*sizeof(void*));
-	if (!st->libh) perror("; realloc"), exit(1);
+	if (!(st->libh = realloc(st->libh, (st->libhc+1)*sizeof(void*))))
+		perror("; realloc"), exit(1);
 
 	memset(name, 0, sizeof(name));
 	strcpy(name, "libtib");
