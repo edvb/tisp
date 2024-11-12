@@ -253,7 +253,6 @@ hash_add(Hash ht, char *key, Val val)
 
 /* add each binding args[i] -> vals[i] */
 /* args and vals are both lists */
-/* TODO don't return anything in hash_extend since it's modifying ht */
 static Hash
 hash_extend(Hash ht, Val args, Val vals)
 {
@@ -348,8 +347,8 @@ mk_sym(Tsp st, char *s)
 	if ((ret = hash_get(st->syms, s)))
 		return ret;
 	ret = mk_val(TSP_SYM);
-	ret->v.s = strndup(s, strlen(s));
-	if (!ret->v.s) perror("; strndup"), exit(1);
+	if (!(ret->v.s = strndup(s, strlen(s))))
+		perror("; strndup"), exit(1);
 	hash_add(st->syms, s, ret);
 	return ret;
 }
@@ -435,6 +434,7 @@ static int
 read_int(Tsp st)
 {
 	int ret = 0;
+	/* TODO skip commas */
 	for (; tsp_fget(st) && isdigit(tsp_fget(st)); tsp_finc(st))
 		ret = ret * 10 + tsp_fget(st) - '0';
 	return ret;
@@ -637,11 +637,16 @@ tisp_read(Tsp st)
 			if (!(w = read_sym(st, &is_sym))) return NULL;
 			return mk_list(st, 3, mk_sym(st, "get"), v,
 				       mk_list(st, 2, mk_sym(st, "quote"), w));
+		default: /* key: val => (key val) */
+			skip_ws(st, 1);
+			if (!(w = tisp_read(st))) return NULL;
+			return mk_list(st, 2, v, w);
 		}
-		skip_ws(st, 1);
-		if (!(w = tisp_read(st))) return NULL;
-		/* TODO make pair for use in assoc list ? */
-		return mk_list(st, 2, v, w); /* key: val => (key val) */
+	} else if (tsp_fget(st) == '>' && tsp_fgetat(st, 1) == '>') {
+		tsp_finc(st), tsp_finc(st);
+		if (!(w = tisp_read(st)) || w->t != TSP_PAIR)
+			tsp_warn("invalid UFCS");
+		return mk_pair(car(w), mk_pair(v, cdr(w)));
 	}
 	/* return mk_pair(v, tisp_read(st)); */
 	return v;
@@ -697,10 +702,9 @@ tisp_parse_file(Tsp st, char *fname)
 Val
 tisp_eval_list(Tsp st, Hash env, Val v)
 {
-	Val cur = mk_pair(NULL, st->none);
-	Val ret = cur, ev;
-	for (; !nilp(v); v = cdr(v), cur = cdr(cur)) {
-		if (v->t != TSP_PAIR) {
+	Val ret = mk_pair(NULL, st->nil), ev;
+	for (Val cur = ret; !nilp(v); v = cdr(v), cur = cdr(cur)) {
+		if (v->t != TSP_PAIR) { /* last element in improper list */
 			if (!(ev = tisp_eval(st, env, v)))
 				return NULL;
 			cdr(cur) = ev;
@@ -708,9 +712,8 @@ tisp_eval_list(Tsp st, Hash env, Val v)
 		}
 		if (!(ev = tisp_eval(st, env, car(v))))
 			return NULL;
-		cdr(cur) = mk_pair(ev, st->none);
+		cdr(cur) = mk_pair(ev, st->nil);
 	}
-	cdr(cur) = st->nil;
 	return cdr(ret);
 }
 
