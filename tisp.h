@@ -19,35 +19,35 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define tsp_warnf(M, ...) do {                                  \
+#define tsp_warnf(M, ...) do {                                    \
 	fprintf(stderr, "; tisp: error: " M "\n", ##__VA_ARGS__); \
-	return NULL;                                            \
+	return NULL;                                              \
 } while(0)
-#define tsp_warn(M) do {                         \
+#define tsp_warn(M) do {                           \
 	fprintf(stderr, "; tisp: error: " M "\n"); \
-	return NULL;                             \
+	return NULL;                               \
 } while(0)
 
 /* TODO test general condition */
-#define tsp_arg_min(ARGS, NAME, NARGS) do {                                    \
-	if (list_len(ARGS) < NARGS)                                            \
-		tsp_warnf("%s: expected at least %d argument%s, received %d",  \
-		           NAME, NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
+#define tsp_arg_min(ARGS, NAME, NARGS) do {                                      \
+	if (tsp_lstlen(ARGS) < NARGS)                                            \
+		tsp_warnf("%s: expected at least %d argument%s, received %d",    \
+		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS)); \
 } while(0)
 #define tsp_arg_max(ARGS, NAME, NARGS) do {                                          \
-	if (list_len(ARGS) > NARGS)                                                  \
+	if (tsp_lstlen(ARGS) > NARGS)                                                \
 		tsp_warnf("%s: expected at no more than %d argument%s, received %d", \
-		           NAME, NARGS, NARGS > 1 ? "s" : "", list_len(ARGS));       \
+		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS));     \
 } while(0)
-#define tsp_arg_num(ARGS, NAME, NARGS) do {                                    \
-	if (list_len(ARGS) != NARGS && NARGS != -1)                            \
-		tsp_warnf("%s: expected %d argument%s, received %d",           \
-		           NAME, NARGS, NARGS > 1 ? "s" : "", list_len(ARGS)); \
+#define tsp_arg_num(ARGS, NAME, NARGS) do {                                      \
+	if (NARGS != -1 && tsp_lstlen(ARGS) != NARGS)                            \
+		tsp_warnf("%s: expected %d argument%s, received %d",             \
+		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS)); \
 } while(0)
 #define tsp_arg_type(ARG, NAME, TYPE) do {                                     \
 	if (!(ARG->t & (TYPE)))                                                \
 		tsp_warnf(NAME ": expected %s, received %s",                   \
-		                type_str(TYPE), type_str(ARG->t));             \
+		                tsp_type_str(TYPE), tsp_type_str(ARG->t));     \
 } while(0)
 
 #define tsp_env_name_prim(NAME, FN) tisp_env_add(st, #NAME, mk_prim(TSP_PRIM, prim_##FN, #NAME))
@@ -68,8 +68,6 @@
 #define cdar(P) cdr(car(P))
 #define cddr(P) cdr(cdr(P))
 #define nilp(P) ((P)->t == TSP_NIL)
-#define num(P)  ((P)->v.n.num)
-#define den(P)  ((P)->v.n.den)
 
 struct Val;
 typedef struct Val *Val;
@@ -131,8 +129,8 @@ struct Tsp {
 	size_t libhc;
 };
 
-char *type_str(TspType t);
-int list_len(Val v);
+char *tsp_type_str(TspType t);
+int tsp_lstlen(Val v);
 
 Val mk_int(int i);
 Val mk_dec(double d);

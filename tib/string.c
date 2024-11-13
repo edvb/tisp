@@ -78,7 +78,7 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 			break;
 		case TSP_PAIR:
 		default:
-			tsp_warnf("could not convert type %s into string", type_str(v->t));
+			tsp_warnf("could not convert type %s into string", tsp_type_str(v->t));
 		}
 	}
 	v = mk_fn(st, ret);

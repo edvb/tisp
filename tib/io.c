@@ -37,22 +37,21 @@ prim_write(Tsp st, Hash env, Val args)
 	/* if second argument is true, append file don't write over */
 	if (!nilp(cadr(args)))
 		mode = "a";
-	/* first argument can either be the symbol stdout or stderr,
-	 * or the file as a string */
+	/* first argument can either be the symbol stdout or stderr, or the file as a string */
 	if (car(args)->t == TSP_SYM)
 		f = !strncmp(car(args)->v.s, "stdout", 7) ? stdout : stderr;
 	else if (car(args)->t != TSP_STR)
 		tsp_warnf("write: expected file name as string, received %s",
-		           type_str(car(args)->t));
+		           tsp_type_str(car(args)->t));
 	else if (!(f = fopen(car(args)->v.s, mode)))
 		tsp_warnf("write: could not load file '%s'", car(args)->v.s);
-	if (f == stderr && strncmp(car(args)->v.s, "stderr", 7))
-		tsp_warn("write: expected file name as string, "
-		                  "or symbol stdout/stderr");
+	if (f == stderr && strncmp(car(args)->v.s, "stderr", 7)) /* validate stderr symbol */
+		tsp_warn("write: expected file name as string, or symbol stdout/stderr");
 
 	for (args = cddr(args); !nilp(args); args = cdr(args))
 		tisp_print(f, car(args));
-	if (f == stdout || f == stderr)
+
+	if (f == stdout || f == stderr) /* clean up */
 		fflush(f);
 	else
 		fclose(f);
@@ -65,7 +64,7 @@ prim_read(Tsp st, Hash env, Val args)
 {
 	char *file, *fname = NULL; /* read from stdin by default */
 	tsp_arg_max(args, "read", 1);
-	if (list_len(args) == 1) { /* if file name given as string, read it */
+	if (tsp_lstlen(args) == 1) { /* if file name given as string, read it */
 		tsp_arg_type(car(args), "read", TSP_STR);
 		fname = car(args)->v.s;
 	}

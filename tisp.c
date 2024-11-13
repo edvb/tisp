@@ -42,7 +42,7 @@ static void hash_add(Hash ht, char *key, Val val);
 /* return named string for each type */
 /* TODO loop through each type bit to print */
 char *
-type_str(TspType t)
+tsp_type_str(TspType t)
 {
 	switch (t) {
 	case TSP_NONE:  return "Void";
@@ -121,7 +121,7 @@ count_parens(char *s, int len)
 
 /* get length of list, if improper list return -1 */
 int
-list_len(Val v)
+tsp_lstlen(Val v)
 {
 	int len = 0;
 	for (; v->t == TSP_PAIR; v = cdr(v))
@@ -134,7 +134,7 @@ static int
 vals_eq(Val a, Val b)
 {
 	if (a->t & TSP_NUM && b->t & TSP_NUM) { /* NUMBERs */
-		if (num(a) != num(b) || den(a) != den(b))
+		if (a->v.n.num != b->v.n.num || a->v.n.den != b->v.n.den)
 			return 0;
 		return 1;
 	}
@@ -267,7 +267,7 @@ hash_extend(Hash ht, Val args, Val vals)
 		}
 		if (arg->t != TSP_SYM)
 			tsp_warnf("expected symbol for argument of function"
-				  " definition, recieved %s", type_str(arg->t));
+				  " definition, recieved %s", tsp_type_str(arg->t));
 		hash_add(ht, arg->v.s, val);
 		if (args->t != TSP_PAIR)
 			break;
@@ -290,8 +290,8 @@ Val
 mk_int(int i)
 {
 	Val ret = mk_val(TSP_INT);
-	num(ret) = i;
-	den(ret) = 1;
+	ret->v.n.num = i;
+	ret->v.n.den = 1;
 	return ret;
 }
 
@@ -299,8 +299,8 @@ Val
 mk_dec(double d)
 {
 	Val ret = mk_val(TSP_DEC);
-	num(ret) = d;
-	den(ret) = 1;
+	ret->v.n.num = d;
+	ret->v.n.den = 1;
 	return ret;
 }
 
@@ -689,10 +689,9 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 		return (*f->v.pr.pr)(st, env, args);
 	case TSP_FUNC:
 	case TSP_MACRO:
-		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anon",
-		            list_len(f->v.f.args));
 		e = hash_new(8, f->v.f.env);
 		/* TODO call hash_extend in hash_new to know new hash size */
+		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anon", tsp_lstlen(f->v.f.args));
 		if (!(hash_extend(e, f->v.f.args, args)))
 			return NULL;
 		if (!(ret = tisp_eval_seq(st, e, f->v.f.body)))
@@ -701,7 +700,7 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 			ret = tisp_eval(st, env, ret);
 		return ret;
 	default:
-		tsp_warnf("attempt to evaluate non procedural type %s", type_str(f->t));
+		tsp_warnf("attempt to evaluate non procedural type %s", tsp_type_str(f->t));
 	}
 }
 
@@ -739,15 +738,15 @@ tisp_print(FILE *f, Val v)
 		fputs("Nil", f);
 		break;
 	case TSP_INT:
-		fprintf(f, "%d", (int)num(v));
+		fprintf(f, "%d", (int)v->v.n.num);
 		break;
 	case TSP_DEC:
-		fprintf(f, "%.15g", num(v));
-		if (num(v) == (int)num(v))
+		fprintf(f, "%.15g", v->v.n.num);
+		if (v->v.n.num == (int)v->v.n.num)
 			fprintf(f, ".0");
 		break;
 	case TSP_RATIO:
-		fprintf(f, "%d/%d", (int)num(v), (int)den(v));
+		fprintf(f, "%d/%d", (int)v->v.n.num, (int)v->v.n.den);
 		break;
 	case TSP_STR:
 	case TSP_SYM:
@@ -782,7 +781,7 @@ tisp_print(FILE *f, Val v)
 		putc(')', f);
 		break;
 	default:
-		fprintf(stderr, "; tisp: could not print value type %s\n", type_str(v->t));
+		fprintf(stderr, "; tisp: could not print value type %s\n", tsp_type_str(v->t));
 	}
 }
 
@@ -861,7 +860,7 @@ static Val
 prim_typeof(Tsp st, Hash env, Val args)
 {
 	tsp_arg_num(args, "typeof", 1);
-	return mk_str(st, type_str(car(args)->t));
+	return mk_str(st, tsp_type_str(car(args)->t));
 }
 
 /* TODO rename get to getattr like python ? */
@@ -907,8 +906,7 @@ prim_get(Tsp st, Hash env, Val args)
 			return mk_int(strlen(v->v.s));
 	default: break;
 	}
-	tsp_warnf("get: can not access %s from type %s",
-		   prop->v.s, type_str(v->t));
+	tsp_warnf("get: can not access %s from type %s", prop->v.s, tsp_type_str(v->t));
 }
 
 /* creates new tisp function */
@@ -951,7 +949,7 @@ form_def(Tsp st, Hash env, Val args)
 		if (sym->t != TSP_SYM)
 			tsp_warnf("def: incorrect format,"
 			          " expected symbol for function name, received %s",
-			          type_str(sym->t));
+			          tsp_type_str(sym->t));
 		val = mk_func(TSP_FUNC, sym->v.s, cdar(args), cdr(args), env);
 	} else if (car(args)->t == TSP_SYM) { /* create variable */
 		sym = car(args); /* if only symbol given, make it self evaluating */

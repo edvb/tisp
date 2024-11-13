@@ -25,6 +25,9 @@
 
 #include "../tisp.h"
 
+#define num(P) ((P)->v.n.num)
+#define den(P) ((P)->v.n.den)
+
 #define EVAL_CHECK(A, V, NAME, TYPE) do {  \
 	if (!(A = tisp_eval(st, vars, V))) \
 		return NULL;               \
@@ -111,7 +114,7 @@ static Val
 prim_sub(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
-	int len = list_len(args);
+	int len = tsp_lstlen(args);
 	if (len != 2 && len != 1)
 		tsp_warnf("-: expected 1 or 2 arguments, recieved %d", len);
 	a = car(args);
@@ -148,7 +151,7 @@ static Val
 prim_div(Tsp st, Hash vars, Val args)
 {
 	Val a, b;
-	int len = list_len(args);
+	int len = tsp_lstlen(args);
 	if (len != 2 && len != 1)
 		tsp_warnf("/: expected 1 or 2 arguments, recieved %d", len);
 	a = car(args);
@@ -200,7 +203,7 @@ prim_pow(Tsp st, Hash vars, Val args)
 static Val                                              \
 prim_##NAME(Tsp st, Hash vars, Val args)                \
 {                                                       \
-	if (list_len(args) != 2)                        \
+	if (tsp_lstlen(args) != 2)                      \
 		return st->t;                           \
 	tsp_arg_type(car(args), #OP, TSP_NUM);          \
 	tsp_arg_type(car(cdr(args)), #OP, TSP_NUM);     \

@@ -33,10 +33,10 @@ static Val
 prim_cd(Tsp st, Hash env, Val args)
 {
 	Val dir;
-	tsp_arg_num(args, "cd", 1);
+	tsp_arg_num(args, "cd!", 1);
 	dir = car(args);
 	if (!(dir->t & (TSP_STR|TSP_SYM)))
-		tsp_warnf("strlen: expected string or symbol, received %s", type_str(dir->t));
+		tsp_warnf("cd!: expected string or symbol, received %s", tsp_type_str(dir->t));
 	if (chdir(dir->v.s))
 		return perror("; error: cd"), NULL;
 	return st->none;
