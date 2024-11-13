@@ -50,11 +50,15 @@ main(int argc, char *argv[])
 readstr:
 				if ((v = tisp_read(st)))
 					v = tisp_eval(st, st->global, v);
+			} else if (argv[i][1] == 'r') {
+				st->file = "(repl)";
+				if ((v = tisp_read(st)))
+					v = tisp_eval(st, st->global, v);
 			} else if (argv[i][1] == 'v') { /* version and copyright info */
 				fprintf(stderr, "tisp v%s (c) 2017-2022 Ed van Bruggen\n", VERSION);
 				exit(0);
 			} else if (argv[i][1]) { /* unsupported argument or help */
-				fputs("usage: tisp [-hv] [-c COMMAND] [-] [FILE ...]\n", stderr);
+				fputs("usage: tisp [-hrv] [-c COMMAND] [-] [FILE ...]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
 				v = tisp_eval_seq(st, st->global, tisp_parse_file(st, NULL));
