@@ -9,7 +9,7 @@
   Also see def"
     (cond
       ((pair? args)
-      (list 'def (car args) (list 'Macro (cdr args) . body)))
+       (list 'def (car args) (list 'Macro (cdr args) . body)))
       (else
         (error 'defmacro "expected macro name and argument List, recieved "
               (typeof args))))))
@@ -137,15 +137,13 @@
                  @`((= ,val ,(car it)) ,(cadr it))
                  body)))
 
-; TODO allow for improper lists
-; TODO `(0 ,@1) => (0 . 1)
 (defmacro (quasiquote expr)
   "Recursively quote the given expression
   Automatically quotes each element within the expression, but evaluates the
   element if it is labeled with the unquote macro.
   Can be shortened with the ` prefix.
   Also see quote, unquote, and unquote-splice"
-  (def (check form) ; TODO don't redefine functions every call
+  (def (check form)
     (unless (and (pair? (cdr form)) (nil? (cddr form)))
       (error (car form) "invalid form " form)))
   (def (quasicons a d)
@@ -166,7 +164,7 @@
       ((atom? expr) (list 'quote expr))
       ((= (car expr) 'quasiquote)
        (check expr)
-       (quasicons ''quasiquote (f (cdr x) (+ n 1))))
+       (quasicons ''quasiquote (f (cdr expr) (+ n 1))))
       ((= (car expr) 'unquote)
        (check expr)
        (if (= n 0)
@@ -227,7 +225,7 @@
     (cons (car lst) (apply list* (cdr lst)))
     (car lst)))
 
-(def (do  . body)
+(def (do . body)
   "Evaluate each expression in body, returning last
   Also see do0"
   (last body))
@@ -239,9 +237,9 @@
 (def (length lst)
   "Number of elements in given list"
   (recur f ((lst lst) (x 0))
-         (if lst
-           (f (cdr lst) (+ x 1))
-           x)))
+    (if (pair? lst)
+      (f (cdr lst) (+ x 1))
+      x)))
 
 (def (last lst)
   "Last element of list"
@@ -366,9 +364,9 @@
 (def (reverse lst)
   "Reverse order of list"
   (recur f ((in lst) (out Nil))
-         (if (pair? in)
-           (f (cdr in) (cons (car in) out))
-           out)))
+    (if (pair? in)
+      (f (cdr in) (cons (car in) out))
+      out)))
 
 ; TODO accept many lists to append
 (def (append x y)
@@ -413,7 +411,7 @@
   Also see pop!, push, peek"
   (if stack
     (cdr stack)
-    (error 'pop "Improper stack")))
+    (error 'pop "Improper stack: " stack)))
 
 (defmacro (pop! stack)
   "Get value at front of stack, removing value
@@ -427,7 +425,7 @@
   Also see push, pop"
   (if (pair? stack)
     (car stack)
-    (error 'peak "Improper stack")))
+    (error 'peek "Improper stack: " stack)))
 
 (def (swap stack)
   "Get stack where the first 2 values are swapped

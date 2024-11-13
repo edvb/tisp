@@ -10,6 +10,7 @@
       "Create new pair with a car of a and cdr of d")
     (quote
       "(quote expr)"
+      "'expr"
       "Return expression unevaluated"
       "  Can be shortened with the ' prefix"
       "  Also see quote, unquote, and unquote-splice")
@@ -43,14 +44,20 @@
       "  If only body is given, create macro with one argument labeled 'it'")
     (def
       "(def var . val)"
-      "Create new variable with value"
-      "  If value is not given, make variable a self-evaluating symbol"
+      "Define new variable with value"
+      "  If value is not given, define a self-evaluating symbol"
       ""
       "(def (func . args) . body)"
       "Create new function with arguments list and body list")
     (set!
       "(set! var val)"
-      "change the variable var to val")
+      "Change the variable var to val")
+    (undefine!
+      "(undefine! var)"
+      "Remove variable from environment")
+    (defined?
+      "(defined? var)"
+      "Return boolean on if variable is defined in environment")
     (load
       "(load lib)"
       "Loads the library given as a string")

@@ -1,8 +1,9 @@
 (docstr-add!
   '((write
-      "(write file . vals)"
-      "Writes to file given as string all values"
-      "  File can also be symbol 'stdout or 'stderr")
+      "(write file append? . vals)"
+      "Writes to file all values"
+      "  File can be file path give as string or the symbols 'stdout or 'stderr"
+      "  Append file if append? is true, otherwise override")
     (read
       "(read . file)"
       "Return string read from optional file, if not given read from stdin")

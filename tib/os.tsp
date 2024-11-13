@@ -10,7 +10,7 @@
       "Number of milliseconds since 1970 (unix time stamp)")
     (time
       "(time expr)"
-      "Time taken to run given expression")))
+      "Time in milliseconds it took to run expression")))
 
 (def (repl)
   "Read, evaluate, print, loop
