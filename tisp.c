@@ -98,7 +98,7 @@ isdelim(int c)
 static void
 skip_ws(Tsp st, int skipnl)
 {
-	const char *s = skipnl ? " \t\n" : " \t";
+	const char *s = skipnl ? " \t\n\r" : " \t";
 	while (tsp_fget(st) && (strchr(s, tsp_fget(st)) || tsp_fget(st) == ';')) {
 		st->filec += strspn(st->file+st->filec, s); /* skip white space */
 		for (; tsp_fget(st) == ';'; tsp_finc(st)) /* skip comments until newline */
@@ -463,6 +463,7 @@ esc_char(char c)
 {
 	switch (c) {
 	case 'n': return '\n';
+	case 'r': return '\r';
 	case 't': return '\t';
 	case '\n': return ' ';
 	case '\\':
