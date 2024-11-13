@@ -681,14 +681,17 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 	Val ret;
 	Hash e;
 	/* evaluate function and primitive arguments before being passed */
-	if (f->t & (TSP_FUNC|TSP_PRIM))
+	switch (f->t) {
+	case TSP_PRIM:
 		if (!(args = tisp_eval_list(st, env, args)))
 			return NULL;
-	switch (f->t) {
+		/* FALLTHROUGH */
 	case TSP_FORM:
-	case TSP_PRIM:
 		return (*f->v.pr.pr)(st, env, args);
 	case TSP_FUNC:
+		if (!(args = tisp_eval_list(st, env, args)))
+			return NULL;
+		/* FALLTHROUGH */
 	case TSP_MACRO:
 		e = hash_new(8, f->v.f.env);
 		/* TODO call hash_extend in hash_new to know new hash size */
