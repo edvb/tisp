@@ -36,14 +36,10 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 	Val v;
 	char s[43], *ret = calloc(1, sizeof(char));
 	int len = 1;
-	for (; !nilp(args); args = cdr(args)) {
+	for (; args->t == TSP_PAIR; args = cdr(args)) {
 		v = car(args);
 		switch (v->t) {
-		case TSP_NONE:
-			len += 5;
-			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, "Void");
-			break;
+		case TSP_NONE: break;
 		case TSP_NIL:
 			len += 4;
 			ret = realloc(ret, len*sizeof(char));
