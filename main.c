@@ -55,7 +55,7 @@ readstr:
 				if ((v = tisp_read(st)))
 					v = tisp_eval(st, st->global, v);
 			} else if (argv[i][1] == 'v') { /* version and copyright info */
-				fprintf(stderr, "tisp v%s (c) 2017-2022 Ed van Bruggen\n", VERSION);
+				fprintf(stderr, "tisp v%s (c) 2017-2024 Ed van Bruggen\n", VERSION);
 				exit(0);
 			} else if (argv[i][1]) { /* unsupported argument or help */
 				fputs("usage: tisp [-hrv] [-c COMMAND] [-] [FILE ...]\n", stderr);
