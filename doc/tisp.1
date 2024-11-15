@@ -1,19 +1,23 @@
-.TH TISP 1 "March 2021" "tisp 0.0.0" 
+.TH TISP 1 "November 2024" "tisp 0.1" 
 .PP
 .SH NAME
 tisp \- tiny lisp
 .PP
 .SH SYNOPSIS
-tisp [-hv] [-c COMMAND] [-] [FILE ...]
+tisp [-hrv] [-c COMMAND] [-] [FILE ...]
 .PP
 .SH DESCRIPTION
 .PP
-Tisp programming language interpreter.  Read and evaluate all files in order given, if file name is '-' read from 'stdin'. If no files are supplied launch REPL.
+Tisp programming language default interpreter.  Read and evaluate all files in order given, if file name is '-' read from 'stdin'. If no files are supplied launch the read-evaluate-print-loop (REPL) for interactive running of commands.
 .PP
 .SH OPTIONS
 .TP
 \fB-c COMMAND\fP
-Read \fICOMMAND\fP as a line of Tisp code and print result
+Read \fICOMMAND\fP as a line of Tisp code, evaluate and print result
+.PP
+.TP
+\fB-r\fP
+Launch the REPL prompt. Default if no arguments are given. Useful for loading files and then running REPL after. Equivalent to -c '(repl)'
 .PP
 .TP
 \fB-h\fP
@@ -32,7 +36,9 @@ Run the program from the command line to type a single command and press enter t
 
 $ tisp
 > (cons 1 2)
-(1 . 2)
+'(1 . 2)
+> (list 1 (+ 1 1) 3 (* 2 2))
+'(1 2 4)
 
 .EE
 .RE
@@ -41,7 +47,7 @@ Alternatively you can pass a file name which will be opened and run, outputting 
 .RS 4
 .EX
 
-$ echo '((lambda (x) (+ x 1)) 10)' > inc.tsp
+$ echo '((Func (x) (+ x 1)) 10)' > inc.tsp
 $ tisp inc.tsp
 11
 
@@ -53,7 +59,7 @@ Commands can also be piped directing into Tisp through the command line.
 .EX
 
 $ echo '(= "foo" "foo")' | tisp
-t
+True
 
 .EE
 .RE

@@ -1,13 +1,19 @@
 # tisp \- tiny lisp
 
-Tisp programming language interpreter.  Read and evaluate all files in order given, if file name
-is `-` read from `stdin`. If no files are supplied launch REPL.
+Tisp programming language default interpreter.  Read and evaluate all files in order given, if
+file name is `-` read from `stdin`. If no files are supplied launch the read-evaluate-print-loop
+(REPL) for interactive running of commands.
 
 ## Options
 
 #### -c COMMAND
 
-Read *COMMAND* as a line of Tisp code and print result
+Read *COMMAND* as a line of Tisp code, evaluate and print result
+
+#### -r
+
+Launch the REPL prompt. Default if no arguments are given. Useful for
+loading files and then running REPL after. Equivalent to -c '(repl)'
 
 #### -h
 
@@ -25,14 +31,16 @@ to see the result.
 ```
 $ tisp
 > (cons 1 2)
-(1 . 2)
+'(1 . 2)
+> (list 1 (+ 1 1) 3 (* 2 2))
+'(1 2 4)
 ```
 
 Alternatively you can pass a file name which will be opened and run, outputting
 the result before exiting.
 
 ```
-$ echo '((lambda (x) (+ x 1)) 10)' > inc.tsp
+$ echo '((Func (x) (+ x 1)) 10)' > inc.tsp
 $ tisp inc.tsp
 11
 ```
@@ -41,7 +49,7 @@ Commands can also be piped directing into Tisp through the command line.
 
 ```
 $ echo '(= "foo" "foo")' | tisp
-t
+True
 ```
 
 Or given directly to Tisp as an argument:

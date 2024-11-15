@@ -1,41 +1,45 @@
 # tisp \- tiny lisp
 
-[![Build Status](https://travis-ci.org/edvb/tisp.svg)](https://travis-ci.org/edvb/tisp)
+Tisp is a tiny, terse, and transparent lisp programming language designed to be
+lightweight, modular, extendable, and easy to embedded into other programs.
+Tisp is a functional language which tries to be unambiguous and focus on
+simplicity.  Much of the language is defined with Tisp itself leaving the C
+code as short as possible and maximally orthogonal.
 
-Tisp is a tiny, terse, and transparent lisp programming language designed to be lightweight
-and easy to embedded in other programs. Simply drop the `tisp.c` and `tisp.h`
-files into your project in order to use the necessary functions for your
-program. An example command line interpreter is provided in `main.c`. Tisp is a
-single value name language (lisp-1) which tries to be unambiguous and focus
-on simplicity.  Much of the language is defined with Tisp itself leaving the C
-code as short as possible.
+To include Tisp in your project, simply drop the `tisp.c`, `tisp.h`,
+`tibs.tsp.h`, and any lib files into your project to use the necessary
+functions for your program. An example command line interpreter is provided in
+`main.c`.
 
-The language is still in active development and not yet stable. Until the `v1.0` release expect
-non-backwards compatible changes in minor releases.
+The language is still in active development and not yet stable. Until the
+`v1.0` release expect non-backwards compatible changes in minor releases.
 
 ## Language
 
-Tisp is mainly based off of scheme, with minor features borrowed from other
-lisps and scripting languages.
+Tisp is a strong dynamically typed language (with a powerful first-class static
+type system in the works) inspired mostly by Scheme, with ideas from Python,
+Haskell, Julia, and Elm as well.
 
 ### General
 
 #### Comments
 
-Single line comments with a semicolon, **eg** `(cons 1 2) ; ingnored by tisp until new line`.
+Single line comments with a semicolon, **eg** `(cons 1 2) ; ingnored by tisp
+until new line`.
 
 ### Types
 
 #### Nil
 
-Nil, null, empty, or false, represented as an empty list, **eg** `()`, `nil` `false`.
+Nil, null, empty, or false, represented as an empty list, **eg** `()`, `nil`
+`false`.
 
 #### Integers
 
-Whole real numbers, positive or negative with optional `+` or `-` prefixes
-repressively. Also supports scientific notation with a capital or lowercase
-`e`. The exponent needs to be an positive integer, it can also be negative but
-that would just round to zero.  **eg** `1`, `-48`, `+837e4`, `3E-2`.
+Whole real numbers, positive or negative with optional `+` or `-` prefixes.
+Also supports scientific notation with an upper or lowercase `e`. The exponent
+should be a positive integer, it can also be negative but that would just round
+to zero for integers.  **eg** `1`, `-48`, `+837e4`, `3E2`.
 
 #### Decimals
 
@@ -50,6 +54,18 @@ Fraction type, a ratio of two integers. Similar rules apply for numerator and
 dominator as integers (real positive or negative), except for scientific
 notation. Will simplify fraction where possible, and will through error
 on division by zero. **eg** `1/2`, `4/3` `-1/2`, `01/-30`, `-6/-3`.
+
+#### Booleans
+
+In Tisp all values except `Nil` (the empty list `()`) are truthy. The symbols
+`True` and `False` are also defined for explicit booleans, `False` being mapped
+to `Nil`. Functions which return a boolean type should end with `?`.
+**eg** `pair?`, `integer?`, `even?`
+
+#### Void
+
+Returns nothing. Used to insert a void type in a list or force a function not
+to return anything.
 
 #### Strings
 
@@ -129,57 +145,63 @@ as the cdr. Can be chained together to create a list if ending with `nil`.
 
 Returns the given argument unevaluated.
 
-#### Void
-
-Returns nothing. Used to insert a void type in a list or force a function not
-to return anything.
-
 #### eval
 
-Evaluates the expression given, can be dangerous to use in practice. In general
-`apply` should be used instead.
+Evaluates the expression given. Can be dangerous to use as arbitrary code could
+be executed if the input is not from a trusted source. In general `apply`
+should be used when possible.
 
 #### =
 
-Tests if multiple values are all equal. Returns `nil` if any are not, and `t`
-otherwise.
+Tests if multiple values are all equal. Returns `Nil` if any are not, and `True`
+if they are.
 
 #### cond
 
 Evaluates each expression if the given condition corresponding to it is true.
 Runs through all arguments, each is a list with the first element as the
-condition which needs to be `t` after evaluated, and the rest of the list is
+condition which needs to be `True` after evaluated, and the rest of the list is
 the body to be run if and only if the condition is met. Used for if/elseif/else
-statements found in C-like languages and `if`,`when`,`unless`,`switch` macros
-in Tisp.
+statements found in C-like languages. Also see `if`,`when`,`unless`,`switch`
+macros in Tisp.
 
 #### typeof
 
-Returns a string stating the given argument's type. Used to create `type?`
-individual functions.
+Returns a string stating the given argument's type.
 
-#### lambda
+#### Func
 
-Creates function, first argument is a list of elements representing the symbol
-name for any arguments of the new function. Rest of the arguments are code to
-be run with the supplied arguments.
+Creates anonymous function, first argument is a list of symbols for the names
+of the new function arguments. Rest of the arguments to Func is the body of
+code to be run when the function is called. Also see `def`.
 
-#### macro
+#### Macro
 
-Similar to lambda, creates anonymous macro with first argument as macro's
-argument list and rest as macro's body.
+Functions which operate on syntax expressions, and return syntax. Similar to
+Func, Macro creates anonymous macro with first argument as macro's argument
+list and rest as macro's body. Unlike functions macros do not evaluate their
+arguments when called, allowing the expressions to be transformed by the macro,
+returning a new expression to be evaluated at run time. Also see `defmacro`
 
 #### def
 
 Create variable with the name of the first argument, with the value of the
 second. If name given is a list use the first element of this list as a new
 functions name and rest of list as its arguments. If only variable name is
-given make it self evaluating.
+given make it a self evaluating symbol.
 
 #### set!
 
 Change the value of the of the variable given by the first argument to the
 second argument. Errors if variable is not defined before.
+
+#### undefine!
+
+Remove variable from environment. Errors if variable is not defined before.
+
+#### defined?
+
+Return boolean on if variable is defined in the environment.
 
 #### load
 
@@ -196,11 +218,13 @@ Return string of Tisp's version number.
 
 ### Differences From Other Lisps
 
-In Tisp there are no boolean types, much like common lisp, true is represented
-by the self evaluating symbol `t` and false is nil, represented as `()`, an
-empty list. `nil` and `false` are also mapped to `()`.
+By default Tisp's output is valid Tisp code, fully equivalent to the evaluated
+input. Lists and symbols are quoted (`(list 1 2 3) => '(1 2 3)`), errors are
+comments. The only exception is procedural types which will be fixed soon. To
+print value as valid Tisp code use `display` and `displayln`, to get a plain
+output use `print` and `println`.
 
-Tisp also only has one builtin equality primitive, `=`, which tests integers,
+Tisp only has one builtin equality primitive, `=`, which tests integers,
 symbols, strings, and objects which occupy the same space in memory, such as
 primitives.
 
@@ -208,8 +232,9 @@ Symbols are case sensitive, unlike many other older lisps, in order to better
 interface with modern languages.
 
 Tisp is single value named, so procedures share the same namespace as
-variables, removing the need for common lisp's `defunc` vs `defvar`, `let` vs
-`flet`, and redundant syntax for getting the function from a symbol.
+variables. This way functions are full first class citizens. It removes the
+need for common lisp's `defunc` vs `defvar`, `let` vs `flet`, and redundant
+syntax for getting the function from a symbol.
 
 ## Author
 
