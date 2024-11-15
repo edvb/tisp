@@ -53,7 +53,7 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 			strcat(ret, s);
 			break;
 		case TSP_DEC:
-			snprintf(s, 17, "%.15g", v->v.n.num);
+			snprintf(s, 22, "%.15g", v->v.n.num);
 			len += strlen(s);
 			s[len] = '\0';
 			ret = realloc(ret, len*sizeof(char));
