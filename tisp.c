@@ -182,7 +182,6 @@ hash(char *key)
 static Hash
 hash_new(size_t cap, Hash next)
 {
-	if (cap < 1) return NULL;
 	Hash ht = malloc(sizeof(struct Hash));
 	if (!ht) perror("; malloc"), exit(1);
 	ht->size = 0;
@@ -968,31 +967,6 @@ form_def(Tsp st, Hash env, Val args)
 	return st->none;
 }
 
-/* set symbol to new value */
-static Val
-form_set(Tsp st, Hash env, Val args)
-{
-	Val val;
-	Hash h;
-	Entry e = NULL;
-	tsp_arg_num(args, "set!", 2);
-	tsp_arg_type(car(args), "set!", TSP_SYM);
-	if (!(val = tisp_eval(st, env, cadr(args))))
-		return NULL;
-	/* find first occurrence of symbol */
-	for (h = env; h; h = h->next) {
-		e = entry_get(h, car(args)->v.s);
-		if (e->key)
-			break;
-	}
-	if (!e || !e->key)
-		tsp_warnf("set!: variable %s is not defined", car(args)->v.s);
-	if (e->val->t == TSP_PRIM) /* TODO hard code other values */
-		tsp_warnf("set!: can not modify %s, is primitive procedure", e->val->v.pr.name);
-	e->val = val;
-	return val;
-}
-
 /* TODO fix crashing if try to undefine builtin */
 static Val
 form_undefine(Tsp st, Hash env, Val args)
@@ -1137,7 +1111,6 @@ tisp_env_init(size_t cap)
 	tsp_env_form(Func);
 	tsp_env_form(Macro);
 	tsp_env_form(def);
-	tsp_env_name_form(set!, set);
 	tsp_env_prim(load);
 	tsp_env_name_form(undefine!, undefine);
 	tsp_env_name_form(defined?, definedp);

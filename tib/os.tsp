@@ -1,4 +1,4 @@
-(docstr-add!
+(def docstr-reg (append docstr-reg
   '((cd!
       "(cd! dir)"
       "Change directory")
@@ -7,10 +7,10 @@
       "String of current working directory")
     (now
       "(now)"
-      "Number of milliseconds since 1970 (unix time stamp)")
+      "Number of seconds since 1970 (unix time stamp)")
     (time
       "(time expr)"
-      "Time in milliseconds it took to run expression")))
+      "Time in milliseconds it took to run expression"))))
 
 (def (repl)
   "Read, evaluate, print, loop

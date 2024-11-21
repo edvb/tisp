@@ -19,11 +19,6 @@
 (def (logb b x) (/ (log x) (log b)))
 (def (log10 x) (logb 10. x))
 
-(defmacro (++ x . n)
-  `(set! ,x (+ ,x ,(default n 1))))
-(defmacro (-- x . n)
-  `(set! ,x (- ,x ,(default n 1))))
-
 ;;; Trig
 
 (def (csc x)     (/ (sin x)))

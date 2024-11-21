@@ -70,8 +70,9 @@
 
 (def (docstr-add! . docstrs)
   "Add given docstrs to the global doc string registry"
-  (set! docstr-reg (apply @(append docstr-reg it) docstrs))
-  Void)
+  ; FIXME for some reason evals docstrs as funcs
+  ; `(def docstr-reg (append docstr-reg ,docstrs))
+  )
 
 (def (doc proc)
   "Get documentation of procedure"

@@ -1,4 +1,4 @@
-(docstr-add!
+(def docstr-reg (append docstr-reg
   '((write
       "(write file append? . vals)"
       "Writes to file all values"
@@ -9,7 +9,7 @@
       "Return string read from optional file, if not given read from stdin")
     (parse
       "(parse string)"
-      "Parse Tisp object from given string")))
+      "Parse Tisp object from given string"))))
 
 (def (run file) (eval (parse (read file))))
 (def (print . str) (apply write (list* 'stdout Nil str)))

@@ -401,24 +401,12 @@
   Also see push!, pop, peek"
   (cons val stack))
 
-(defmacro (push! stack val)
-  "Add value to front of stack, modifying stack
-  Also see push, pop!"
-  `(set! ,stack (push ,stack ,val)))
-
 (def (pop stack)
   "Get stack without first element
   Also see pop!, push, peek"
   (if stack
     (cdr stack)
     (error 'pop "Improper stack: " stack)))
-
-(defmacro (pop! stack)
-  "Get value at front of stack, removing value
-  Also see pop, push!"
-  `(do0
-     (peek ,stack)
-     (set! ,stack (pop ,stack))))
 
 (def (peek stack)
   "Get value at front of stack
@@ -433,11 +421,3 @@
   (let ((x (peek stack))
         (y (peek (pop stack))))
     (push (push (pop (pop stack)) x) y)))
-
-; TODO swap! use gen sym instead of x and y ?
-(defmacro (swap! stack)
-  "Modify stack, swapping the first 2 values
-  Also see swap, push!, pop!"
-  `(let ((x (pop! ,stack))
-         (y (pop! ,stack)))
-     (set! ,stack (push (push ,stack x) y))))
