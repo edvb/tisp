@@ -1098,7 +1098,7 @@ tisp_env_init(size_t cap)
 	tisp_env_add(st, "Nil", st->nil);
 	tisp_env_add(st, "Void", st->none);
 	tisp_env_add(st, "bt", st->nil);
-	tisp_env_add(st, "version", mk_str(st, "0.0.0"));
+	tisp_env_add(st, "version", mk_str(st, "0.1"));
 	tsp_env_prim(car);
 	tsp_env_prim(cdr);
 	tsp_env_prim(cons);
