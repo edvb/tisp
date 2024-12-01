@@ -21,7 +21,7 @@ main(int argc, char *argv[])
 	int i = 1;
 	Val v = NULL;
 
-	Tsp st = tisp_env_init(64);
+	Tsp st = tisp_env_init(256);
 #ifndef TIB_DYNAMIC
 	tib_env_math(st);
 	tib_env_io(st);
@@ -61,10 +61,10 @@ readstr:
 				fputs("usage: tisp [-hrv] [-c COMMAND] [-] [FILE ...]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
-				v = tisp_eval_seq(st, st->global, tisp_parse_file(st, NULL));
+				v = tisp_eval_body(st, st->global, tisp_parse_file(st, NULL)); /* TODO rm duplication */
 			}
 		} else { /* otherwise read as file */
-			v = tisp_eval_seq(st, st->global, tisp_parse_file(st, argv[i]));
+			v = tisp_eval_body(st, st->global, tisp_parse_file(st, argv[i]));
 		}
 		if (v && v->t != TSP_NONE) tisp_print(stdout, v);
 	}

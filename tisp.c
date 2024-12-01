@@ -36,6 +36,7 @@
 
 /* functions */
 static void hash_add(Hash ht, char *key, Val val);
+static Val eval_proc(Tsp st, Hash env, Val f, Val args);
 
 /* utility functions */
 
@@ -719,13 +720,26 @@ tisp_eval_list(Tsp st, Hash env, Val v)
 
 /* evaluate all elements of list returning last */
 Val
-tisp_eval_seq(Tsp st, Hash env, Val v)
+tisp_eval_body(Tsp st, Hash env, Val v)
 {
 	Val ret = st->none;
 	for (; v->t == TSP_PAIR; v = cdr(v))
-		if (!(ret = tisp_eval(st, env, car(v))))
+		if (nilp(cdr(v)) && car(v)->t == TSP_PAIR) { /* func call is last, do tail call */
+			Val f, args;
+			if (!(f = tisp_eval(st, env, caar(v))))
+				return NULL;
+			if (f->t != TSP_FUNC)
+				return eval_proc(st, env, f, cdar(v));
+			tsp_arg_num(cdar(v), f->v.f.name ? f->v.f.name : "anon",
+			            tsp_lstlen(f->v.f.args));
+			if (!(args = tisp_eval_list(st, env, cdar(v))))
+				return NULL;
+			if (!(env = hash_extend(f->v.f.env, f->v.f.args, args)))
+				return NULL;
+			v = mk_pair(NULL, f->v.f.body); /* continue loop from body of func call */
+		} else if (!(ret = tisp_eval(st, env, car(v))))
 			return NULL;
-	return nilp(v) ? ret : tisp_eval(st, env, v);
+	return ret;
 }
 
 static void
@@ -764,7 +778,7 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anon", tsp_lstlen(f->v.f.args));
 		if (!(fenv = hash_extend(f->v.f.env, f->v.f.args, args)))
 			return NULL;
-		if (!(ret = tisp_eval_seq(st, fenv, f->v.f.body)))
+		if (!(ret = tisp_eval_body(st, fenv, f->v.f.body)))
 			return prepend_bt(st, env, f), NULL;
 		if (f->t == TSP_MACRO) /* TODO remove w/ expand_macro */
 			ret = tisp_eval(st, env, ret);
@@ -936,7 +950,7 @@ form_cond(Tsp st, Hash env, Val args)
 		if (!(cond = tisp_eval(st, env, caar(v))))
 			return NULL;
 		else if (!nilp(cond)) /* TODO incorporate else directly into cond */
-			return tisp_eval_seq(st, env, cdar(v));
+			return tisp_eval_body(st, env, cdar(v));
 	return st->none;
 }
 
@@ -1116,7 +1130,7 @@ prim_load(Tsp st, Hash env, Val args)
 		strcat(name, tib->v.s);
 		strcat(name, ".tsp");
 		if (access(name, R_OK) != -1) {
-			tisp_eval_seq(st, env, tisp_parse_file(st, name));
+			tisp_eval_body(st, env, tisp_parse_file(st, name));
 			return st->none;
 		}
 	}
@@ -1226,8 +1240,9 @@ tisp_env_lib(Tsp st, char* lib)
 	size_t filec = st->filec;
 	st->file = lib;
 	st->filec = 0;
+	skip_ws(st, 1);
 	if ((v = tisp_read(st)))
-		tisp_eval_seq(st, st->global, v);
+		tisp_eval_body(st, st->global, v);
 	st->file = file;
 	st->filec = filec;
 }

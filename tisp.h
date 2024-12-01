@@ -144,14 +144,16 @@ Val mk_str(Tsp st, char *s);
 Val mk_sym(Tsp st, char *s);
 Val mk_prim(TspType t, Prim prim, char *name);
 Val mk_func(TspType t, char *name, Val args, Val body, Hash env);
+Val mk_table(Tsp st, Hash env, Val assoc);
 Val mk_pair(Val a, Val b);
 Val mk_list(Tsp st, int n, ...);
 
 Val read_pair(Tsp st, char endchar);
+Val tisp_read_sexpr(Tsp st);
 Val tisp_read(Tsp st);
 Val tisp_read_line(Tsp st);
 Val tisp_eval_list(Tsp st, Hash env, Val v);
-Val tisp_eval_seq(Tsp st, Hash env, Val v);
+Val tisp_eval_body(Tsp st, Hash env, Val v);
 Val tisp_eval(Tsp st, Hash env, Val v);
 void tisp_print(FILE *f, Val v);
 
