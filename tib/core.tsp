@@ -61,6 +61,7 @@
 (def (specialform? x) (= (typeof x) "Form"))
 (def (function? x)    (= (typeof x) "Func"))
 (def (macro? x)       (= (typeof x) "Macro"))
+(def (table? x)       (= (typeof x) "Table"))
 (def (pair? x)        (= (typeof x) "Pair"))
 (def (atom? x)        (not (pair? x)))
 (def (cons? x)        (and (pair? x) (not (pair? (cdr x)))))
@@ -131,6 +132,7 @@
           vars)
         (list* proc (map car vars))))
 
+; TODO support else that is run if no values are equal
 (defmacro (switch val . body)
   "Compare value to first element in each body statement, only running line where they are equal"
   (list* 'cond (map
@@ -202,20 +204,16 @@
 (def False ())
 (def (not x)
   (if x Nil True))
-; TODO logic func many arguments
 ; Use a macro so arguments aren't evaluated all at once
 (defmacro (and a b)
   "Return b if a is not nil, else return nil"
   (list 'if a b Nil))
-(defmacro (nand a b)
-  "Not and, only true if both a and b are nil, else true"
-  (list 'not (list 'and a b)))
 (defmacro (or a b)
   "Return a if not nil, else return b"
   (list 'if a a b))
-(defmacro (nor a b)
-  "Not or, only nil if both a and b are not nil, else true"
-  (list 'not (list 'or a b)))
+(defmacro (xor? a b)
+  "Exclusive or, either a or b are true, but not if both are true"
+  (list 'and (list 'or a b) (list 'not (list 'and a b))))
 
 ;;; Lists
 
@@ -399,12 +397,12 @@
 
 (def (push stack val)
   "Add value to front of stack
-  Also see push!, pop, peek"
+  Also see pop, peek"
   (cons val stack))
 
 (def (pop stack)
   "Get stack without first element
-  Also see pop!, push, peek"
+  Also see push, peek"
   (if stack
     (cdr stack)
     (error 'pop "Improper stack: " stack)))
@@ -418,7 +416,7 @@
 
 (def (swap stack)
   "Get stack where the first 2 values are swapped
-  Also see swap!, push, pop, peek"
+  Also see push, pop, peek"
   (let (x: (peek stack)
         y: (peek (pop stack)))
     (push (push (pop (pop stack)) x) y)))

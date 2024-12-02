@@ -58,6 +58,7 @@ char *tests[][2] = {
 	{ "True",        "True"        },
 	{ "()",          "Nil"         },
 	{ "Nil",         "Nil"         },
+	{ "Void",        "Void"        },
 
 	{ "comments",                  NULL      },
 	{ "; commment",                "Void"    },
@@ -79,6 +80,7 @@ char *tests[][2] = {
 	{ "'12",                     "12"        },
 	{ "'foo",                    "foo"       },
 	{ "'(1 2 3 4)",              "(1 2 3 4)" },
+	{ "'()",                     "Nil"       },
 
 	{ "cons",                         NULL              },
 	{ "(cons 1 2)",                   "(1 . 2)"         },
@@ -100,9 +102,6 @@ char *tests[][2] = {
 	{ "(car (cons 1 (cons 2 3)))",                 "1"       },
 	{ "(cdr (cons 1 (cons 2 3)))",                 "(2 . 3)" },
 	{ "(cdr (cdr (cons 1 (cons 2 3))))",           "3"       },
-
-	{ "void", NULL   },
-	{ "Void", "Void" },
 
 	{ "do",                                       NULL      },
 	{ "(do (+ 1 2) (+ 2 2))",                     "4"       },
@@ -208,6 +207,7 @@ char *tests[][2] = {
 	{ "(def (add2 x)"
 	  "        (+ x 1) (+ x 2))",    "Void"    },
 	{ "(add2 2)",                    "4"       },
+
 	{ "defined?",                    NULL      },
 	{ "(defined? invalid-var)",      "Nil"     },
 	{ "(defined? defined?)",         "True"    },
@@ -247,18 +247,14 @@ char *tests[][2] = {
 	{ "(and True ())",      "Nil"  },
 	{ "(and () True)",      "Nil"  },
 	{ "(and True True)",    "True" },
-	{ "(nand () ())",       "True" },
-	{ "(nand True ())",     "True" },
-	{ "(nand () True)",     "True" },
-	{ "(nand True True)",   "Nil"  },
 	{ "(or () ())",         "Nil"  },
 	{ "(or True ())",       "True" },
 	{ "(or () True)",       "True" },
 	{ "(or True True)",     "True" },
-	{ "(nor () ())",        "True" },
-	{ "(nor True ())",      "Nil"  },
-	{ "(nor () True)",      "Nil"  },
-	{ "(nor True True)",    "Nil"  },
+	{ "(xor? Nil ())",      "Nil"  },
+	{ "(xor? True Nil)",    "True" },
+	{ "(xor? Nil True)",    "True" },
+	{ "(xor? True True)",   "Nil"  },
 
 	{ "list",                     NULL                 },
 	{ "(list 1 2 3)",             "(1 2 3)"            },
