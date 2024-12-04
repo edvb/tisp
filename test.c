@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "tisp.h"
 #include "tibs.tsp.h"
@@ -380,7 +381,7 @@ char *tests[][2] = {
 	{ "`(foo bar quax)",          "(foo bar quax)"  },
 	{ "`(,foo ,bar)",             "(8 4)"           },
 	{ "`(,foo . ,bar)",           "(8 . 4)"         },
-	{ "`(,foo . ,bar)",           "(8 . 4)"         },
+	{ "`(,foo ,@bar)",            "(8 . 4)"         },
 	{ "`(foo bar ,foo fry)",      "(foo bar 8 fry)" },
 	{ "`(1 ,(+ 1 2) 5 ,(- 9 2))", "(1 3 5 7)"       },
 	{ "`(1 ,@(list 4 9))",        "(1 4 9)"         },
@@ -576,11 +577,13 @@ main(void)
 {
 	int correct = 0, total = 0, seccorrect = 0, sectotal = 0, last = 1;
 	int errors[LEN(tests)] = {0};
+	clock_t t;
 	Tsp st = tisp_env_init(1024);
 	tib_env_math(st);
 	tib_env_string(st);
 	tisp_env_lib(st, tibs);
 
+	t = clock();
 	for (int i = 0; ; i++) {
 		if (!tests[i][1]) {
 			if (i != 0) {
@@ -612,7 +615,9 @@ main(void)
 			sectotal++;
 		}
 	}
+	t = clock() - t;
 	printf("%-10s %d/%d\n", "total", correct, total);
+	printf("%f ms\n", ((double)t)/CLOCKS_PER_SEC*100);
 
 	return correct != total;
 }
