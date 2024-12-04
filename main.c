@@ -49,11 +49,11 @@ main(int argc, char *argv[])
 				}
 readstr:
 				if ((v = tisp_read(st)))
-					v = tisp_eval(st, st->global, v);
+					v = tisp_eval(st, st->env, v);
 			} else if (argv[i][1] == 'r') {
 				st->file = "(repl)";
 				if ((v = tisp_read(st)))
-					v = tisp_eval(st, st->global, v);
+					v = tisp_eval(st, st->env, v);
 			} else if (argv[i][1] == 'v') { /* version and copyright info */
 				fprintf(stderr, "tisp v%s (c) 2017-2024 Ed van Bruggen\n", VERSION);
 				exit(0);
@@ -61,10 +61,10 @@ readstr:
 				fputs("usage: tisp [-hrv] [-c COMMAND] [-] [FILE ...]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
-				v = tisp_eval_body(st, st->global, tisp_parse_file(st, NULL)); /* TODO rm duplication */
+				v = tisp_eval_body(st, st->env, tisp_parse_file(st, NULL)); /* TODO rm duplication */
 			}
 		} else { /* otherwise read as file */
-			v = tisp_eval_body(st, st->global, tisp_parse_file(st, argv[i]));
+			v = tisp_eval_body(st, st->env, tisp_parse_file(st, argv[i]));
 		}
 		if (v && v->t != TSP_NONE) tisp_print(stdout, v);
 	}

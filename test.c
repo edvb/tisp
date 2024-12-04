@@ -545,12 +545,13 @@ tisp_test(Tsp st, const char *input, const char *expect, int output)
 	size_t nread;
 	char buf[BUFSIZ] = {0};
 
+	/* TODO eval expect as well, then compare values? and compare printed strings */
 	if (!(st->file = strdup(input)))
 		return 0;
 	st->filec = 0;
 	if (!(v = tisp_read(st)))
 		return 0;
-	if (!(v = tisp_eval(st, st->global, v))) {
+	if (!(v = tisp_eval(st, st->env, v))) {
 		if (output)
 			putchar('\n');
 		return 0;

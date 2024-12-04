@@ -129,7 +129,7 @@ struct Tsp {
 	char *file;
 	size_t filec;
 	Val none, nil, t;
-	Hash global, strs, syms;
+	Hash env, strs, syms;
 	void **libh;
 	size_t libhc;
 };

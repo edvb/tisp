@@ -110,6 +110,7 @@ skip_ws(Tsp st, int skipnl)
 }
 
 /* count number of parenthesis */
+/* FIXME makes reading O(n^2) replace w/ better counting sys */
 static int
 count_parens(char *s, int len)
 {
@@ -926,7 +927,7 @@ prim_eval(Tsp st, Hash env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "eval", 1);
-	return (v = tisp_eval(st, st->global, car(args))) ? v : st->none;
+	return (v = tisp_eval(st, st->env, car(args))) ? v : st->none;
 }
 
 /* test equality of all values given */
@@ -1181,7 +1182,7 @@ prim_error(Tsp st, Hash env, Val args)
 void
 tisp_env_add(Tsp st, char *key, Val v)
 {
-	hash_add(st->global, key, v);
+	hash_add(st->env, key, v);
 }
 
 /* initialise tisp's state and global environment */
@@ -1197,12 +1198,13 @@ tisp_env_init(size_t cap)
 	st->strs = hash_new(cap, NULL);
 	st->syms = hash_new(cap, NULL);
 
+	/* TODO make globals */
 	st->nil = mk_val(TSP_NIL);
 	st->none = mk_val(TSP_NONE);
 	st->t = mk_val(TSP_SYM);
 	st->t->v.s = "True";
 
-	st->global = hash_new(cap, NULL);
+	st->env = hash_new(cap, NULL);
 	tisp_env_add(st, "True", st->t);
 	tisp_env_add(st, "Nil", st->nil);
 	tisp_env_add(st, "Void", st->none);
@@ -1242,7 +1244,7 @@ tisp_env_lib(Tsp st, char* lib)
 	st->filec = 0;
 	skip_ws(st, 1);
 	if ((v = tisp_read(st)))
-		tisp_eval_body(st, st->global, v);
+		tisp_eval_body(st, st->env, v);
 	st->file = file;
 	st->filec = filec;
 }
