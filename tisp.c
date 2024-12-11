@@ -327,7 +327,7 @@ mk_rat(int num, int den)
 	return ret;
 }
 
-/* TODO combine mk_str and mk_sym */
+/* TODO combine mk_str and mk_sym, replace st with intern hash */
 Val
 mk_str(Tsp st, char *s)
 {
@@ -522,25 +522,25 @@ read_str(Tsp st, Val (*mk_fn)(Tsp, char*))
 		if (!tsp_fget(st))
 			tsp_warnf("reached end before closing %c", endchar);
 		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, -1) != '\\')
-			tsp_finc(st); /* skip over break condition */
+			tsp_finc(st); /* skip over break condition since it is escaped */
 	tsp_finc(st); /* skip last closing quote */
-	return mk_str(st, esc_str(s, len));
+	return mk_fn(st, esc_str(s, len));
 }
 
 /* return read symbol */
 static Val
 read_sym(Tsp st, int (*is_char)(char))
 {
-	int n = 16, len = 0;
-	char *sym = malloc(n);
-	for (; is_char(tsp_fget(st)); tsp_finc(st)) {
-		if (!sym) perror("; alloc"), exit(1);
-		sym[len++] = tsp_fget(st);
-		if (len == n)
-			sym = realloc(sym, n *= 2);
-	}
-	sym[len] = '\0';
-	return mk_sym(st, sym);
+	int len = 0;
+	char *ret, *s = st->file + st->filec;
+	for (; is_char(tsp_fget(st)); tsp_finc(st))
+		len++; /* get length of new symbol */
+	if (!(ret = malloc((len+1) * sizeof(char))))
+		perror("; malloc"), exit(1);
+	for (char *pos = ret; pos-ret < len; pos++, s++)
+		*pos = *s; /* copy to returned symbol */
+	ret[len] = '\0';
+	return mk_sym(st, ret);
 }
 
 /* return read string containing a list */
