@@ -498,12 +498,12 @@ esc_char(char c)
 
 /* replace all encoded escape characters in string with their actual character */
 static char *
-esc_str(char *s, int len)
+esc_str(char *s, int len, int do_esc)
 {
 	char *pos, *ret = malloc((len+1) * sizeof(char));
 	if (!ret) perror("; malloc"), exit(1);
 	for (pos = ret; pos-ret < len; pos++, s++)
-		*pos = (*s == '\\') ? esc_char(*(++s)) : *s;
+		*pos = (*s == '\\' && do_esc) ? esc_char(*(++s)) : *s;
 	*pos = '\0';
 	return ret;
 }
@@ -521,7 +521,7 @@ read_str(Tsp st, Val (*mk_fn)(Tsp, char*))
 		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, -1) != '\\')
 			tsp_finc(st); /* skip over break condition since it is escaped */
 	tsp_finc(st); /* skip last closing quote */
-	return mk_fn(st, esc_str(s, len));
+	return mk_fn(st, esc_str(s, len, mk_fn == &mk_str)); /* only escape strings */
 }
 
 /* return read symbol */
@@ -532,12 +532,7 @@ read_sym(Tsp st, int (*is_char)(char))
 	char *ret, *s = st->file + st->filec;
 	for (; is_char(tsp_fget(st)); tsp_finc(st))
 		len++; /* get length of new symbol */
-	if (!(ret = malloc((len+1) * sizeof(char))))
-		perror("; malloc"), exit(1);
-	for (char *pos = ret; pos-ret < len; pos++, s++)
-		*pos = *s; /* copy to returned symbol */
-	ret[len] = '\0';
-	return mk_sym(st, ret);
+	return mk_sym(st, esc_str(s, len, 0));
 }
 
 /* return read string containing a list */
