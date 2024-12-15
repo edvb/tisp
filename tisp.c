@@ -335,9 +335,7 @@ mk_str(Tsp st, char *s)
 	if ((ret = hash_get(st->strs, s)))
 		return ret;
 	ret = mk_val(TSP_STR);
-	/* TODO remove strndup, POSIX extension */
-	if (!(ret->v.s = strndup(s, strlen(s))))
-		perror("; strndup"), exit(1);
+	ret->v.s = s;
 	hash_add(st->strs, s, ret);
 	return ret;
 }
@@ -349,8 +347,7 @@ mk_sym(Tsp st, char *s)
 	if ((ret = hash_get(st->syms, s)))
 		return ret;
 	ret = mk_val(TSP_SYM);
-	if (!(ret->v.s = strndup(s, strlen(s))))
-		perror("; strndup"), exit(1);
+	ret->v.s = s;
 	hash_add(st->syms, s, ret);
 	return ret;
 }
