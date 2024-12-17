@@ -98,6 +98,14 @@ prim_Sym(Tsp st, Hash env, Val args)
 	return val_string(st, args, mk_sym);
 }
 
+static Val
+prim_strlen(Tsp st, Hash env, Val args)
+{
+	tsp_arg_min(args, "strlen", 1);
+	tsp_arg_type(car(args), "strlen", TSP_STR | TSP_SYM);
+	return mk_int(strlen(car(args)->v.s));
+}
+
 /* perform interpolation on explicit string, evaluating anything inside curly braces */
 static Val
 form_strformat(Tsp st, Hash env, Val args)
@@ -150,5 +158,6 @@ tib_env_string(Tsp st)
 {
 	tsp_env_prim(Sym);
 	tsp_env_prim(Str);
+	tsp_env_prim(strlen);
 	tsp_env_form(strformat);
 }

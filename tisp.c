@@ -621,16 +621,14 @@ tisp_read(Tsp st)
 	} else if (tsp_fget(st) == ':') {
 		tsp_finc(st);
 		switch (tsp_fget(st)) {
-		case '[': /* var:[val] => (get var val) */
+		case '[': /* proc:[lst] => (map proc lst) */
 			tsp_finc(st);
 			if (!(w = read_pair(st, ']'))) return NULL;
-			if (!nilp(cdr(w))) tsp_warn("get: only expected 1 argument");
-			return mk_list(st, 3, mk_sym(st, "get"), v, car(w));
-		case ':': /* var::prop => (get var 'prop) */
+			return mk_pair(mk_sym(st, "map"), mk_pair(v, w));
+		case ':': /* var::prop => (var 'prop) */
 			tsp_finc(st);
 			if (!(w = read_sym(st, &is_sym))) return NULL;
-			return mk_list(st, 3, mk_sym(st, "get"), v,
-				       mk_list(st, 2, mk_sym(st, "quote"), w));
+			return mk_list(st, 2, v, mk_list(st, 2, mk_sym(st, "quote"), w));
 		default: /* key: val => (key val) */
 			skip_ws(st, 1);
 			if (!(w = tisp_read(st))) return NULL;
@@ -777,9 +775,13 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 			ret = tisp_eval(st, env, ret);
 		return ret;
 	case TSP_TABLE:
-		if (!(ret = hash_get(f->v.tb, "@")))
-			tsp_warn("could not evaluate table as procedure, missing @ function");
-		return eval_proc(st, env, ret, args);
+		if (!(args = tisp_eval_list(st, env, args)))
+			return NULL;
+		tsp_arg_num(args, "table", 1);
+		tsp_arg_type(car(args), "table", TSP_SYM);
+		if (!(ret = hash_get(f->v.tb, car(args)->v.s)))
+			tsp_warnf("could not find element '%s' in table", car(args)->v.s);
+		return ret;
 	default:
 		tsp_warnf("attempt to evaluate non procedural type %s", tsp_type_str(f->t));
 	}
@@ -793,7 +795,7 @@ tisp_eval(Tsp st, Hash env, Val v)
 	switch (v->t) {
 	case TSP_SYM:
 		if (!(f = hash_get(env, v->v.s)))
-			tsp_warnf("could not find symbol %s", v->v.s);
+			tsp_warnf("could not find symbol '%s'", v->v.s);
 		return f;
 	case TSP_PAIR:
 		if (!(f = tisp_eval(st, env, car(v))))
@@ -835,6 +837,7 @@ tisp_print(FILE *f, Val v)
 		break;
 	case TSP_FUNC:
 	case TSP_MACRO:
+		/* TODO replace with printing function name with type annotaction */
 		fprintf(f, "#<%s%s%s>", /* if proc name is not null print it */
 		            v->t == TSP_FUNC ? "function" : "macro",
 		            v->v.f.name ? ":" : "", /* TODO dont work for anon funcs */
@@ -955,54 +958,29 @@ prim_typeof(Tsp st, Hash env, Val args)
 	return mk_str(st, tsp_type_str(car(args)->t));
 }
 
-/* TODO rename get to getattr like python ? */
-/* get a property of given value */
+/* return table containing properties of given procedure */
 static Val
-prim_get(Tsp st, Hash env, Val args)
+prim_procprops(Tsp st, Hash env, Val args)
 {
-	Val v, prop;
-	tsp_arg_num(args, "get", 2);
-	v = car(args), prop = cadr(args);
-	tsp_arg_type(prop, "get", TSP_SYM);
-	switch (v->t) {
+	tsp_arg_num(args, "procprops", 1);
+	Val proc = car(args);
+	Hash ret = hash_new(6, NULL);
+	switch (proc->t) {
 	case TSP_FORM:
 	case TSP_PRIM:
-		if (!strncmp(prop->v.s, "name", 4))
-			return mk_sym(st, v->v.pr.name);
+		hash_add(ret, "name", mk_sym(st, proc->v.pr.name));
 		break;
 	case TSP_FUNC:
 	case TSP_MACRO:
-		if (!strncmp(prop->v.s, "name", 4))
-			return mk_sym(st, v->v.f.name ? v->v.f.name : "anon");
-		if (!strncmp(prop->v.s, "body", 4))
-			return v->v.f.body;
-		if (!strncmp(prop->v.s, "args", 4))
-			return v->v.f.args;
+		hash_add(ret, "name", mk_sym(st, proc->v.f.name ? proc->v.f.name : "anon"));
+		hash_add(ret, "args", proc->v.f.args);
+		hash_add(ret, "body", proc->v.f.body);
+		/* hash_add(ret, "env", proc->v.f.env); */
 		break;
-	case TSP_TABLE:
-		if (!(v = hash_get(v->v.tb, prop->v.s)))
-			tsp_warnf("could not find element '%s' in table", prop->v.s);
-		return v;
-	case TSP_INT:
-	case TSP_RATIO:
-		if (!strncmp(prop->v.s, "numerator", 9))
-			return mk_int(v->v.n.num);
-		if (!strncmp(prop->v.s, "denominator", 9))
-			return mk_int(v->v.n.den);
-		break;
-	case TSP_PAIR: /* TODO get nth element if number */
-		if (!strncmp(prop->v.s, "car", 3))
-			return v->v.p.car;
-		if (!strncmp(prop->v.s, "cdr", 3))
-			return v->v.p.cdr;
-		break;
-	case TSP_STR:
-	case TSP_SYM:
-		if (!strncmp(prop->v.s, "len", 3))
-			return mk_int(strlen(v->v.s));
-	default: break;
+	default:
+		tsp_warnf("procprops: expected Proc, received '%s'", tsp_type_str(proc->t));
 	}
-	tsp_warnf("get: can not access '%s' from type '%s'", prop->v.s, tsp_type_str(v->t));
+	return mk_table(st, ret, NULL);
 }
 
 /* creates new tisp function */
@@ -1210,7 +1188,7 @@ tisp_env_init(size_t cap)
 	tsp_env_name_prim(=, eq);
 	tsp_env_form(cond);
 	tsp_env_prim(typeof);
-	tsp_env_prim(get);
+	tsp_env_prim(procprops);
 	tsp_env_form(Func);
 	tsp_env_form(Macro);
 	tsp_env_form(Table);

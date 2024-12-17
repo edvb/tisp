@@ -243,6 +243,22 @@ PRIM_TRIG(atanh)
 PRIM_TRIG(exp)
 PRIM_TRIG(log)
 
+static Val
+prim_numerator(Tsp st, Hash env, Val args)
+{
+	tsp_arg_num(args, "numerator", 1);
+	tsp_arg_type(car(args), "numerator", TSP_INT | TSP_RATIO);
+	return mk_int(car(args)->v.n.num);
+}
+
+static Val
+prim_denominator(Tsp st, Hash env, Val args)
+{
+	tsp_arg_num(args, "denominator", 1);
+	tsp_arg_type(car(args), "denominator", TSP_INT | TSP_RATIO);
+	return mk_int(car(args)->v.n.den);
+}
+
 void
 tib_env_math(Tsp st)
 {
@@ -251,6 +267,8 @@ tib_env_math(Tsp st)
 	tsp_env_prim(floor);
 	tsp_env_prim(ceil);
 	tsp_env_prim(round);
+	tsp_env_prim(numerator);
+	tsp_env_prim(denominator);
 
 	tsp_env_name_prim(+, add);
 	tsp_env_name_prim(-, sub);
