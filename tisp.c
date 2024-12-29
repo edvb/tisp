@@ -529,7 +529,7 @@ static Val
 read_sym(Tsp st, int (*is_char)(char))
 {
 	int len = 0;
-	char *ret, *s = st->file + st->filec;
+	char *s = st->file + st->filec;
 	for (; is_char(tsp_fget(st)); tsp_finc(st))
 		len++; /* get length of new symbol */
 	return mk_sym(st, esc_str(s, len, 0));
@@ -1089,7 +1089,7 @@ prim_load(Tsp st, Hash env, Val args)
 	void (*tibenv)(Tsp);
 	char name[PATH_MAX];
 	const char *paths[] = {
-		"/usr/local/share/tisp/", "/usr/share/tisp/", "./", NULL
+		"/usr/local/lib/tisp/pkgs/", "/usr/lib/tisp/pkgs/", "./", NULL
 	};
 
 	tsp_arg_num(args, "load", 1);
@@ -1115,7 +1115,7 @@ prim_load(Tsp st, Hash env, Val args)
 	strcat(name, tib->v.s);
 	strcat(name, ".so");
 	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY)))
-		tsp_warnf("load: could not load '%s':\n%s", tib->v.s, dlerror());
+		tsp_warnf("load: could not load '%s':\n; %s", tib->v.s, dlerror());
 	dlerror();
 
 	memset(name, 0, sizeof(name));

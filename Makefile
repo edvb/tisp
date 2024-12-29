@@ -12,7 +12,7 @@ EXE = tisp
 SRC = tisp.c main.c
 TIB = tib/math.c tib/io.c tib/os.c tib/string.c
 OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
-LIB = tib/libtibmath.so tib/libtibio.so
+LIB = $(TIB:.c=.so)
 TSP = tib/core.tsp tib/doc.tsp tib/io.tsp tib/math.tsp tib/os.tsp
 DOC = doc/tisp.1.md doc/tisp.7.md
 MAN = $(DOC:.md=)
@@ -77,12 +77,9 @@ install: all
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	@cp -f doc/$(EXE).1 $(DESTDIR)$(MANPREFIX)/man1/
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@echo installing shared libraries to $(DESTDIR)$(PREFIX)/lib/tisp
-	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp
-	@cp -f $(LIB) $(DESTDIR)$(PREFIX)/lib/tisp
-	@echo installing tisp libraries to $(DESTDIR)$(PREFIX)/share/tisp
-	@mkdir -p $(DESTDIR)$(PREFIX)/share/tisp
-	@cp -f $(TSP) $(DESTDIR)$(PREFIX)/share/tisp
+	@echo installing tibs to $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
+	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
+	@cp -f $(TSP) $(LIB) $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
 
 uninstall:
 	@echo removing $(EXE) from $(DESTDIR)$(PREFIX)/bin
