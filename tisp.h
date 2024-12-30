@@ -19,6 +19,8 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#define TSP_MAX_TABLE_PRINT 64
+
 #define TSP_OP_CHARS "_+-*/\\|=^<>.:"
 #define TSP_SYM_CHARS "_!?" "@#$%&~" "*-"
 

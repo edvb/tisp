@@ -857,6 +857,9 @@ tisp_print(FILE *f, Val v)
 					c++;
 					fprintf(f, " %s: ", h->items[i].key);
 					tisp_print(f, h->items[i].val);
+				} else if (c == TSP_MAX_TABLE_PRINT) {
+					fputs(" ...", f);
+					break;
 				}
 		fputs(" }", f);
 		break;
