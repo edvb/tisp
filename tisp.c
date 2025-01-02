@@ -618,6 +618,11 @@ tisp_read(Tsp st)
 		tsp_finc(st);
 		if (!(lst = read_pair(st, ']'))) return NULL;
 		return mk_pair(v, lst);
+	} else if (tsp_fget(st) == '{') { /* rec{ key: value } => (recmerge rec { key: value }) */
+		tsp_finc(st);
+		if (!(lst = read_pair(st, '}'))) return NULL;
+		return mk_list(st, 3, mk_sym(st, "recmerge"), v,
+		                      mk_pair(mk_sym(st, "Table"), lst));
 	} else if (tsp_fget(st) == ':') {
 		tsp_finc(st);
 		switch (tsp_fget(st)) {
@@ -1021,6 +1026,40 @@ form_Table(Tsp st, Hash env, Val args)
 	return ret;
 }
 
+/* merge second table into first table, without mutation */
+static Val
+prim_recmerge(Tsp st, Hash env, Val args)
+{
+	Val ret = mk_val(TSP_TABLE);;
+	tsp_arg_num(args, "recmerge", 2);
+	tsp_arg_type(car(args), "recmerge", TSP_TABLE);
+	tsp_arg_type(cadr(args), "recmerge", TSP_TABLE);
+	ret->v.tb = hash_new(cadr(args)->v.tb->size*2, car(args)->v.tb);
+	for (Hash h = cadr(args)->v.tb; h; h = h->next)
+		for (int i = 0, c = 0; c < h->size; i++)
+			if (h->items[i].key)
+				c++, hash_add(ret->v.tb, h->items[i].key, h->items[i].val);
+	return ret;
+}
+
+/* retrieve list of every entry in given record */
+static Val
+prim_records(Tsp st, Hash env, Val args)
+{
+	Val ret = st->nil;
+	tsp_arg_num(args, "records", 1);
+	tsp_arg_type(car(args), "records", TSP_TABLE);
+	for (Hash h = car(args)->v.tb; h; h = h->next)
+		for (int i = 0, c = 0; c < h->size; i++)
+			if (h->items[i].key) {
+				Val entry = mk_pair(mk_sym(st, h->items[i].key),
+				                               h->items[i].val);
+				ret = mk_pair(entry, ret);
+				c++;
+			}
+	return ret;
+}
+
 /* creates new variable of given name and value
  * if pair is given as name of variable, creates function with the car as the
  * function name and the cdr the function arguments */
@@ -1195,6 +1234,8 @@ tisp_env_init(size_t cap)
 	tsp_env_form(Func);
 	tsp_env_form(Macro);
 	tsp_env_form(Table);
+	tsp_env_prim(recmerge);
+	tsp_env_prim(records);
 	tsp_env_form(def);
 	tsp_env_name_form(undefine!, undefine);
 	tsp_env_name_form(defined?, definedp);
