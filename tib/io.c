@@ -28,7 +28,7 @@
 /* write all arguemnts to given file, or stdout/stderr, without newline */
 /* first argument is file name, second is option to append file */
 static Val
-prim_write(Tsp st, Hash env, Val args)
+prim_write(Tsp st, Rec env, Val args)
 {
 	FILE *f;
 	const char *mode = "w";
@@ -60,7 +60,7 @@ prim_write(Tsp st, Hash env, Val args)
 
 /* return string of given file or read from stdin */
 static Val
-prim_read(Tsp st, Hash env, Val args)
+prim_read(Tsp st, Rec env, Val args)
 {
 	char *file, *fname = NULL; /* read from stdin by default */
 	tsp_arg_max(args, "read", 1);
@@ -76,7 +76,7 @@ prim_read(Tsp st, Hash env, Val args)
 /* parse string as tisp expression, return (quit) if given nil */
 /* TODO parse more than 1 expression */
 static Val
-prim_parse(Tsp st, Hash env, Val args)
+prim_parse(Tsp st, Rec env, Val args)
 {
 	Val expr;
 	char *file = st->file;

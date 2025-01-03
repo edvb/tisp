@@ -84,7 +84,7 @@ val_string(Tsp st, Val args, MkFn mk_fn)
 
 /* convert all args to a string */
 static Val
-prim_Str(Tsp st, Hash env, Val args)
+prim_Str(Tsp st, Rec env, Val args)
 {
 	tsp_arg_min(args, "Str", 1);
 	return val_string(st, args, mk_str);
@@ -92,14 +92,14 @@ prim_Str(Tsp st, Hash env, Val args)
 
 /* convert all args to a symbol */
 static Val
-prim_Sym(Tsp st, Hash env, Val args)
+prim_Sym(Tsp st, Rec env, Val args)
 {
 	tsp_arg_min(args, "Sym", 1);
 	return val_string(st, args, mk_sym);
 }
 
 static Val
-prim_strlen(Tsp st, Hash env, Val args)
+prim_strlen(Tsp st, Rec env, Val args)
 {
 	tsp_arg_min(args, "strlen", 1);
 	tsp_arg_type(car(args), "strlen", TSP_STR | TSP_SYM);
@@ -108,7 +108,7 @@ prim_strlen(Tsp st, Hash env, Val args)
 
 /* perform interpolation on explicit string, evaluating anything inside curly braces */
 static Val
-form_strformat(Tsp st, Hash env, Val args)
+form_strformat(Tsp st, Rec env, Val args)
 {
 	char *ret, *str;
 	int ret_len, ret_cap, pos = 0;
@@ -127,6 +127,7 @@ form_strformat(Tsp st, Hash env, Val args)
 			char *file = st->file;
 			size_t filec = st->filec;
 			st->file = ++str, st->filec = 0;
+			/* TODO skip until } to allow for comments */
 			if (!(v = read_pair(st, '}')))
 				return NULL;
 			str += st->filec;

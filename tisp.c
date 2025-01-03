@@ -35,8 +35,8 @@
 #define LEN(X)            (sizeof(X) / sizeof((X)[0]))
 
 /* functions */
-static void hash_add(Hash ht, char *key, Val val);
-static Val eval_proc(Tsp st, Hash env, Val f, Val args);
+static void rec_add(Rec ht, char *key, Val val);
+static Val eval_proc(Tsp st, Rec env, Val f, Val args);
 
 /* utility functions */
 
@@ -57,8 +57,8 @@ tsp_type_str(TspType t)
 	case TSP_FORM:  return "Form";
 	case TSP_FUNC:  return "Func";
 	case TSP_MACRO: return "Macro";
-	case TSP_TABLE: return "Table";
 	case TSP_PAIR:  return "Pair";
+	case TSP_REC:   return "Rec";
 	default:
 		if (t == TSP_EXPR)
 			return "Expr";
@@ -169,7 +169,7 @@ frac_reduce(int *num, int *den)
 	*den = *den / b;
 }
 
-/* hash map */
+/* records */
 
 /* return hashed number based on key */
 static uint32_t
@@ -182,11 +182,11 @@ hash(char *key)
 	return h;
 }
 
-/* create new empty hash table with given capacity */
-static Hash
-hash_new(size_t cap, Hash next)
+/* create new empty rec with given capacity */
+static Rec
+rec_new(size_t cap, Rec next)
 {
-	Hash ht = malloc(sizeof(struct Hash));
+	Rec ht = malloc(sizeof(struct Rec));
 	if (!ht) perror("; malloc"), exit(1);
 	ht->size = 0;
 	ht->cap = cap;
@@ -196,9 +196,9 @@ hash_new(size_t cap, Hash next)
 	return ht;
 }
 
-/* get entry in one hash table for the key */
+/* get entry in one record for the key */
 static Entry
-entry_get(Hash ht, char *key)
+entry_get(Rec ht, char *key)
 {
 	int i = hash(key) % ht->cap;
 	char *s;
@@ -212,9 +212,9 @@ entry_get(Hash ht, char *key)
 	return &ht->items[i]; /* returns entry if found or empty one to be filled */
 }
 
-/* get value of given key in each hash table */
+/* get value of given key in each record */
 static Val
-hash_get(Hash ht, char *key)
+rec_get(Rec ht, char *key)
 {
 	Entry e;
 	for (; ht; ht = ht->next) {
@@ -225,42 +225,42 @@ hash_get(Hash ht, char *key)
 	return NULL;
 }
 
-/* enlarge the hash table to ensure algorithm's efficiency */
+/* enlarge the record to ensure algorithm's efficiency */
 static void
-hash_grow(Hash ht)
+rec_grow(Rec ht)
 {
 	int i, ocap = ht->cap;
 	Entry oitems = ht->items;
 	ht->cap *= 2;
 	ht->items = calloc(ht->cap, sizeof(struct Entry));
 	if (!ht->items) perror("; calloc"), exit(1);
-	for (i = 0; i < ocap; i++) /* repopulate new hash table with old values */
+	for (i = 0; i < ocap; i++) /* repopulate new record with old values */
 		if (oitems[i].key)
-			hash_add(ht, oitems[i].key, oitems[i].val);
+			rec_add(ht, oitems[i].key, oitems[i].val);
 	free(oitems);
 }
 
-/* create new key and value pair to the hash table */
+/* create new key and value pair to the record */
 static void
-hash_add(Hash ht, char *key, Val val)
+rec_add(Rec ht, char *key, Val val)
 {
 	Entry e = entry_get(ht, key);
 	e->val = val;
 	if (!e->key) {
 		e->key = key;
-		if (++ht->size > ht->cap / 2) /* grow table if it is more than half full */
-			hash_grow(ht);
+		if (++ht->size > ht->cap / 2) /* grow record if it is more than half full */
+			rec_grow(ht);
 	}
 }
 
 /* add each binding args[i] -> vals[i] */
 /* args and vals are both lists */
-static Hash
-hash_extend(Hash ht, Val args, Val vals)
+static Rec
+rec_extend(Rec ht, Val args, Val vals)
 {
 	Val arg, val;
 	int argnum = tsp_lstlen(args);
-	Hash ret = hash_new(argnum > 0 ? 2*argnum : 8, ht);
+	Rec ret = rec_new(argnum > 0 ? 2*argnum : 8, ht);
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
 		if (args->t == TSP_PAIR) {
 			arg = car(args);
@@ -272,7 +272,7 @@ hash_extend(Hash ht, Val args, Val vals)
 		if (arg->t != TSP_SYM)
 			tsp_warnf("expected symbol for argument of function"
 				  " definition, recieved %s", tsp_type_str(arg->t));
-		hash_add(ret, arg->v.s, val);
+		rec_add(ret, arg->v.s, val);
 		if (args->t != TSP_PAIR)
 			break;
 	}
@@ -332,11 +332,11 @@ Val
 mk_str(Tsp st, char *s)
 {
 	Val ret;
-	if ((ret = hash_get(st->strs, s)))
+	if ((ret = rec_get(st->strs, s)))
 		return ret;
 	ret = mk_val(TSP_STR);
 	ret->v.s = s;
-	hash_add(st->strs, s, ret);
+	rec_add(st->strs, s, ret);
 	return ret;
 }
 
@@ -344,11 +344,11 @@ Val
 mk_sym(Tsp st, char *s)
 {
 	Val ret;
-	if ((ret = hash_get(st->syms, s)))
+	if ((ret = rec_get(st->syms, s)))
 		return ret;
 	ret = mk_val(TSP_SYM);
 	ret->v.s = s;
-	hash_add(st->syms, s, ret);
+	rec_add(st->syms, s, ret);
 	return ret;
 }
 
@@ -362,7 +362,7 @@ mk_prim(TspType t, Prim pr, char *name)
 }
 
 Val
-mk_func(TspType t, char *name, Val args, Val body, Hash env)
+mk_func(TspType t, char *name, Val args, Val body, Rec env)
 {
 	Val ret = mk_val(t);
 	ret->v.f.name = name;
@@ -373,23 +373,23 @@ mk_func(TspType t, char *name, Val args, Val body, Hash env)
 }
 
 Val
-mk_table(Tsp st, Hash env, Val assoc)
+mk_rec(Tsp st, Rec env, Val assoc)
 {
-	Val v, ret = mk_val(TSP_TABLE);
-	if (!assoc) return ret->v.tb = env, ret;
-	ret->v.tb = hash_new(64, NULL);
-	Hash h = hash_new(4, env);
-	hash_add(h, "this", ret);
+	Val v, ret = mk_val(TSP_REC);
+	if (!assoc) return ret->v.r = env, ret;
+	ret->v.r = rec_new(64, NULL);
+	Rec h = rec_new(4, env);
+	rec_add(h, "this", ret);
 	for (Val cur = assoc; cur->t == TSP_PAIR; cur = cdr(cur))
 		if (car(cur)->t == TSP_PAIR && caar(cur)->t & (TSP_SYM|TSP_STR)) {
 			if (!(v = tisp_eval(st, h, cdar(cur)->v.p.car)))
 				return NULL;
-			hash_add(ret->v.tb, caar(cur)->v.s, v);
+			rec_add(ret->v.r, caar(cur)->v.s, v);
 		} else if (car(cur)->t == TSP_SYM) {
 			if (!(v = tisp_eval(st, h, car(cur))))
 				return NULL;
-			hash_add(ret->v.tb, car(cur)->v.s, v);
-		} else tsp_warn("table: missing key symbol or string");
+			rec_add(ret->v.r, car(cur)->v.s, v);
+		} else tsp_warn("Rec: missing key symbol or string");
 	return ret;
 }
 
@@ -599,10 +599,10 @@ tisp_read_sexpr(Tsp st)
 		return tsp_finc(st), read_pair(st, ')');
 	if (tsp_fget(st) == '[') /* list */
 		return tsp_finc(st), mk_pair(mk_sym(st, "list"), read_pair(st, ']'));
-	if (tsp_fget(st) == '{') { /* table */
+	if (tsp_fget(st) == '{') { /* record */
 		Val v; tsp_finc(st);
 		if (!(v = read_pair(st, '}'))) return NULL;
-		return mk_pair(mk_sym(st, "Table"), v);
+		return mk_pair(mk_sym(st, "Rec"), v);
 	}
 	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
 }
@@ -622,7 +622,7 @@ tisp_read(Tsp st)
 		tsp_finc(st);
 		if (!(lst = read_pair(st, '}'))) return NULL;
 		return mk_list(st, 3, mk_sym(st, "recmerge"), v,
-		                      mk_pair(mk_sym(st, "Table"), lst));
+		                      mk_pair(mk_sym(st, "Rec"), lst));
 	} else if (tsp_fget(st) == ':') {
 		tsp_finc(st);
 		switch (tsp_fget(st)) {
@@ -697,7 +697,7 @@ tisp_parse_file(Tsp st, char *fname)
 
 /* evaluate each element of list */
 Val
-tisp_eval_list(Tsp st, Hash env, Val v)
+tisp_eval_list(Tsp st, Rec env, Val v)
 {
 	Val ret = mk_pair(NULL, st->nil), ev;
 	for (Val cur = ret; !nilp(v); v = cdr(v), cur = cdr(cur)) {
@@ -716,7 +716,7 @@ tisp_eval_list(Tsp st, Hash env, Val v)
 
 /* evaluate all elements of list returning last */
 Val
-tisp_eval_body(Tsp st, Hash env, Val v)
+tisp_eval_body(Tsp st, Rec env, Val v)
 {
 	Val ret = st->none;
 	for (; v->t == TSP_PAIR; v = cdr(v))
@@ -730,7 +730,7 @@ tisp_eval_body(Tsp st, Hash env, Val v)
 			            tsp_lstlen(f->v.f.args));
 			if (!(args = tisp_eval_list(st, env, cdar(v))))
 				return NULL;
-			if (!(env = hash_extend(f->v.f.env, f->v.f.args, args)))
+			if (!(env = rec_extend(f->v.f.env, f->v.f.args, args)))
 				return NULL;
 			v = mk_pair(NULL, f->v.f.body); /* continue loop from body of func call */
 		} else if (!(ret = tisp_eval(st, env, car(v))))
@@ -739,7 +739,7 @@ tisp_eval_body(Tsp st, Hash env, Val v)
 }
 
 static void
-prepend_bt(Tsp st, Hash env, Val f)
+prepend_bt(Tsp st, Rec env, Val f)
 {
 	if (!f->v.f.name) /* no need to record anonymous functions */
 		return;
@@ -754,10 +754,10 @@ prepend_bt(Tsp st, Hash env, Val f)
 /* evaluate procedure f with arguments */
 /* TODO Val f -> Func f */
 static Val
-eval_proc(Tsp st, Hash env, Val f, Val args)
+eval_proc(Tsp st, Rec env, Val f, Val args)
 {
 	Val ret;
-	Hash fenv;
+	Rec fenv;
 	/* evaluate function and primitive arguments before being passed */
 	switch (f->t) {
 	case TSP_PRIM:
@@ -772,20 +772,20 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 		/* FALLTHROUGH */
 	case TSP_MACRO:
 		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anon", tsp_lstlen(f->v.f.args));
-		if (!(fenv = hash_extend(f->v.f.env, f->v.f.args, args)))
+		if (!(fenv = rec_extend(f->v.f.env, f->v.f.args, args)))
 			return NULL;
 		if (!(ret = tisp_eval_body(st, fenv, f->v.f.body)))
 			return prepend_bt(st, env, f), NULL;
 		if (f->t == TSP_MACRO) /* TODO remove w/ expand_macro */
 			ret = tisp_eval(st, env, ret);
 		return ret;
-	case TSP_TABLE:
+	case TSP_REC:
 		if (!(args = tisp_eval_list(st, env, args)))
 			return NULL;
-		tsp_arg_num(args, "table", 1);
-		tsp_arg_type(car(args), "table", TSP_SYM);
-		if (!(ret = hash_get(f->v.tb, car(args)->v.s)))
-			tsp_warnf("could not find element '%s' in table", car(args)->v.s);
+		tsp_arg_num(args, "record", 1);
+		tsp_arg_type(car(args), "record", TSP_SYM);
+		if (!(ret = rec_get(f->v.r, car(args)->v.s)))
+			tsp_warnf("could not find element '%s' in record", car(args)->v.s);
 		return ret;
 	default:
 		tsp_warnf("attempt to evaluate non procedural type %s", tsp_type_str(f->t));
@@ -794,12 +794,12 @@ eval_proc(Tsp st, Hash env, Val f, Val args)
 
 /* evaluate given value */
 Val
-tisp_eval(Tsp st, Hash env, Val v)
+tisp_eval(Tsp st, Rec env, Val v)
 {
 	Val f;
 	switch (v->t) {
 	case TSP_SYM:
-		if (!(f = hash_get(env, v->v.s)))
+		if (!(f = rec_get(env, v->v.s)))
 			tsp_warnf("could not find symbol '%s'", v->v.s);
 		return f;
 	case TSP_PAIR:
@@ -814,6 +814,7 @@ tisp_eval(Tsp st, Hash env, Val v)
 /* print */
 
 /* main print function */
+/* TODO return Str, unify w/ val_string */
 void
 tisp_print(FILE *f, Val v)
 {
@@ -854,15 +855,15 @@ tisp_print(FILE *f, Val v)
 	case TSP_FORM:
 		fprintf(f, "#<form:%s>", v->v.pr.name);
 		break;
-	case TSP_TABLE:
+	case TSP_REC:
 		putc('{', f);
-		for (Hash h = v->v.tb; h; h = h->next)
+		for (Rec h = v->v.r; h; h = h->next)
 			for (int i = 0, c = 0; c < h->size; i++)
 				if (h->items[i].key) {
 					c++;
 					fprintf(f, " %s: ", h->items[i].key);
 					tisp_print(f, h->items[i].val);
-				} else if (c == TSP_MAX_TABLE_PRINT) {
+				} else if (c == TSP_REC_MAX_PRINT) {
 					fputs(" ...", f);
 					break;
 				}
@@ -886,13 +887,14 @@ tisp_print(FILE *f, Val v)
 	default:
 		fprintf(stderr, "; tisp: could not print value type %s\n", tsp_type_str(v->t));
 	}
+	/* fflush(f); */
 }
 
 /* primitives */
 
 /* return first element of list */
 static Val
-prim_car(Tsp st, Hash env, Val args)
+prim_car(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "car", 1);
 	tsp_arg_type(car(args), "car", TSP_PAIR);
@@ -901,7 +903,7 @@ prim_car(Tsp st, Hash env, Val args)
 
 /* return elements of a list after the first */
 static Val
-prim_cdr(Tsp st, Hash env, Val args)
+prim_cdr(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "cdr", 1);
 	tsp_arg_type(car(args), "cdr", TSP_PAIR);
@@ -910,7 +912,7 @@ prim_cdr(Tsp st, Hash env, Val args)
 
 /* return new pair */
 static Val
-prim_cons(Tsp st, Hash env, Val args)
+prim_cons(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "cons", 2);
 	return mk_pair(car(args), cadr(args));
@@ -918,7 +920,7 @@ prim_cons(Tsp st, Hash env, Val args)
 
 /* do not evaluate argument */
 static Val
-form_quote(Tsp st, Hash env, Val args)
+form_quote(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "quote", 1);
 	return car(args);
@@ -926,7 +928,7 @@ form_quote(Tsp st, Hash env, Val args)
 
 /* evaluate argument given */
 static Val
-prim_eval(Tsp st, Hash env, Val args)
+prim_eval(Tsp st, Rec env, Val args)
 {
 	Val v;
 	tsp_arg_num(args, "eval", 1);
@@ -935,19 +937,20 @@ prim_eval(Tsp st, Hash env, Val args)
 
 /* test equality of all values given */
 static Val
-prim_eq(Tsp st, Hash env, Val args)
+prim_eq(Tsp st, Rec env, Val args)
 {
 	if (nilp(args))
 		return st->t;
 	for (; !nilp(cdr(args)); args = cdr(args))
 		if (!vals_eq(car(args), cadr(args)))
 			return st->nil;
+	/* return nilp(car(args)) ? st->t : car(args); */
 	return st->t;
 }
 
 /* evaluates all expressions if their conditions are met */
 static Val
-form_cond(Tsp st, Hash env, Val args)
+form_cond(Tsp st, Rec env, Val args)
 {
 	Val v, cond;
 	for (v = args; !nilp(v); v = cdr(v))
@@ -960,40 +963,40 @@ form_cond(Tsp st, Hash env, Val args)
 
 /* return type of tisp value */
 static Val
-prim_typeof(Tsp st, Hash env, Val args)
+prim_typeof(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "typeof", 1);
 	return mk_str(st, tsp_type_str(car(args)->t));
 }
 
-/* return table containing properties of given procedure */
+/* return record of properties for given procedure */
 static Val
-prim_procprops(Tsp st, Hash env, Val args)
+prim_procprops(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "procprops", 1);
 	Val proc = car(args);
-	Hash ret = hash_new(6, NULL);
+	Rec ret = rec_new(6, NULL);
 	switch (proc->t) {
 	case TSP_FORM:
 	case TSP_PRIM:
-		hash_add(ret, "name", mk_sym(st, proc->v.pr.name));
+		rec_add(ret, "name", mk_sym(st, proc->v.pr.name));
 		break;
 	case TSP_FUNC:
 	case TSP_MACRO:
-		hash_add(ret, "name", mk_sym(st, proc->v.f.name ? proc->v.f.name : "anon"));
-		hash_add(ret, "args", proc->v.f.args);
-		hash_add(ret, "body", proc->v.f.body);
-		/* hash_add(ret, "env", proc->v.f.env); */
+		rec_add(ret, "name", mk_sym(st, proc->v.f.name ? proc->v.f.name : "anon"));
+		rec_add(ret, "args", proc->v.f.args);
+		rec_add(ret, "body", proc->v.f.body);
+		/* rec_add(ret, "env", proc->v.f.env); */
 		break;
 	default:
 		tsp_warnf("procprops: expected Proc, received '%s'", tsp_type_str(proc->t));
 	}
-	return mk_table(st, ret, NULL);
+	return mk_rec(st, ret, NULL);
 }
 
 /* creates new tisp function */
 static Val
-form_Func(Tsp st, Hash env, Val args)
+form_Func(Tsp st, Rec env, Val args)
 {
 	Val params, body;
 	tsp_arg_min(args, "Func", 1);
@@ -1009,7 +1012,7 @@ form_Func(Tsp st, Hash env, Val args)
 
 /* creates new tisp defined macro */
 static Val
-form_Macro(Tsp st, Hash env, Val args)
+form_Macro(Tsp st, Rec env, Val args)
 {
 	tsp_arg_min(args, "Macro", 1);
 	Val ret = form_Func(st, env, args);
@@ -1017,39 +1020,32 @@ form_Macro(Tsp st, Hash env, Val args)
 	return ret;
 }
 
-/* TODO support { var := 'hey } */
-/* create new table */
-static Val
-form_Table(Tsp st, Hash env, Val args)
-{
-	Val ret = mk_table(st, env, args);
-	return ret;
-}
+/** Records **/
 
-/* merge second table into first table, without mutation */
+/* merge second record into first record, without mutation */
 static Val
-prim_recmerge(Tsp st, Hash env, Val args)
+prim_recmerge(Tsp st, Rec env, Val args)
 {
-	Val ret = mk_val(TSP_TABLE);;
+	Val ret = mk_val(TSP_REC);;
 	tsp_arg_num(args, "recmerge", 2);
-	tsp_arg_type(car(args), "recmerge", TSP_TABLE);
-	tsp_arg_type(cadr(args), "recmerge", TSP_TABLE);
-	ret->v.tb = hash_new(cadr(args)->v.tb->size*2, car(args)->v.tb);
-	for (Hash h = cadr(args)->v.tb; h; h = h->next)
+	tsp_arg_type(car(args), "recmerge", TSP_REC);
+	tsp_arg_type(cadr(args), "recmerge", TSP_REC);
+	ret->v.r = rec_new(cadr(args)->v.r->size*2, car(args)->v.r);
+	for (Rec h = cadr(args)->v.r; h; h = h->next)
 		for (int i = 0, c = 0; c < h->size; i++)
 			if (h->items[i].key)
-				c++, hash_add(ret->v.tb, h->items[i].key, h->items[i].val);
+				c++, rec_add(ret->v.r, h->items[i].key, h->items[i].val);
 	return ret;
 }
 
 /* retrieve list of every entry in given record */
 static Val
-prim_records(Tsp st, Hash env, Val args)
+prim_records(Tsp st, Rec env, Val args)
 {
 	Val ret = st->nil;
 	tsp_arg_num(args, "records", 1);
-	tsp_arg_type(car(args), "records", TSP_TABLE);
-	for (Hash h = car(args)->v.tb; h; h = h->next)
+	tsp_arg_type(car(args), "records", TSP_REC);
+	for (Rec h = car(args)->v.r; h; h = h->next)
 		for (int i = 0, c = 0; c < h->size; i++)
 			if (h->items[i].key) {
 				Val entry = mk_pair(mk_sym(st, h->items[i].key),
@@ -1065,7 +1061,7 @@ prim_records(Tsp st, Hash env, Val args)
  * function name and the cdr the function arguments */
 /* TODO if var not func error if more than 2 args */
 static Val
-form_def(Tsp st, Hash env, Val args)
+form_def(Tsp st, Rec env, Val args)
 {
 	Val sym, val;
 	tsp_arg_min(args, "def", 1);
@@ -1084,18 +1080,18 @@ form_def(Tsp st, Hash env, Val args)
 		return NULL;
 	/* set procedure name if it was previously anonymous */
 	if (val->t & (TSP_FUNC|TSP_MACRO) && !val->v.f.name)
-		val->v.f.name = sym->v.s;
-	hash_add(env, sym->v.s, val);
+		val->v.f.name = sym->v.s; /* TODO some bug here */
+	rec_add(env, sym->v.s, val);
 	return st->none;
 }
 
 /* TODO fix crashing if try to undefine builtin */
 static Val
-form_undefine(Tsp st, Hash env, Val args)
+form_undefine(Tsp st, Rec env, Val args)
 {
 	tsp_arg_min(args, "undefine!", 1);
 	tsp_arg_type(car(args), "undefine!", TSP_SYM);
-	for (Hash h = env; h; h = h->next) {
+	for (Rec h = env; h; h = h->next) {
 		Entry e = entry_get(h, car(args)->v.s);
 		if (e->key) {
 			e->key = NULL;
@@ -1107,12 +1103,12 @@ form_undefine(Tsp st, Hash env, Val args)
 }
 
 static Val
-form_definedp(Tsp st, Hash env, Val args)
+form_definedp(Tsp st, Rec env, Val args)
 {
 	Entry e = NULL;
 	tsp_arg_min(args, "defined?", 1);
 	tsp_arg_type(car(args), "defined?", TSP_SYM);
-	for (Hash h = env; h; h = h->next) {
+	for (Rec h = env; h; h = h->next) {
 		e = entry_get(h, car(args)->v.s);
 		if (e->key)
 			break;
@@ -1125,7 +1121,7 @@ form_definedp(Tsp st, Hash env, Val args)
 /* TODO only use dlopen if -ldl is given with TIB_DYNAMIC */
 /* TODO define load in lisp which calls load-dl */
 static Val
-prim_load(Tsp st, Hash env, Val args)
+prim_load(Tsp st, Rec env, Val args)
 {
 	Val tib;
 	void (*tibenv)(Tsp);
@@ -1174,7 +1170,7 @@ prim_load(Tsp st, Hash env, Val args)
 
 /* display message and return error */
 static Val
-prim_error(Tsp st, Hash env, Val args)
+prim_error(Tsp st, Rec env, Val args)
 {
 	/* TODO have error auto print function name that was pre-defined */
 	tsp_arg_min(args, "error", 2);
@@ -1194,7 +1190,7 @@ prim_error(Tsp st, Hash env, Val args)
 void
 tisp_env_add(Tsp st, char *key, Val v)
 {
-	hash_add(st->env, key, v);
+	rec_add(st->env, key, v);
 }
 
 /* initialise tisp's state and global environment */
@@ -1207,8 +1203,8 @@ tisp_env_init(size_t cap)
 	st->file = NULL;
 	st->filec = 0;
 
-	st->strs = hash_new(cap, NULL);
-	st->syms = hash_new(cap, NULL);
+	st->strs = rec_new(cap, NULL);
+	st->syms = rec_new(cap, NULL);
 
 	/* TODO make globals */
 	st->nil = mk_val(TSP_NIL);
@@ -1216,7 +1212,7 @@ tisp_env_init(size_t cap)
 	st->t = mk_val(TSP_SYM);
 	st->t->v.s = "True";
 
-	st->env = hash_new(cap, NULL);
+	st->env = rec_new(cap, NULL);
 	tisp_env_add(st, "True", st->t);
 	tisp_env_add(st, "Nil", st->nil);
 	tisp_env_add(st, "Void", st->none);
@@ -1233,7 +1229,7 @@ tisp_env_init(size_t cap)
 	tsp_env_prim(procprops);
 	tsp_env_form(Func);
 	tsp_env_form(Macro);
-	tsp_env_form(Table);
+	tisp_env_add(st, "Rec", mk_prim(TSP_FORM, mk_rec, "Rec"));
 	tsp_env_prim(recmerge);
 	tsp_env_prim(records);
 	tsp_env_form(def);

@@ -61,7 +61,7 @@
 (def (specialform? x) (= (typeof x) "Form"))
 (def (function? x)    (= (typeof x) "Func"))
 (def (macro? x)       (= (typeof x) "Macro"))
-(def (table? x)       (= (typeof x) "Table"))
+(def (record? x)      (= (typeof x) "Rec"))
 (def (pair? x)        (= (typeof x) "Pair"))
 (def (atom? x)        (not (pair? x)))
 (def (cons? x)        (and (pair? x) (not (pair? (cdr x)))))

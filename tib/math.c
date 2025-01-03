@@ -75,7 +75,7 @@ static Val
 
 #define PRIM_ROUND(NAME, FORCE)                                      \
 static Val                                                           \
-prim_##NAME(Tsp st, Hash vars, Val args)                             \
+prim_##NAME(Tsp st, Rec vars, Val args)                              \
 {                                                                    \
 	Val n;                                                       \
 	tsp_arg_num(args, #NAME, 1);                                 \
@@ -96,7 +96,7 @@ PRIM_ROUND(floor, 0)
 PRIM_ROUND(ceil,  0)
 
 static Val
-prim_add(Tsp st, Hash vars, Val args)
+prim_add(Tsp st, Rec vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "+", 2);
@@ -111,7 +111,7 @@ prim_add(Tsp st, Hash vars, Val args)
 }
 
 static Val
-prim_sub(Tsp st, Hash vars, Val args)
+prim_sub(Tsp st, Rec vars, Val args)
 {
 	Val a, b;
 	int len = tsp_lstlen(args);
@@ -134,7 +134,7 @@ prim_sub(Tsp st, Hash vars, Val args)
 }
 
 static Val
-prim_mul(Tsp st, Hash vars, Val args)
+prim_mul(Tsp st, Rec vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "*", 2);
@@ -148,7 +148,7 @@ prim_mul(Tsp st, Hash vars, Val args)
 }
 
 static Val
-prim_div(Tsp st, Hash vars, Val args)
+prim_div(Tsp st, Rec vars, Val args)
 {
 	Val a, b;
 	int len = tsp_lstlen(args);
@@ -169,7 +169,7 @@ prim_div(Tsp st, Hash vars, Val args)
 }
 
 static Val
-prim_mod(Tsp st, Hash vars, Val args)
+prim_mod(Tsp st, Rec vars, Val args)
 {
 	Val a, b;
 	tsp_arg_num(args, "mod", 2);
@@ -183,7 +183,7 @@ prim_mod(Tsp st, Hash vars, Val args)
 
 /* TODO if given function as 2nd arg run it on first arg */
 static Val
-prim_pow(Tsp st, Hash vars, Val args)
+prim_pow(Tsp st, Rec vars, Val args)
 {
 	Val b, p;
 	double bnum, bden;
@@ -201,7 +201,7 @@ prim_pow(Tsp st, Hash vars, Val args)
 
 #define PRIM_COMPARE(NAME, OP)                          \
 static Val                                              \
-prim_##NAME(Tsp st, Hash vars, Val args)                \
+prim_##NAME(Tsp st, Rec vars, Val args)                 \
 {                                                       \
 	if (tsp_lstlen(args) != 2)                      \
 		return st->t;                           \
@@ -219,7 +219,7 @@ PRIM_COMPARE(gte, >=)
 
 #define PRIM_TRIG(NAME)                                      \
 static Val                                                   \
-prim_##NAME(Tsp st, Hash vars, Val args)                     \
+prim_##NAME(Tsp st, Rec vars, Val args)                      \
 {                                                            \
 	tsp_arg_num(args, #NAME, 1);                         \
 	tsp_arg_type(car(args), #NAME, TSP_EXPR);            \
@@ -244,7 +244,7 @@ PRIM_TRIG(exp)
 PRIM_TRIG(log)
 
 static Val
-prim_numerator(Tsp st, Hash env, Val args)
+prim_numerator(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "numerator", 1);
 	tsp_arg_type(car(args), "numerator", TSP_INT | TSP_RATIO);
@@ -252,7 +252,7 @@ prim_numerator(Tsp st, Hash env, Val args)
 }
 
 static Val
-prim_denominator(Tsp st, Hash env, Val args)
+prim_denominator(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "denominator", 1);
 	tsp_arg_type(car(args), "denominator", TSP_INT | TSP_RATIO);

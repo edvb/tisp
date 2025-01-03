@@ -30,7 +30,7 @@
 
 /* change to new directory */
 static Val
-prim_cd(Tsp st, Hash env, Val args)
+prim_cd(Tsp st, Rec env, Val args)
 {
 	Val dir;
 	tsp_arg_num(args, "cd!", 1);
@@ -45,7 +45,7 @@ prim_cd(Tsp st, Hash env, Val args)
 /* TODO rename to cwd ? */
 /* return string of current working directory */
 static Val
-prim_pwd(Tsp st, Hash env, Val args)
+prim_pwd(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "pwd", 0);
 	char cwd[PATH_MAX];
@@ -57,7 +57,7 @@ prim_pwd(Tsp st, Hash env, Val args)
 /* TODO time formating */
 /* return number of seconds since 1970 (unix time stamp) */
 static Val
-prim_now(Tsp st, Hash env, Val args)
+prim_now(Tsp st, Rec env, Val args)
 {
 	tsp_arg_num(args, "now", 0);
 	return mk_int(time(NULL));
@@ -66,7 +66,7 @@ prim_now(Tsp st, Hash env, Val args)
 /* TODO time-avg: run timeit N times and take average */
 /* return time in miliseconds taken to run command given */
 static Val
-form_time(Tsp st, Hash env, Val args)
+form_time(Tsp st, Rec env, Val args)
 {
 	Val v;
 	clock_t t;

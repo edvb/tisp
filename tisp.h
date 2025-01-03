@@ -19,7 +19,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define TSP_MAX_TABLE_PRINT 64
+#define TSP_REC_MAX_PRINT 64
 
 #define TSP_OP_CHARS "_+-*/\\|=^<>.:"
 #define TSP_SYM_CHARS "_!?" "@#$%&~" "*-"
@@ -80,14 +80,14 @@ typedef struct Tsp *Tsp;
 
 typedef struct Entry *Entry;
 
-typedef struct Hash {
+typedef struct Rec {
 	int size, cap;
 	struct Entry {
 		char *key;
 		Val val;
 	} *items;
-	struct Hash *next;
-} *Hash;
+	struct Rec *next;
+} *Rec;
 
 /* possible tisp object types */
 typedef enum {
@@ -102,8 +102,8 @@ typedef enum {
 	TSP_FORM  = 1 << 8,  /* special form: built-in macro */
 	TSP_FUNC  = 1 << 9,  /* function: procedure written is tisp */
 	TSP_MACRO = 1 << 10, /* macro: function without evaluated arguments */
-	TSP_TABLE = 1 << 11, /* table: hash table */
-	TSP_PAIR  = 1 << 12, /* pair: building block for lists */
+	TSP_PAIR  = 1 << 11, /* pair: building block for lists */
+	TSP_REC   = 1 << 12, /* record: hash table */
 } TspType;
 #define TSP_RATIONAL (TSP_INT | TSP_RATIO)
 #define TSP_NUM      (TSP_RATIONAL | TSP_DEC)
@@ -111,18 +111,18 @@ typedef enum {
 #define TSP_EXPR     (TSP_NUM | TSP_SYM | TSP_PAIR)
 
 /* bultin function written in C, not tisp */
-typedef Val (*Prim)(Tsp, Hash, Val);
+typedef Val (*Prim)(Tsp, Rec, Val);
 
 /* tisp object */
 struct Val {
 	TspType t; /* NONE, NIL */
 	union {
-		char *s;                                            /* STRING, SYMBOL */
-		struct { double num, den; } n;                      /* NUMBER */
-		struct { char *name; Prim pr; } pr;                 /* PRIMITIVE, FORM */
-		struct { char *name; Val args, body; Hash env; } f; /* FUNCTION, MACRO */
-		Hash tb; /* TABLE */
-		struct { Val car, cdr; } p;                         /* PAIR */
+		char *s;                                           /* STRING, SYMBOL */
+		struct { double num, den; } n;                     /* NUMBER */
+		struct { char *name; Prim pr; } pr;                /* PRIMITIVE, FORM */
+		struct { char *name; Val args, body; Rec env; } f; /* FUNCTION, MACRO */
+		struct { Val car, cdr; } p;                        /* PAIR */
+		Rec r;                                             /* REC */
 	} v;
 };
 
@@ -131,7 +131,7 @@ struct Tsp {
 	char *file;
 	size_t filec;
 	Val none, nil, t;
-	Hash env, strs, syms;
+	Rec env, strs, syms;
 	void **libh;
 	size_t libhc;
 };
@@ -145,8 +145,8 @@ Val mk_rat(int num, int den);
 Val mk_str(Tsp st, char *s);
 Val mk_sym(Tsp st, char *s);
 Val mk_prim(TspType t, Prim prim, char *name);
-Val mk_func(TspType t, char *name, Val args, Val body, Hash env);
-Val mk_table(Tsp st, Hash env, Val assoc);
+Val mk_func(TspType t, char *name, Val args, Val body, Rec env);
+Val mk_rec(Tsp st, Rec env, Val assoc);
 Val mk_pair(Val a, Val b);
 Val mk_list(Tsp st, int n, ...);
 
@@ -154,9 +154,9 @@ Val read_pair(Tsp st, char endchar);
 Val tisp_read_sexpr(Tsp st);
 Val tisp_read(Tsp st);
 Val tisp_read_line(Tsp st);
-Val tisp_eval_list(Tsp st, Hash env, Val v);
-Val tisp_eval_body(Tsp st, Hash env, Val v);
-Val tisp_eval(Tsp st, Hash env, Val v);
+Val tisp_eval_list(Tsp st, Rec env, Val v);
+Val tisp_eval_body(Tsp st, Rec env, Val v);
+Val tisp_eval(Tsp st, Rec env, Val v);
 void tisp_print(FILE *f, Val v);
 
 char *tisp_read_file(char *fname);
