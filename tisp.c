@@ -784,7 +784,8 @@ eval_proc(Tsp st, Rec env, Val f, Val args)
 			return NULL;
 		tsp_arg_num(args, "record", 1);
 		tsp_arg_type(car(args), "record", TSP_SYM);
-		if (!(ret = rec_get(f->v.r, car(args)->v.s)))
+		if (!(ret = rec_get(f->v.r, car(args)->v.s)) &&
+		    !(ret = rec_get(f->v.r, "else")))
 			tsp_warnf("could not find element '%s' in record", car(args)->v.s);
 		return ret;
 	default:
