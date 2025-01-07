@@ -130,7 +130,7 @@ tsp_lstlen(Val v)
 	int len = 0;
 	for (; v->t == TSP_PAIR; v = cdr(v))
 		len++;
-	return nilp(v) ? len : -1;
+	return nilp(v) ? len : -1; /* TODO -len */
 }
 
 /* check if two values are equal */
@@ -535,30 +535,32 @@ read_sym(Tsp st, int (*is_char)(char))
 	return mk_sym(st, esc_str(s, len, 0));
 }
 
-/* return read string containing a list */
-/* TODO read pair after as well, allow lambda((x) (* x 2))(4) */
+/* return read list, pair, or improper list */
 Val
 read_pair(Tsp st, char endchar)
 {
-	Val a, b;
-	skip_ws(st, 1);
-	if (!tsp_fget(st))
-		tsp_warnf("reached end before closing '%c'", endchar);
-	if (tsp_fget(st) == endchar) /* if empty list or at end, return nil */
-		return tsp_finc(st), st->nil;
-	if (!(a = tisp_read(st)))
-		return NULL;
-	if (a->t == TSP_SYM && !strncmp(a->v.s, ".", 2)) { /* improper list, end with non-nil */
-		if (!(b = tisp_read(st)))
+	Val v, ret = mk_pair(NULL, st->nil);
+	int skipnl = endchar != '\n';
+	skip_ws(st, skipnl);
+	for (Val pos = ret; tsp_fget(st) && tsp_fget(st) != endchar; pos = cdr(pos)) {
+		if (!(v = tisp_read(st)))
 			return NULL;
-		skip_ws(st, 1);
-		if (tsp_fget(st) != endchar)
-			tsp_warnf("did not find closing '%c'", endchar);
-		return tsp_finc(st), b;
+		/* pair cdr, end with non-nil (improper list) */
+		if (v->t == TSP_SYM && !strncmp(v->v.s, ".", 2)) {
+			skip_ws(st, skipnl);
+			if (!(v = tisp_read(st)))
+				return NULL;
+			cdr(pos) = v;
+			break;
+		}
+		cdr(pos) = mk_pair(v, st->nil);
+		skip_ws(st, skipnl);
 	}
-	if (!(b = read_pair(st, endchar)))
-		return NULL;
-	return mk_pair(a, b);
+	skip_ws(st, skipnl);
+	if (skipnl && tsp_fget(st) != endchar)
+		tsp_warnf("did not find closing '%c'", endchar);
+	tsp_finc(st);
+	return cdr(ret);
 }
 
 /* reads given string returning its tisp value */
@@ -1204,6 +1206,7 @@ tisp_env_init(size_t cap)
 	st->file = NULL;
 	st->filec = 0;
 
+	/* TODO intern (memorize) all types, including stateless func calls */
 	st->strs = rec_new(cap, NULL);
 	st->syms = rec_new(cap, NULL);
 
