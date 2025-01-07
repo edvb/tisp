@@ -88,8 +88,7 @@ prim_parse(Tsp st, Rec env, Val args)
 	tsp_arg_type(expr, "parse", TSP_STR);
 	st->file = expr->v.s;
 	st->filec = 0;
-	expr = tisp_read(st);
-	/* for (; tsp_fget(st) && (expr = tisp_read(st));) ; */
+	expr = tisp_read_line(st, 0);
 	st->file = file;
 	st->filec = filec;
 	return expr ? expr : st->none;

@@ -651,6 +651,25 @@ tisp_read(Tsp st)
 	return v;
 }
 
+Val
+tisp_read_line(Tsp st, int level)
+{
+	Val pos, ret;
+	if (!(ret = read_pair(st, '\n'))) /* read line */
+		return NULL;
+	if (ret->t != TSP_PAIR) /* force to be pair */
+		ret = mk_pair(ret, st->nil);
+	for (pos = ret; cdr(pos)->t == TSP_PAIR; pos = cdr(pos)) ; /* get last pair */
+	for (; tsp_fget(st); pos = cdr(pos)) { /* read indented lines as sub expressions */
+		int newlevel = strspn(st->file+st->filec, "\t ");
+		if (newlevel <= level)
+			break;
+		st->filec += newlevel;
+		cdr(pos) = mk_pair(tisp_read_line(st, newlevel), cdr(pos));
+	}
+	return nilp(cdr(ret)) ? car(ret) : ret; /* if only 1 element in list, return just it */
+}
+
 /* return string containing contents of file name */
 char *
 tisp_read_file(char *fname)

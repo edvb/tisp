@@ -153,7 +153,7 @@ Val mk_list(Tsp st, int n, ...);
 Val read_pair(Tsp st, char endchar);
 Val tisp_read_sexpr(Tsp st);
 Val tisp_read(Tsp st);
-Val tisp_read_line(Tsp st);
+Val tisp_read_line(Tsp st, int level);
 Val tisp_eval_list(Tsp st, Rec env, Val v);
 Val tisp_eval_body(Tsp st, Rec env, Val v);
 Val tisp_eval(Tsp st, Rec env, Val v);
