@@ -6,7 +6,7 @@
   (Macro (args . body)
     "Define named macro, with argument list and body
   First element of arguments is name of macro
-  Also see def"
+  Also see: def"
     (cond
       ((pair? args)
        (list 'def (car args) (list 'Macro (cdr args) . body)))
@@ -125,7 +125,7 @@
 
 (defmacro (recur proc vars . body)
   "Do recursion within body by calling proc with values for vars
-  Also see let"
+  Also see: let"
   (list 'let
         (list*
           (list proc (list* 'Func (map car vars) body))
@@ -144,7 +144,7 @@
   Automatically quotes each element within the expression, but evaluates the
   element if it is labeled with the unquote macro.
   Can be shortened with the ` prefix.
-  Also see quote, unquote, and unquote-splice"
+  Also see: quote, unquote, unquote-splice"
   (def (check form)
     (unless (and (pair? (cdr form)) (nil? (cddr form)))
       (error (car form) "invalid form " form)))
@@ -189,14 +189,14 @@
   "Unquote expression so its evaluated before placed into the quasiquote
   Can be shortened with the , prefix
   Errors if called outside quasiquote
-  Also see quote, unquote, and unquote-splice"
+  Also see: quasiquote, unquote-splice, quote"
   (error 'unquote "called outside of quasiquote"))
 (defmacro (unquote-splice expr)
   "Unquote and splice the expression into the quasiquote
   If the value evaluated is a list, embedded each element into the quasiquote
   Can be shortened with the ,@ prefix
   Errors if called outside a quasiquote of a list
-  Also see quote, unquote, and unquote-splice"
+  Also see: quasiquote, unquote, quote"
   (error 'unquote-splice "called outside of quasiquote"))
 
 ;;; Logic
@@ -230,7 +230,7 @@
   (last body))
 (def (do0 . body)
   "Evaluate each expression in body, returning first
-  Also see do"
+  Also see: do"
   (car body))
 
 (def (length lst)
@@ -310,7 +310,7 @@
 
 (def (filter proc lst)
   "Only keep elements of list where applying proc returns true
-  Also see keep, remove, member, memp"
+  Also see: keep, remove, member, memp"
   (cond
     ((not (pair? lst)) Nil)
     ((proc (car lst)) (cons (car lst) (filter proc (cdr lst))))
@@ -319,24 +319,24 @@
 ; TODO keep* remove*
 (def (keep elem lst)
   "Return list with only elements matching elem
-  Also see filter, remove"
+  Also see: filter, remove"
   (filter @(= elem it) lst))
 
 (def (remove elem lst)
   "Return list without elements matching elem
-  Also see filter, keep"
+  Also see: filter, keep"
   (filter @(/= elem it) lst))
 
 (def (memp proc lst)
   "Return list of elements after first time procedure applied to each is not nil
-  Also see member, filter"
+  Also see: member, filter"
   (cond ((nil? lst) Nil)
         ((proc (car lst)) lst)
         (else (memp proc (cdr lst)))))
 
 (def (member elem lst)
   "Return list of elements after first matching elem
-  Also see memp, filter"
+  Also see: memp, filter"
   (memp @(= elem it) lst))
 
 (def (everyp? proc lst)
@@ -397,26 +397,26 @@
 
 (def (push stack val)
   "Add value to front of stack
-  Also see pop, peek"
+  Also see: pop, peek"
   (cons val stack))
 
 (def (pop stack)
   "Get stack without first element
-  Also see push, peek"
+  Also see: push, peek"
   (if stack
     (cdr stack)
     (error 'pop "Improper stack: " stack)))
 
 (def (peek stack)
   "Get value at front of stack
-  Also see push, pop"
+  Also see: push, pop"
   (if (pair? stack)
     (car stack)
     (error 'peek "Improper stack: " stack)))
 
 (def (swap stack)
   "Get stack where the first 2 values are swapped
-  Also see push, pop, peek"
+  Also see: push, pop, peek"
   (let (x: (peek stack)
         y: (peek (pop stack)))
     (push (push (pop (pop stack)) x) y)))

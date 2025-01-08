@@ -1,12 +1,12 @@
 (def docstr-reg (append docstr-reg
   '((write
       "(write file append? . vals)"
-      "Writes to file all values"
+      "Write all values to file"
       "  File can be file path give as string or the symbols 'stdout or 'stderr"
       "  Append file if append? is true, otherwise override")
     (read
       "(read . file)"
-      "Return string read from optional file, if not given read from stdin")
+      "Return string read from file, or stdin if no file is provided")
     (parse
       "(parse string)"
       "Parse Tisp object from given string")

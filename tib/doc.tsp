@@ -4,7 +4,7 @@
       "First element of list")
     (cdr
       "(cdr lst)"
-      "Rest of list after first element")
+      "Rest of list after first element, or second element of pair")
     (cons
       "(cons a d)"
       "Create new pair with a car of a and cdr of d")
@@ -13,35 +13,40 @@
       "'expr"
       "Return expression unevaluated"
       "  Can be shortened with the ' prefix"
-      "  Also see quote, unquote, and unquote-splice")
-    (Void
-      "Void"
-      "Return nothing"
-      "Used to insert a void type in a list or force a function not to return anything")
+      "  Also see: quasiquote, unquote, and unquote-splice")
     (eval
       "(eval expr)"
-      "Evaluate expression, can be dangerous to use in practice")
+      "Evaluate expression"
+      "  Can be dangerous to use, as arbitrary code might be executed if the input"
+      "  comes from an untrusted source"
+      "  Also see: apply")
     (=
       "(= . vals)"
       "Return boolean depending on if multiple values are all equal")
     (cond
       "(cond . (expr . body))"
-      "Conditional statement")
+      "Evaluates and returns first body with a true conditional expression"
+      "  Also see: if, when, unless")
     (typeof
       "(typeof val)"
       "Get string stating the argument's type")
-    (get
-      "(get val prop)"
-      "Get the property of the given value depending on its type")
+    (procprops
+      "(procprops prop)"
+      "Get record of properties for given procedure"
+      "  Includes name, args, and body for functions and macros"
+      "  Only has name for builtin primitives and special forms")
     (Func
       "(Func args . body)"
       "(Func body)"
       "Create anonymous function"
-      "  If only body is given, create function with one argument labeled 'it'")
+      "  If only body is given, create function with one argument labeled 'it'"
+      "  Also see: def")
     (Macro
       "(Macro args . body)"
+      "(Macro body)"
       "Create anonymous macro, arguments are not evaluated before given to body"
-      "  If only body is given, create macro with one argument labeled 'it'")
+      "  If only body is given, create macro with one argument labeled 'it'"
+      "  Also see: defmacro")
     (def
       "(def var . val)"
       "Define new variable with value"
@@ -49,9 +54,6 @@
       ""
       "(def (func . args) . body)"
       "Create new function with arguments list and body list")
-    (set!
-      "(set! var val)"
-      "Change the variable var to val")
     (undefine!
       "(undefine! var)"
       "Remove variable from environment")
@@ -61,9 +63,6 @@
     (error
       "(error func msg)"
       "Throw error, print message with function name given as symbol")
-    (version
-      "(version)"
-      "Tisp's version number as a string")
     (Str
       "(Str . vals)"
       "Convert all values into single string")
@@ -77,12 +76,7 @@
       "  Double curly braces are not evaluated, inserting a single one."
       "  Equivalent to f\"str\"")))
 
-(def (docstr-add! . docstrs)
-  "Add given docstrs to the global doc string registry"
-  ; FIXME for some reason evals docstrs as funcs
-  ; `(def docstr-reg (append docstr-reg ,docstrs))
-  )
-
+; TODO print func args even if no docstr
 (def (doc proc)
   "Get documentation of procedure"
   (unless (procedure? proc)

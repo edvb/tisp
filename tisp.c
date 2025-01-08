@@ -968,7 +968,7 @@ prim_eq(Tsp st, Rec env, Val args)
 	return st->t;
 }
 
-/* evaluates all expressions if their conditions are met */
+/* evaluates and returns first expression with a true conditional */
 static Val
 form_cond(Tsp st, Rec env, Val args)
 {
