@@ -22,6 +22,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <unistd.h>
+
+#include <dlfcn.h>
+#include <limits.h>
 
 #include "../tisp.h"
 
@@ -92,7 +96,56 @@ prim_parse(Tsp st, Rec env, Val args)
 	st->file = file;
 	st->filec = filec;
 	return expr ? expr : st->none;
-	/* return tisp_parse_file(st, expr->v.s); */
+	/* return expr; */
+}
+
+/* loads tisp file or C dynamic library */
+static Val
+prim_load(Tsp st, Rec env, Val args)
+{
+	Val tib;
+	void (*tibenv)(Tsp);
+	char name[PATH_MAX];
+	const char *paths[] = {
+		"/usr/local/lib/tisp/pkgs/", "/usr/lib/tisp/pkgs/", "./", NULL
+	};
+
+	tsp_arg_num(args, "load", 1);
+	tib = car(args);
+	tsp_arg_type(tib, "load", TSP_STR);
+
+	for (int i = 0; paths[i]; i++) {
+		strcpy(name, paths[i]);
+		strcat(name, tib->v.s);
+		strcat(name, ".tsp");
+		if (access(name, R_OK) != -1) {
+			tisp_eval_body(st, env, tisp_parse_file(st, name));
+			return st->none;
+		}
+	}
+
+	/* If not tisp file, try loading shared object library */
+	if (!(st->libh = realloc(st->libh, (st->libhc+1)*sizeof(void*))))
+		perror("; realloc"), exit(1);
+
+	memset(name, 0, sizeof(name));
+	strcpy(name, "libtib");
+	strcat(name, tib->v.s);
+	strcat(name, ".so");
+	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY)))
+		tsp_warnf("load: could not load '%s':\n; %s", tib->v.s, dlerror());
+	dlerror();
+
+	memset(name, 0, sizeof(name));
+	strcpy(name, "tib_env_");
+	strcat(name, tib->v.s);
+	tibenv = dlsym(st->libh[st->libhc], name);
+	if (dlerror())
+		tsp_warnf("load: could not run '%s':\n; %s", tib->v.s, dlerror());
+	(*tibenv)(st);
+
+	st->libhc++;
+	return st->none;
 }
 
 void
@@ -101,4 +154,5 @@ tib_env_io(Tsp st)
 	tsp_env_prim(write);
 	tsp_env_prim(read);
 	tsp_env_prim(parse);
+	tsp_env_prim(load);
 }

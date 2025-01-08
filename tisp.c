@@ -19,9 +19,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 #include <ctype.h>
-#include <dlfcn.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -1138,58 +1136,6 @@ form_definedp(Tsp st, Rec env, Val args)
 	return (e && e->key) ? st->t : st->nil;
 }
 
-/* loads tisp file or C dynamic library */
-/* TODO lua like error listing places load looked */
-/* TODO only use dlopen if -ldl is given with TIB_DYNAMIC */
-/* TODO define load in lisp which calls load-dl */
-static Val
-prim_load(Tsp st, Rec env, Val args)
-{
-	Val tib;
-	void (*tibenv)(Tsp);
-	char name[PATH_MAX];
-	const char *paths[] = {
-		"/usr/local/lib/tisp/pkgs/", "/usr/lib/tisp/pkgs/", "./", NULL
-	};
-
-	tsp_arg_num(args, "load", 1);
-	tib = car(args);
-	tsp_arg_type(tib, "load", TSP_STR);
-
-	for (int i = 0; paths[i]; i++) {
-		strcpy(name, paths[i]);
-		strcat(name, tib->v.s);
-		strcat(name, ".tsp");
-		if (access(name, R_OK) != -1) {
-			tisp_eval_body(st, env, tisp_parse_file(st, name));
-			return st->none;
-		}
-	}
-
-	/* If not tisp file, try loading shared object library */
-	if (!(st->libh = realloc(st->libh, (st->libhc+1)*sizeof(void*))))
-		perror("; realloc"), exit(1);
-
-	memset(name, 0, sizeof(name));
-	strcpy(name, "libtib");
-	strcat(name, tib->v.s);
-	strcat(name, ".so");
-	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY)))
-		tsp_warnf("load: could not load '%s':\n; %s", tib->v.s, dlerror());
-	dlerror();
-
-	memset(name, 0, sizeof(name));
-	strcpy(name, "tib_env_");
-	strcat(name, tib->v.s);
-	tibenv = dlsym(st->libh[st->libhc], name);
-	if (dlerror())
-		tsp_warnf("load: could not run '%s':\n%s", tib->v.s, dlerror());
-	(*tibenv)(st);
-
-	st->libhc++;
-	return st->none;
-}
-
 /* display message and return error */
 static Val
 prim_error(Tsp st, Rec env, Val args)
@@ -1258,7 +1204,6 @@ tisp_env_init(size_t cap)
 	tsp_env_form(def);
 	tsp_env_name_form(undefine!, undefine);
 	tsp_env_name_form(defined?, definedp);
-	tsp_env_prim(load);
 	tsp_env_prim(error);
 
 	st->libh = NULL;

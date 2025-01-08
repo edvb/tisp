@@ -58,9 +58,6 @@
     (defined?
       "(defined? var)"
       "Return boolean on if variable is defined in environment")
-    (load
-      "(load lib)"
-      "Loads the library given as a string")
     (error
       "(error func msg)"
       "Throw error, print message with function name given as symbol")
