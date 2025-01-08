@@ -27,6 +27,10 @@
       "(cond . (expr . body))"
       "Evaluates and returns first body with a true conditional expression"
       "  Also see: if, when, unless")
+    (do
+      "(do . body)"
+      "Evaluate each expression in body, returning last"
+      "  Also see: do0")
     (typeof
       "(typeof val)"
       "Get string stating the argument's type")

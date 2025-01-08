@@ -224,10 +224,6 @@
     (cons (car lst) (apply list* (cdr lst)))
     (car lst)))
 
-(def (do . body)
-  "Evaluate each expression in body, returning last
-  Also see do0"
-  (last body))
 (def (do0 . body)
   "Evaluate each expression in body, returning first
   Also see: do"

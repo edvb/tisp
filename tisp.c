@@ -1194,6 +1194,7 @@ tisp_env_init(size_t cap)
 	tsp_env_prim(eval);
 	tsp_env_name_prim(=, eq);
 	tsp_env_form(cond);
+	tisp_env_add(st, "do", mk_prim(TSP_FORM, tisp_eval_body, "do"));
 	tsp_env_prim(typeof);
 	tsp_env_prim(procprops);
 	tsp_env_form(Func);
