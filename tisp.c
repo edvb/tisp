@@ -528,7 +528,7 @@ read_sym(Tsp st, int (*is_char)(char))
 {
 	int len = 0;
 	char *s = st->file + st->filec;
-	for (; is_char(tsp_fget(st)); tsp_finc(st))
+	for (; tsp_fget(st) && is_char(tsp_fget(st)); tsp_finc(st))
 		len++; /* get length of new symbol */
 	return mk_sym(st, esc_str(s, len, 0));
 }
@@ -566,6 +566,7 @@ Val
 tisp_read_sexpr(Tsp st)
 {
 	/* TODO merge w/ infix */
+	/* TODO mk const global */
 	static char *prefix[] = {
 		"'",  "quote",
 		"`",  "quasiquote",
@@ -573,6 +574,10 @@ tisp_read_sexpr(Tsp st)
 		",",  "unquote",
 		"@",  "Func",
 		"f\"",  "strformat",
+		/* "?",  "try?", */
+		/* "$",  "system!", */
+		/* "-",  "negative", */
+		/* "!",  "not?", */
 	};
 	skip_ws(st, 1);
 	if (strlen(st->file+st->filec) == 0) /* empty list */
@@ -604,7 +609,8 @@ tisp_read_sexpr(Tsp st)
 		if (!(v = read_pair(st, '}'))) return NULL;
 		return mk_pair(mk_sym(st, "Rec"), v);
 	}
-	tsp_warnf("could not read given input '%c'", st->file[st->filec]);
+	tsp_warnf("could not read given input '%c' (%d)",
+	          st->file[st->filec], (int)st->file[st->filec]);
 }
 
 /* read extra syntax sugar on top of s-expressions */
