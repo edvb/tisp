@@ -1,6 +1,6 @@
 /* zlib License
  *
- * Copyright (c) 2017-2024 Ed van Bruggen
+ * Copyright (c) 2017-2025 Ed van Bruggen
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
