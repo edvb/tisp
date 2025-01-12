@@ -78,11 +78,10 @@ prim_read(Tsp st, Rec env, Val args)
 }
 
 /* parse string as tisp expression, return (quit) if given nil */
-/* TODO parse more than 1 expression */
 static Val
 prim_parse(Tsp st, Rec env, Val args)
 {
-	Val expr;
+	Val ret, expr;
 	char *file = st->file;
 	size_t filec = st->filec;
 	tsp_arg_num(args, "parse", 1);
@@ -92,11 +91,14 @@ prim_parse(Tsp st, Rec env, Val args)
 	tsp_arg_type(expr, "parse", TSP_STR);
 	st->file = expr->v.s;
 	st->filec = 0;
-	expr = tisp_read_line(st, 0);
+	ret = mk_pair(mk_sym(st, "do"), st->nil);
+	for (Val pos = ret; tsp_fget(st) && (expr = tisp_read_line(st, 0)); pos = cdr(pos))
+		cdr(pos) = mk_pair(expr, st->nil);
 	st->file = file;
 	st->filec = filec;
-	return expr ? expr : st->none;
-	/* return expr; */
+	if (cdr(ret)->t == TSP_PAIR && nilp(cddr(ret)))
+		return cadr(ret); /* if only 1 expression parsed, return just it */
+	return ret;
 }
 
 /* loads tisp file or C dynamic library */
