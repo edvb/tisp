@@ -19,13 +19,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 #include <ctype.h>
-#include <fcntl.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "tisp.h"
 
@@ -105,20 +103,6 @@ skip_ws(Tsp st, int skipnl)
 		for (; tsp_fget(st) == ';'; tsp_finc(st)) /* skip comments until newline */
 			st->filec += strcspn(st->file+st->filec, "\n") - !skipnl;
 	}
-}
-
-/* count number of parenthesis */
-/* FIXME makes reading O(n^2) replace w/ better counting sys */
-static int
-count_parens(char *s, int len)
-{
-	int count = 0;
-	for (int i = 0; i < len && s[i]; i++)
-		if (s[i] == '(')
-			count++;
-		else if (s[i] == ')')
-			count--;
-	return count;
 }
 
 /* get length of list, if improper list return -1 */
@@ -268,8 +252,8 @@ rec_extend(Rec ht, Val args, Val vals)
 			val = vals;
 		}
 		if (arg->t != TSP_SYM)
-			tsp_warnf("expected symbol for argument of function"
-				  " definition, recieved %s", tsp_type_str(arg->t));
+			tsp_warnf("expected symbol for argument of function definition, recieved '%s'",
+			          tsp_type_str(arg->t));
 		rec_add(ret, arg->v.s, val);
 		if (args->t != TSP_PAIR)
 			break;
@@ -674,53 +658,10 @@ tisp_read_line(Tsp st, int level)
 	return nilp(cdr(ret)) ? car(ret) : ret; /* if only 1 element in list, return just it */
 }
 
-/* return string containing contents of file name */
-char *
-tisp_read_file(char *fname)
-{
-	char buf[BUFSIZ], *file = NULL;
-	int len = 0, n, fd, parens = 0;
-	if (!fname) /* read from stdin if no file given */
-		fd = 0;
-	else if ((fd = open(fname, O_RDONLY)) < 0)
-		tsp_warnf("could not find file '%s'", fname);
-	while ((n = read(fd, buf, sizeof(buf))) > 0) {
-		file = realloc(file, len + n + 1);
-		if (!file) perror("; realloc"), exit(1);
-		memcpy(file + len, buf, n);
-		len += n;
-		file[len] = '\0';
-		if (fd == 0 && !(parens += count_parens(buf, n)))
-			break;
-	}
-	if (fd) /* close file if not stdin */
-		close(fd);
-	if (n < 0)
-		tsp_warnf("could not read file '%s'", fname);
-	return file;
-}
-
-/* read given file name returning its tisp value */
-Val
-tisp_parse_file(Tsp st, char *fname)
-{
-	Val ret = mk_pair(st->none, st->nil);
-	Val v, last = ret;
-	char *file = st->file;
-	size_t filec = st->filec;
-	if (!(st->file = tisp_read_file(fname)))
-		return ret;
-	for (st->filec = 0; tsp_fget(st) && (v = tisp_read(st)); last = cdr(last))
-		cdr(last) = mk_pair(v, st->nil);
-	free(st->file);
-	st->file = file;
-	st->filec = filec;
-	return cdr(ret);
-}
-
 /* eval */
 
 /* evaluate each element of list */
+/* TODO arg for tisp_eval or expand_macro */
 Val
 tisp_eval_list(Tsp st, Rec env, Val v)
 {
@@ -1094,8 +1035,7 @@ form_def(Tsp st, Rec env, Val args)
 	if (car(args)->t == TSP_PAIR) { /* create function if given argument list */
 		sym = caar(args); /* first element of argument list is function name */
 		if (sym->t != TSP_SYM)
-			tsp_warnf("def: incorrect format,"
-			          " expected symbol for function name, received %s",
+			tsp_warnf("def: expected symbol for function name, received '%s'",
 			          tsp_type_str(sym->t));
 		val = mk_func(TSP_FUNC, sym->v.s, cdar(args), cdr(args), env);
 	} else if (car(args)->t == TSP_SYM) { /* create variable */

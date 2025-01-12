@@ -15,6 +15,15 @@
 	tsp_include_tib(string);
 #endif
 
+/* read, parse, and eval file given as single element list, or empty list for stdin */
+Val
+read_parse_eval(Tsp st, Val file)
+{
+	Val val = mk_list(st, 2, mk_sym(st, "parse"), mk_pair(mk_sym(st, "read"), file));
+	val = tisp_eval(st, st->env, val); /* read and parse */
+	return tisp_eval(st, st->env, val); /* eval resulting expressions */
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -61,15 +70,17 @@ readstr:
 				fputs("usage: tisp [-hrv] [-c COMMAND] [-] [FILE ...]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
-				v = tisp_eval_body(st, st->env, tisp_parse_file(st, NULL)); /* TODO rm duplication */
+				v = read_parse_eval(st, st->nil);
 			}
 		} else { /* otherwise read as file */
-			v = tisp_eval_body(st, st->env, tisp_parse_file(st, argv[i]));
+			v = read_parse_eval(st, mk_pair(mk_str(st, argv[i]), st->nil));
 		}
-		if (v && v->t != TSP_NONE) tisp_print(stdout, v);
+		if (v && v->t != TSP_NONE)
+			tisp_print(stdout, v);
 	}
 
-	puts("");
+	/* if (v && v->t != TSP_NONE) */
+		puts("");
 
 	return 0;
 }

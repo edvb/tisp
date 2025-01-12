@@ -159,9 +159,6 @@ Val tisp_eval_body(Tsp st, Rec env, Val v);
 Val tisp_eval(Tsp st, Rec env, Val v);
 void tisp_print(FILE *f, Val v);
 
-char *tisp_read_file(char *fname);
-Val tisp_parse_file(Tsp st, char *fname);
-
 void tisp_env_add(Tsp st, char *key, Val v);
 Tsp  tisp_env_init(size_t cap);
 void tisp_env_lib(Tsp st, char* lib);

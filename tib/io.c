@@ -21,13 +21,53 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include "../tisp.h"
+
+/* count number of parenthesis */
+/* FIXME makes reading O(n^2) replace w/ better counting sys */
+static int
+count_parens(char *s, int len)
+{
+	int count = 0;
+	for (int i = 0; i < len && s[i]; i++)
+		if (s[i] == '(')
+			count++;
+		else if (s[i] == ')')
+			count--;
+	return count;
+}
+
+/* return string containing contents of file name */
+static char *
+read_file(char *fname)
+{
+	char buf[BUFSIZ], *file = NULL;
+	int len = 0, n, fd, parens = 0;
+	if (!fname) /* read from stdin if no file given */
+		fd = 0;
+	else if ((fd = open(fname, O_RDONLY)) < 0)
+		tsp_warnf("could not find file '%s'", fname);
+	while ((n = read(fd, buf, sizeof(buf))) > 0) {
+		file = realloc(file, len + n + 1);
+		if (!file) perror("; realloc"), exit(1);
+		memcpy(file + len, buf, n);
+		len += n;
+		file[len] = '\0';
+		if (fd == 0 && !(parens += count_parens(buf, n)))
+			break;
+	}
+	if (fd) /* close file if not stdin */
+		close(fd);
+	if (n < 0)
+		tsp_warnf("could not read file '%s'", fname);
+	return file;
+}
 
 /* write all arguemnts to given file, or stdout/stderr, without newline */
 /* first argument is file name, second is option to append file */
@@ -72,7 +112,7 @@ prim_read(Tsp st, Rec env, Val args)
 		tsp_arg_type(car(args), "read", TSP_STR);
 		fname = car(args)->v.s;
 	}
-	if (!(file = tisp_read_file(fname)))
+	if (!(file = read_file(fname)))
 		return st->nil;
 	return mk_str(st, file);
 }
@@ -121,7 +161,9 @@ prim_load(Tsp st, Rec env, Val args)
 		strcat(name, tib->v.s);
 		strcat(name, ".tsp");
 		if (access(name, R_OK) != -1) {
-			tisp_eval_body(st, env, tisp_parse_file(st, name));
+			char *file = read_file(name);
+			Val body = prim_parse(st, env, mk_pair(mk_sym(st, file), st->nil));
+			tisp_eval_body(st, env, body);
 			return st->none;
 		}
 	}

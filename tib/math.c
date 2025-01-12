@@ -18,10 +18,11 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-#include <assert.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <assert.h>
+#include <math.h>
 
 #include "../tisp.h"
 

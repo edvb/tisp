@@ -20,9 +20,10 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
-#include <limits.h>
 
 #include "../tisp.h"
 
