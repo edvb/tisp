@@ -29,18 +29,27 @@
 
 #include "../tisp.h"
 
-/* count number of parenthesis */
-/* FIXME makes reading O(n^2) replace w/ better counting sys */
+/* count number of parenthesis, brackets, and curly braces */
+/* FIXME makes reading O(2N) replace w/ better counting sys */
 static int
 count_parens(char *s, int len)
 {
-	int count = 0;
-	for (int i = 0; i < len && s[i]; i++)
-		if (s[i] == '(')
-			count++;
-		else if (s[i] == ')')
-			count--;
-	return count;
+	int pcount = 0, bcount = 0, ccount = 0;
+	for (int i = 0; i < len && s[i]; i++) {
+		switch (s[i]) {
+			case '(': pcount++; break;
+			case '[': bcount++; break;
+			case '{': ccount++; break;
+			case ')': pcount--; break;
+			case ']': bcount--; break;
+			case '}': ccount--; break;
+		}
+	}
+	if (pcount)
+		return pcount;
+	if (bcount)
+		return bcount;
+	return ccount;
 }
 
 /* return string containing contents of file name */
@@ -59,7 +68,7 @@ read_file(char *fname)
 		memcpy(file + len, buf, n);
 		len += n;
 		file[len] = '\0';
-		if (fd == 0 && !(parens += count_parens(buf, n)))
+		if (fd == 0 && (parens += count_parens(buf, n)) <= 0)
 			break;
 	}
 	if (fd) /* close file if not stdin */
