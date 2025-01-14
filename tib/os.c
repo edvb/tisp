@@ -55,6 +55,14 @@ prim_pwd(Tsp st, Rec env, Val args)
 	return mk_str(st, cwd);
 }
 
+static Val
+prim_exit(Tsp st, Rec env, Val args)
+{
+	tsp_arg_num(args, "exit!", 1);
+	tsp_arg_type(car(args), "exit!", TSP_INT);
+	exit((int)car(args)->v.n.num);
+}
+
 /* TODO time formating */
 /* return number of seconds since 1970 (unix time stamp) */
 static Val
@@ -84,6 +92,7 @@ tib_env_os(Tsp st)
 {
 	tsp_env_name_prim(cd!, cd);
 	tsp_env_prim(pwd);
+	tsp_env_name_prim(exit!, exit);
 	tsp_env_prim(now);
 	tsp_env_form(time);
 }
