@@ -284,10 +284,12 @@
   (eval (map @(list 'quote it) ; prevent proc and args from being evaluated twice
              (cons proc args))))
 
-; TODO allow for map proc to access index and lst
-(def (map proc lst) ; TODO many lsts for proc w/ multi arguments
-  "Evaluate each element of list by giving it to the procedure, returning new list"
-  (if lst
+; TODO rename to foreach (for), swap proc and lst
+; TODO many lsts for proc w/ multi arguments, used for index
+; [lines 0..len(lines)] |> foreach (line num) => println(num ": " line)
+(def (map proc lst)
+  "Return new list created by applying procedure to each element of the input list"
+  (if pair?[lst]
     (cons (proc (car lst))
           (map proc (cdr lst)))
     Nil))
@@ -347,6 +349,7 @@
   "Return boolean if every element in list is equal to elem"
   (everyp? @(= elem it) lst))
 
+; TODO rewrite, optimize tco?
 (def (compose . procs)
   "Create function made from chaining procedures given"
   (cond
@@ -369,6 +372,7 @@
   (cond
     ((pair? x) (cons (car x) (append (cdr x) y)))
     ((nil? x) y)
+    ; (else (cons x y)) ; support appending non lists (for flatmap)
     (else (error 'append "expected proper list"))))
 
 ; TODO zip to proper pairs (def zip' (zip args (nil list)))
@@ -379,15 +383,6 @@
         ((and (pair? x) (pair? y))
          (cons (cons (car x) (car y))
                (zip (cdr x) (cdr y))))))
-
-; English list element accessors
-(def rest cdr) ; TODO first and rest are generics for list, vec, str types
-(def first car) ; TODO rename func to new name
-(recur f (n: 1
-          lst: '(second third forth fifth sixth seventh eighth ninth tenth))
-  (when lst
-    (eval `(def (,(car lst) x) (nth x ,n)))
-    (f (+ n 1) (cdr lst))))
 
 ;;; Stacks
 
