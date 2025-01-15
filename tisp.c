@@ -597,12 +597,25 @@ tisp_read_sexpr(Tsp st)
 	          st->file[st->filec], (int)st->file[st->filec]);
 }
 
-/* read extra syntax sugar on top of s-expressions */
+/* read single value, made up of s-expression and optional syntax sugar */
 Val
 tisp_read(Tsp st)
 {
-	Val v, lst, w;
-	if (!(v = tisp_read_sexpr(st))) return NULL;
+	Val v;
+	if (!(v = tisp_read_sexpr(st)))
+		return NULL;
+	/* HACK find more general way to do this */
+	while (tsp_fget(st) == '[' || tsp_fget(st) == ':' || tsp_fget(st) == '>' ||
+	       tsp_fget(st) == '{')
+		v = tisp_read_sugar(st, v);
+	return v;
+}
+
+/* read extra syntax sugar on top of s-expressions */
+Val
+tisp_read_sugar(Tsp st, Val v)
+{
+	Val lst, w;
 	if (tsp_fget(st) == '[') { /* func[x y] => (func x y) */
 		/* TODO fix @it[3] */
 		tsp_finc(st);
