@@ -60,7 +60,7 @@
         ((atom? lst) (error 'count "expected proper list"))
         ((= elem (car lst)) (+ 1 (count elem (cdr lst))))
         (else (count elem (cdr lst)))))
-        ; (else (Binary[(elem = car[lst])] + count[elem cdr[lst]]))
+        ; (else (Binary((elem = car(lst))) + count(elem cdr(lst))))
 
 (def (apply proc args) ; TODO many args
   "Run procedure with given arguments list"
@@ -72,7 +72,7 @@
 ; [lines 0..len(lines)] |> foreach (line num) => println(num ": " line)
 (def (map proc lst)
   "Return new list created by applying procedure to each element of the input list"
-  (if pair?[lst]
+  (if pair?(lst)
     (cons (proc (car lst))
           (map proc (cdr lst)))
     Nil))

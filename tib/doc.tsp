@@ -1,3 +1,4 @@
+; TODO replace w/ rec, append with def docstr-reg docstr-reg{func: "doc string"}
 (def docstr-reg
   '((car
       "(car lst)"
@@ -86,13 +87,13 @@
   (unless (procedure? proc)
     (error 'doc "documentation only exists for procedures"))
   (def (lookup proc) ; TODO allow for non proc lookup by make doc macro
-    (let (docstrs: (assoc procprops[proc]::name docstr-reg))
+    (let (docstrs: (assoc procprops(proc)::name docstr-reg))
       (if docstrs
         (map println (cdr docstrs))
-        (error 'doc procprops[proc]::name ": no documentation found"))))
+        (error 'doc procprops(proc)::name ": no documentation found"))))
   (if (or (function? proc) (macro? proc))
-    (let (docstr: (car procprops[proc]::body))
-      (println (cons procprops[proc]::name procprops[proc]::args))
+    (let (docstr: (car procprops(proc)::body))
+      (println (cons procprops(proc)::name procprops(proc)::args))
       (if (string? docstr)
         (println docstr)
         (lookup proc)))

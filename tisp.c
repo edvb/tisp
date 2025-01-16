@@ -605,7 +605,7 @@ tisp_read(Tsp st)
 	if (!(v = tisp_read_sexpr(st)))
 		return NULL;
 	/* HACK find more general way to do this */
-	while (tsp_fget(st) == '[' || tsp_fget(st) == ':' || tsp_fget(st) == '>' ||
+	while (tsp_fget(st) == '(' || tsp_fget(st) == ':' || tsp_fget(st) == '>' ||
 	       tsp_fget(st) == '{')
 		v = tisp_read_sugar(st, v);
 	return v;
@@ -616,10 +616,10 @@ Val
 tisp_read_sugar(Tsp st, Val v)
 {
 	Val lst, w;
-	if (tsp_fget(st) == '[') { /* func[x y] => (func x y) */
-		/* TODO fix @it[3] */
+	if (tsp_fget(st) == '(') { /* func(x y) => (func x y) */
+		/* FIXME @it(3) */
 		tsp_finc(st);
-		if (!(lst = read_pair(st, ']'))) return NULL;
+		if (!(lst = read_pair(st, ')'))) return NULL;
 		return mk_pair(v, lst);
 	} else if (tsp_fget(st) == '{') { /* rec{ key: value } => (recmerge rec { key: value }) */
 		tsp_finc(st);
@@ -629,9 +629,9 @@ tisp_read_sugar(Tsp st, Val v)
 	} else if (tsp_fget(st) == ':') {
 		tsp_finc(st);
 		switch (tsp_fget(st)) {
-		case '[': /* proc:[lst] => (map proc lst) */
+		case '(': /* proc:(lst) => (map proc lst) */
 			tsp_finc(st);
-			if (!(w = read_pair(st, ']'))) return NULL;
+			if (!(w = read_pair(st, ')'))) return NULL;
 			return mk_pair(mk_sym(st, "map"), mk_pair(v, w));
 		case ':': /* var::prop => (var 'prop) */
 			tsp_finc(st);
