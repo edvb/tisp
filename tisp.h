@@ -20,6 +20,7 @@
  */
 
 #define TSP_REC_MAX_PRINT 64
+#define TSP_REC_FACTOR 2
 
 #define TSP_OP_CHARS "_+-*/\\|=^<>.:"
 #define TSP_SYM_CHARS "_!?" "@#$%&~" "*-"

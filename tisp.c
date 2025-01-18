@@ -31,7 +31,7 @@
 #define LEN(X)            (sizeof(X) / sizeof((X)[0]))
 
 /* functions */
-static void rec_add(Rec ht, char *key, Val val);
+static void rec_add(Rec rec, char *key, Val val);
 static Val eval_proc(Tsp st, Rec env, Val f, Val args);
 
 /* utility functions */
@@ -168,39 +168,40 @@ hash(char *key)
 static Rec
 rec_new(size_t cap, Rec next)
 {
-	Rec ht = malloc(sizeof(struct Rec));
-	if (!ht) perror("; malloc"), exit(1);
-	ht->size = 0;
-	ht->cap = cap;
-	ht->items = calloc(cap, sizeof(struct Entry));
-	if (!ht->items) perror("; calloc"), exit(1);
-	ht->next = next;
-	return ht;
+	Rec rec;
+	if (!(rec = malloc(sizeof(struct Rec))))
+		perror("; malloc"), exit(1);
+	rec->size = 0;
+	rec->cap = cap;
+	if (!(rec->items = calloc(cap, sizeof(struct Entry))))
+		perror("; calloc"), exit(1);
+	rec->next = next;
+	return rec;
 }
 
 /* get entry in one record for the key */
 static Entry
-entry_get(Rec ht, char *key)
+entry_get(Rec rec, char *key)
 {
-	int i = hash(key) % ht->cap;
+	int i = hash(key) % rec->cap;
 	char *s;
 	/* look for key starting at hash until empty entry is found */
-	while ((s = ht->items[i].key)) {
+	while ((s = rec->items[i].key)) {
 		if (!strcmp(s, key))
 			break;
-		if (++i == ht->cap) /* loop back around if end is reached */
+		if (++i == rec->cap) /* loop back around if end is reached */
 			i = 0;
 	}
-	return &ht->items[i]; /* returns entry if found or empty one to be filled */
+	return &rec->items[i]; /* returns entry if found or empty one to be filled */
 }
 
 /* get value of given key in each record */
 static Val
-rec_get(Rec ht, char *key)
+rec_get(Rec rec, char *key)
 {
 	Entry e;
-	for (; ht; ht = ht->next) {
-		e = entry_get(ht, key);
+	for (; rec; rec = rec->next) {
+		e = entry_get(rec, key);
 		if (e->key)
 			return e->val;
 	}
@@ -209,40 +210,41 @@ rec_get(Rec ht, char *key)
 
 /* enlarge the record to ensure algorithm's efficiency */
 static void
-rec_grow(Rec ht)
+rec_grow(Rec rec)
 {
-	int i, ocap = ht->cap;
-	Entry oitems = ht->items;
-	ht->cap *= 2;
-	ht->items = calloc(ht->cap, sizeof(struct Entry));
-	if (!ht->items) perror("; calloc"), exit(1);
+	int i, ocap = rec->cap;
+	Entry oitems = rec->items;
+	rec->cap *= TSP_REC_FACTOR;
+	if (!(rec->items = calloc(rec->cap, sizeof(struct Entry))))
+		perror("; calloc"), exit(1);
 	for (i = 0; i < ocap; i++) /* repopulate new record with old values */
 		if (oitems[i].key)
-			rec_add(ht, oitems[i].key, oitems[i].val);
+			rec_add(rec, oitems[i].key, oitems[i].val);
 	free(oitems);
 }
 
 /* create new key and value pair to the record */
 static void
-rec_add(Rec ht, char *key, Val val)
+rec_add(Rec rec, char *key, Val val)
 {
-	Entry e = entry_get(ht, key);
+	Entry e = entry_get(rec, key);
 	e->val = val;
 	if (!e->key) {
 		e->key = key;
-		if (++ht->size > ht->cap / 2) /* grow record if it is more than half full */
-			rec_grow(ht);
+		/* grow record if it is more than half full */
+		if (++rec->size > rec->cap / TSP_REC_FACTOR)
+			rec_grow(rec);
 	}
 }
 
 /* add each binding args[i] -> vals[i] */
 /* args and vals are both lists */
 static Rec
-rec_extend(Rec ht, Val args, Val vals)
+rec_extend(Rec rec, Val args, Val vals)
 {
 	Val arg, val;
 	int argnum = tsp_lstlen(args);
-	Rec ret = rec_new(argnum > 0 ? 2*argnum : 8, ht);
+	Rec ret = rec_new(argnum > 0 ? TSP_REC_FACTOR*argnum : 8, rec);
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
 		if (args->t == TSP_PAIR) {
 			arg = car(args);
@@ -266,8 +268,9 @@ rec_extend(Rec ht, Val args, Val vals)
 Val
 mk_val(TspType t)
 {
-	Val ret = malloc(sizeof(struct Val));
-	if (!ret) perror("; malloc"), exit(1);
+	Val ret;
+	if (!(ret = malloc(sizeof(struct Val))))
+		perror("; malloc"), exit(1);
 	ret->t = t;
 	return ret;
 }
@@ -482,8 +485,9 @@ esc_char(char c)
 static char *
 esc_str(char *s, int len, int do_esc)
 {
-	char *pos, *ret = malloc((len+1) * sizeof(char));
-	if (!ret) perror("; malloc"), exit(1);
+	char *pos, *ret;
+	if (!(ret = malloc((len+1) * sizeof(char))))
+		perror("; malloc"), exit(1);
 	for (pos = ret; pos-ret < len; pos++, s++)
 		*pos = (*s == '\\' && do_esc) ? esc_char(*(++s)) : *s;
 	*pos = '\0';
@@ -1010,7 +1014,7 @@ prim_recmerge(Tsp st, Rec env, Val args)
 	tsp_arg_num(args, "recmerge", 2);
 	tsp_arg_type(car(args), "recmerge", TSP_REC);
 	tsp_arg_type(cadr(args), "recmerge", TSP_REC);
-	ret->v.r = rec_new(cadr(args)->v.r->size*2, car(args)->v.r);
+	ret->v.r = rec_new(cadr(args)->v.r->size*TSP_REC_FACTOR, car(args)->v.r);
 	for (Rec h = cadr(args)->v.r; h; h = h->next)
 		for (int i = 0, c = 0; c < h->size; i++)
 			if (h->items[i].key)
@@ -1124,8 +1128,9 @@ tisp_env_add(Tsp st, char *key, Val v)
 Tsp
 tisp_env_init(size_t cap)
 {
-	Tsp st = malloc(sizeof(struct Tsp));
-	if (!st) perror("; malloc"), exit(1);
+	Tsp st;
+	if (!(st = malloc(sizeof(struct Tsp))))
+		perror("; malloc"), exit(1);
 
 	st->file = NULL;
 	st->filec = 0;
