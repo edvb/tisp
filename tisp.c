@@ -105,7 +105,7 @@ skip_ws(Tsp st, int skipnl)
 	}
 }
 
-/* get length of list, if improper list return -1 */
+/* get length of list, if improper list return negative length */
 int
 tsp_lstlen(Val v)
 {
@@ -237,14 +237,14 @@ rec_add(Rec rec, char *key, Val val)
 	}
 }
 
-/* add each binding args[i] -> vals[i] */
-/* args and vals are both lists */
+/* add each vals[i] to rec with key args[i] */
 static Rec
 rec_extend(Rec rec, Val args, Val vals)
 {
 	Val arg, val;
 	int argnum = TSP_REC_FACTOR * tsp_lstlen(args);
-	Rec ret = rec_new(argnum > 0 ? argnum : -argnum, rec);
+	/* HACK need extra +1 for when argnum = 0 */
+	Rec ret = rec_new(argnum > 0 ? argnum : -argnum + 1, rec);
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
 		if (args->t == TSP_PAIR) {
 			arg = car(args);
@@ -365,7 +365,7 @@ mk_rec(Tsp st, Rec env, Val assoc)
 	if (!assoc)
 		return ret->v.r = env, ret;
 	cap = TSP_REC_FACTOR * tsp_lstlen(assoc);
-	ret->v.r = rec_new(cap > 0 ? cap : -cap, NULL);
+	ret->v.r = rec_new(cap > 0 ? cap : -cap + 1, NULL);
 	Rec r = rec_new(4, env);
 	rec_add(r, "this", ret);
 	for (Val cur = assoc; cur->t == TSP_PAIR; cur = cdr(cur))
@@ -738,7 +738,6 @@ prepend_bt(Tsp st, Rec env, Val f)
 }
 
 /* evaluate procedure f with arguments */
-/* TODO Val f -> Func f */
 static Val
 eval_proc(Tsp st, Rec env, Val f, Val args)
 {
