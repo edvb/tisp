@@ -112,7 +112,7 @@ tsp_lstlen(Val v)
 	int len = 0;
 	for (; v->t == TSP_PAIR; v = cdr(v))
 		len++;
-	return nilp(v) ? len : -1; /* TODO -len */
+	return nilp(v) ? len : -(len + 1);
 }
 
 /* check if two values are equal */
@@ -243,8 +243,8 @@ static Rec
 rec_extend(Rec rec, Val args, Val vals)
 {
 	Val arg, val;
-	int argnum = tsp_lstlen(args);
-	Rec ret = rec_new(argnum > 0 ? TSP_REC_FACTOR*argnum : 8, rec);
+	int argnum = TSP_REC_FACTOR * tsp_lstlen(args);
+	Rec ret = rec_new(argnum > 0 ? argnum : -argnum, rec);
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
 		if (args->t == TSP_PAIR) {
 			arg = car(args);
@@ -360,18 +360,21 @@ mk_func(TspType t, char *name, Val args, Val body, Rec env)
 Val
 mk_rec(Tsp st, Rec env, Val assoc)
 {
+	int cap;
 	Val v, ret = mk_val(TSP_REC);
-	if (!assoc) return ret->v.r = env, ret;
-	ret->v.r = rec_new(64, NULL);
-	Rec h = rec_new(4, env);
-	rec_add(h, "this", ret);
+	if (!assoc)
+		return ret->v.r = env, ret;
+	cap = TSP_REC_FACTOR * tsp_lstlen(assoc);
+	ret->v.r = rec_new(cap > 0 ? cap : -cap, NULL);
+	Rec r = rec_new(4, env);
+	rec_add(r, "this", ret);
 	for (Val cur = assoc; cur->t == TSP_PAIR; cur = cdr(cur))
 		if (car(cur)->t == TSP_PAIR && caar(cur)->t & (TSP_SYM|TSP_STR)) {
-			if (!(v = tisp_eval(st, h, cdar(cur)->v.p.car)))
+			if (!(v = tisp_eval(st, r, cdar(cur)->v.p.car)))
 				return NULL;
 			rec_add(ret->v.r, caar(cur)->v.s, v);
 		} else if (car(cur)->t == TSP_SYM) {
-			if (!(v = tisp_eval(st, h, car(cur))))
+			if (!(v = tisp_eval(st, r, car(cur))))
 				return NULL;
 			rec_add(ret->v.r, car(cur)->v.s, v);
 		} else tsp_warn("Rec: missing key symbol or string");
@@ -841,12 +844,12 @@ tisp_print(FILE *f, Val v)
 		break;
 	case TSP_REC:
 		putc('{', f);
-		for (Rec h = v->v.r; h; h = h->next)
-			for (int i = 0, c = 0; c < h->size; i++)
-				if (h->items[i].key) {
+		for (Rec r = v->v.r; r; r = r->next)
+			for (int i = 0, c = 0; c < r->size; i++)
+				if (r->items[i].key) {
 					c++;
-					fprintf(f, " %s: ", h->items[i].key);
-					tisp_print(f, h->items[i].val);
+					fprintf(f, " %s: ", r->items[i].key);
+					tisp_print(f, r->items[i].val);
 				} else if (c == TSP_REC_MAX_PRINT) {
 					fputs(" ...", f);
 					break;
@@ -1010,15 +1013,15 @@ form_Macro(Tsp st, Rec env, Val args)
 static Val
 prim_recmerge(Tsp st, Rec env, Val args)
 {
-	Val ret = mk_val(TSP_REC);;
+	Val ret = mk_val(TSP_REC);
 	tsp_arg_num(args, "recmerge", 2);
 	tsp_arg_type(car(args), "recmerge", TSP_REC);
 	tsp_arg_type(cadr(args), "recmerge", TSP_REC);
 	ret->v.r = rec_new(cadr(args)->v.r->size*TSP_REC_FACTOR, car(args)->v.r);
-	for (Rec h = cadr(args)->v.r; h; h = h->next)
-		for (int i = 0, c = 0; c < h->size; i++)
-			if (h->items[i].key)
-				c++, rec_add(ret->v.r, h->items[i].key, h->items[i].val);
+	for (Rec r = cadr(args)->v.r; r; r = r->next)
+		for (int i = 0, c = 0; c < r->size; i++)
+			if (r->items[i].key)
+				c++, rec_add(ret->v.r, r->items[i].key, r->items[i].val);
 	return ret;
 }
 
@@ -1029,11 +1032,11 @@ prim_records(Tsp st, Rec env, Val args)
 	Val ret = st->nil;
 	tsp_arg_num(args, "records", 1);
 	tsp_arg_type(car(args), "records", TSP_REC);
-	for (Rec h = car(args)->v.r; h; h = h->next)
-		for (int i = 0, c = 0; c < h->size; i++)
-			if (h->items[i].key) {
-				Val entry = mk_pair(mk_sym(st, h->items[i].key),
-				                               h->items[i].val);
+	for (Rec r = car(args)->v.r; r; r = r->next)
+		for (int i = 0, c = 0; c < r->size; i++)
+			if (r->items[i].key) {
+				Val entry = mk_pair(mk_sym(st, r->items[i].key),
+				                               r->items[i].val);
 				ret = mk_pair(entry, ret);
 				c++;
 			}
@@ -1074,8 +1077,8 @@ form_undefine(Tsp st, Rec env, Val args)
 {
 	tsp_arg_min(args, "undefine!", 1);
 	tsp_arg_type(car(args), "undefine!", TSP_SYM);
-	for (Rec h = env; h; h = h->next) {
-		Entry e = entry_get(h, car(args)->v.s);
+	for (Rec r = env; r; r = r->next) {
+		Entry e = entry_get(r, car(args)->v.s);
 		if (e->key) {
 			e->key = NULL;
 			/* TODO tsp_free(e->val); */
@@ -1091,8 +1094,8 @@ form_definedp(Tsp st, Rec env, Val args)
 	Entry e = NULL;
 	tsp_arg_min(args, "defined?", 1);
 	tsp_arg_type(car(args), "defined?", TSP_SYM);
-	for (Rec h = env; h; h = h->next) {
-		e = entry_get(h, car(args)->v.s);
+	for (Rec r = env; r; r = r->next) {
+		e = entry_get(r, car(args)->v.s);
 		if (e->key)
 			break;
 	}

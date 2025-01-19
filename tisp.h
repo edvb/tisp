@@ -46,7 +46,7 @@
 		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS));     \
 } while(0)
 #define tsp_arg_num(ARGS, NAME, NARGS) do {                                      \
-	if (NARGS != -1 && tsp_lstlen(ARGS) != NARGS)                            \
+	if (NARGS > -1 && tsp_lstlen(ARGS) != NARGS)                             \
 		tsp_warnf("%s: expected %d argument%s, received %d",             \
 		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS)); \
 } while(0)
