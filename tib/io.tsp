@@ -14,8 +14,6 @@
       "(load lib)"
       "Loads the library given as a string"))))
 
-(def (run file) (eval (parse (read file))))
-(def (print . str) (apply write (list* 'stdout Nil str)))
 (def (newline . file) ; TODO space and tab functions, accept number of instead
   (if (or (nil? file) (nil? (cdr file)))
     (write (car (or file '(stdout))) file "\n")
@@ -31,4 +29,7 @@
        str)
   Void)
 (def (displayln . str) (apply display str) (newline))
-(def (println . str)   (apply print str) (newline))
+(def (print . str)     (write 'stdout Nil . str))
+(def (println . str)   (print . str) (newline))
+(def printerr(. str)   (write 'stderr Nil . str))
+(def printerrln(. str) (printerr . str) (newline))
