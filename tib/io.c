@@ -18,16 +18,10 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
-
-#include "../tisp.h"
 
 /* count number of parenthesis, brackets, and curly braces */
 /* FIXME makes reading O(2N) replace w/ better counting sys */

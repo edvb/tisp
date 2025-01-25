@@ -9,10 +9,6 @@
 #include "tisp.h"
 #ifndef TIB_DYNAMIC
 #  include "tibs.tsp.h"
-	tsp_include_tib(math);
-	tsp_include_tib(io);
-	tsp_include_tib(os);
-	tsp_include_tib(string);
 #endif
 
 /* read, parse, and eval file given as single element list, or empty list for stdin */
@@ -30,7 +26,7 @@ main(int argc, char *argv[])
 	int i = 1;
 	Val v = NULL;
 
-	Tsp st = tisp_env_init(256);
+	Tsp st = tisp_env_init(1024);
 #ifndef TIB_DYNAMIC
 	tib_env_math(st);
 	tib_env_io(st);

@@ -11,7 +11,7 @@ endif
 EXE = tisp
 SRC = tisp.c main.c
 TIB = tib/math.c tib/io.c tib/os.c tib/string.c
-OBJ = $(SRC:.c=.o) $(TIB:.c=.o)
+OBJ = $(SRC:.c=.o)
 LIB = $(TIB:.c=.so)
 TSP = tib/core.tsp tib/list.tsp tib/doc.tsp tib/io.tsp tib/math.tsp tib/os.tsp
 DOC = doc/tisp.1.md doc/tisp.7.md
@@ -59,7 +59,9 @@ clean:
 dist: tibs.tsp.h
 	@echo creating dist tarball
 	@mkdir -p tisp-$(VERSION)
-	@cp -R tisp.c tisp.h $(TIB) tibs.tsp.h tisp-$(VERSION)
+	@cp tisp.h tibs.tsp.h tisp-$(VERSION)
+	@sed '/^#include "tib/d' tisp.c > tisp-$(VERSION)/tisp.c
+	@cat $(TIB) >> tisp-$(VERSION)/tisp.c
 	@tar -cf tisp-$(VERSION).tar tisp-$(VERSION)
 	@gzip tisp-$(VERSION).tar
 	@rm -rf tisp-$(VERSION)
@@ -94,7 +96,7 @@ uninstall:
 test: $(OBJ) $(LIB) test.o
 	@echo running tests
 	@echo $(CC) -o test
-	@$(CC) -o test tisp.o $(TIB:.c=.o) test.o $(LDFLAGS)
+	@$(CC) -o test tisp.o test.o $(LDFLAGS)
 	@./test
 
 man: $(MAN)

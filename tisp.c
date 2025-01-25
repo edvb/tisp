@@ -1193,3 +1193,9 @@ tisp_env_lib(Tsp st, char* lib)
 	st->file = file;
 	st->filec = filec;
 }
+
+
+#include "tib/string.c"
+#include "tib/math.c"
+#include "tib/io.c"
+#include "tib/os.c"

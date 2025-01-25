@@ -18,13 +18,8 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <assert.h>
 #include <math.h>
-
-#include "../tisp.h"
 
 #define num(P) ((P)->v.n.num)
 #define den(P) ((P)->v.n.den)

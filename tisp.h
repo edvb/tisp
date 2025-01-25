@@ -60,7 +60,6 @@
 #define tsp_env_prim(NAME)          tsp_env_name_prim(NAME, NAME)
 #define tsp_env_name_form(NAME, FN) tisp_env_add(st, #NAME, mk_prim(TSP_FORM, form_##FN, #NAME))
 #define tsp_env_form(NAME)          tsp_env_name_form(NAME, NAME)
-#define tsp_include_tib(NAME)       void tib_env_##NAME(Tsp)
 
 #define tsp_fgetat(ST, O) ST->file[ST->filec+O]
 #define tsp_fget(ST) tsp_fgetat(ST,0)
@@ -164,3 +163,8 @@ void tisp_print(FILE *f, Val v);
 void tisp_env_add(Tsp st, char *key, Val v);
 Tsp  tisp_env_init(size_t cap);
 void tisp_env_lib(Tsp st, char* lib);
+
+void tib_env_string(Tsp);
+void tib_env_math(Tsp);
+void tib_env_io(Tsp);
+void tib_env_os(Tsp);

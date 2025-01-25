@@ -18,17 +18,11 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "../tisp.h"
 
 typedef Val (*MkFn)(Tsp, char*);
 
-/* TODO string tib: lower upper capitalize strpos strsub (python: dir(str))*/
+/* TODO string tib: lower upper capitalize strpos strsub skipto snipto (python: dir(str))*/
 
-/* TODO simplify by using fmemopen/funopen and tisp_print */
 /* TODO NULL check allocs */
 static Val
 val_string(Tsp st, Val args, MkFn mk_fn)
@@ -107,6 +101,7 @@ prim_strlen(Tsp st, Rec env, Val args)
 }
 
 /* perform interpolation on explicit string, evaluating anything inside curly braces */
+/* FIXME nested strings shouldn't need to be escaped*/
 static Val
 form_strformat(Tsp st, Rec env, Val args)
 {
