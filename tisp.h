@@ -66,14 +66,6 @@
 #define tsp_finc(ST) ST->filec++
 #define tsp_fincn(ST, N) ST->filec += N
 
-#define car(P)  ((P)->v.p.car)
-#define cdr(P)  ((P)->v.p.cdr)
-#define caar(P) car(car(P))
-#define cadr(P) car(cdr(P))
-#define cdar(P) cdr(car(P))
-#define cddr(P) cdr(cdr(P))
-#define nilp(P) ((P)->t == TSP_NIL)
-
 struct Val;
 typedef struct Val *Val;
 typedef struct Tsp *Tsp;
@@ -164,6 +156,7 @@ void tisp_env_add(Tsp st, char *key, Val v);
 Tsp  tisp_env_init(size_t cap);
 void tisp_env_lib(Tsp st, char* lib);
 
+void tib_env_core(Tsp);
 void tib_env_string(Tsp);
 void tib_env_math(Tsp);
 void tib_env_io(Tsp);

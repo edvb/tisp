@@ -568,6 +568,7 @@ main(void)
 	int errors[LEN(tests)] = {0};
 	clock_t t;
 	Tsp st = tisp_env_init(1024);
+	tib_env_core(st);
 	tib_env_math(st);
 	tib_env_string(st);
 	tisp_env_lib(st, tibs);

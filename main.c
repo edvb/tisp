@@ -28,6 +28,7 @@ main(int argc, char *argv[])
 
 	Tsp st = tisp_env_init(1024);
 #ifndef TIB_DYNAMIC
+	tib_env_core(st);
 	tib_env_math(st);
 	tib_env_io(st);
 	tib_env_os(st);

@@ -21,9 +21,6 @@
 #include <assert.h>
 #include <math.h>
 
-#define num(P) ((P)->v.n.num)
-#define den(P) ((P)->v.n.den)
-
 #define EVAL_CHECK(A, V, NAME, TYPE) do {  \
 	if (!(A = tisp_eval(st, vars, V))) \
 		return NULL;               \
