@@ -10,7 +10,7 @@ endif
 
 EXE = tisp
 SRC = tisp.c main.c
-TIB = tib/math.c tib/io.c tib/os.c tib/string.c
+TIB = tib/core.c tib/string.c tib/math.c tib/io.c tib/os.c
 OBJ = $(SRC:.c=.o)
 LIB = $(TIB:.c=.so)
 TSP = tib/core.tsp tib/list.tsp tib/doc.tsp tib/io.tsp tib/math.tsp tib/os.tsp
@@ -38,7 +38,7 @@ tibs.tsp.h: $(TSP)
 	@echo $(CC) $<
 	@$(CC) -c -o $@ $< $(CFLAGS)
 
-$(OBJ): config.mk
+$(OBJ): $(TIB) tisp.h config.mk
 
 main.o: tibs.tsp.h
 
