@@ -23,8 +23,15 @@
   (map @(cond
           ((string? it) (print "\"" it "\""))
           ((true? it)   (print it)) ; don't quote True since it's self evaluating
+          ; TODO if contains non symbol char print as explict sym syntax
           ((symbol? it) (print "'" it))
-          ((pair? it)   (print "'" it))
+          ((pair? it)   print("[")
+                        display(car(it))
+                        (map Func((x) print(" ") display(x)) cdr(it))
+                        print("]"))
+          ((record? it) print("{ ")
+                        (map Func((x) print(car(x) ": ") display(cdr(x)) print(" ")) records(it))
+                        print("}"))
           (else         (print it)))
        str)
   Void)
