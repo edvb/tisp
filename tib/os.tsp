@@ -15,10 +15,10 @@
 ; TODO % stack of prev res, %% = fst %
 (def (repl)
   "Read, evaluate, print, loop
-  To exit enter (quit) or press CTRL-D"
+  To exit enter quit or press CTRL-D"
   (print "> ")
   (let (expr: (parse (read)))
-    (unless (and (pair? expr) (= (car expr) 'quit))
+    (unless (= expr 'quit)
       ; TODO push ans to stack of outputs
       (let (ans: (eval expr)) ; env{ :% %%: fst(%) }
         (unless (void? ans)
@@ -27,12 +27,12 @@
 
 (def (repl-simple)
   "Simple REPL interface, only dependencies are builtin functions, no tisp code
-  To exit enter (quit) or press CTRL-D
+  To exit enter quit or press CTRL-D
   See repl for more advanced REPL with prettier printing"
   (write 'stdout Nil "> ")
   ((Func (expr)
      (cond
-       ((cond (= typeof(expr) "Pair"): (= car(expr) 'quit) else: Nil))
+       ((= expr 'quit))
        (else
          write('stdout Nil (eval expr) "\n")
          (repl-simple))))

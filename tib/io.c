@@ -120,7 +120,7 @@ prim_read(Tsp st, Rec env, Val args)
 	return mk_str(st, file);
 }
 
-/* parse string as tisp expression, return (quit) if given nil */
+/* parse string as tisp expression, return 'quit if given no arguments */
 static Val
 prim_parse(Tsp st, Rec env, Val args)
 {
@@ -130,7 +130,7 @@ prim_parse(Tsp st, Rec env, Val args)
 	tsp_arg_num(args, "parse", 1);
 	expr = car(args);
 	if (nilp(expr))
-		return mk_pair(mk_sym(st, "quit"), st->nil);
+		return mk_sym(st, "quit");
 	tsp_arg_type(expr, "parse", TSP_STR);
 	st->file = expr->v.s;
 	st->filec = 0;
