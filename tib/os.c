@@ -50,6 +50,7 @@ prim_pwd(Tsp st, Rec env, Val args)
 	return mk_str(st, cwd);
 }
 
+/* exit program with return value of given int */
 static Val
 prim_exit(Tsp st, Rec env, Val args)
 {

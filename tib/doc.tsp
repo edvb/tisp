@@ -1,22 +1,22 @@
 ; TODO replace w/ rec, append with def docstr-reg docstr-reg{func: "doc string"}
 (def docstr-reg
   '((car
-      "(car lst)"
+      "car(lst)"
       "First element of list")
     (cdr
-      "(cdr lst)"
+      "cdr(lst)"
       "Rest of list after first element, or second element of pair")
     (cons
-      "(cons a d)"
+      "cons(a d)"
       "Create new pair with a car of a and cdr of d")
     (quote
-      "(quote expr)"
+      "quote(expr)"
       "'expr"
       "Return expression unevaluated"
       "  Can be shortened with the ' prefix"
       "  Also see: quasiquote, unquote, and unquote-splice")
     (eval
-      "(eval expr)"
+      "eval(expr)"
       "Evaluate expression"
       "  Can be dangerous to use, as arbitrary code might be executed if the input"
       "  comes from an untrusted source"
@@ -25,64 +25,64 @@
       "(= . vals)"
       "Return boolean depending on if multiple values are all equal")
     (cond
-      "(cond . (expr . body))"
+      "cond . (expr . body)"
       "Evaluates and returns first body with a true conditional expression"
       "  Also see: if, when, unless")
     (do
-      "(do . body)"
+      "do . body"
       "Evaluate each expression in body, returning last"
       "  Also see: do0")
     (typeof
-      "(typeof val)"
+      "typeof(val)"
       "Get string stating the argument's type")
     (procprops
-      "(procprops prop)"
+      "procprops(prop)"
       "Get record of properties for given procedure"
       "  Includes name, args, and body for functions and macros"
       "  Only has name for builtin primitives and special forms")
     (Func
-      "(Func args . body)"
-      "(Func body)"
+      "Func args . body"
+      "Func body"
       "Create anonymous function"
       "  If only body is given, create function with one argument labeled 'it'"
       "  Also see: def")
     (Macro
-      "(Macro args . body)"
-      "(Macro body)"
+      "Macro args . body"
+      "Macro body"
       "Create anonymous macro, arguments are not evaluated before given to body"
       "  If only body is given, create macro with one argument labeled 'it'"
       "  Also see: defmacro")
     (def
-      "(def var . val)"
+      "def var . val"
       "Define new variable with value"
       "  If value is not given, define a self-evaluating symbol"
       ""
-      "(def (func . args) . body)"
+      "def func(. args) . body"
       "Create new function with arguments list and body list")
     (undefine!
-      "(undefine! var)"
+      "undefine!(var)"
       "Remove variable from environment")
     (defined?
-      "(defined? var)"
+      "defined?(var)"
       "Return boolean on if variable is defined in environment")
     (error
-      "(error func msg)"
+      "error(func msg)"
       "Throw error, print message with function name given as symbol")
     (quit
       "quit"
       "Exit REPL, equivalent to Ctrl-D")
     (Str
-      "(Str . vals)"
+      "Str(. vals)"
       "Convert all values into single string")
     (Sym
-      "(Sym . vals)"
+      "Sym(. vals)"
       "Convert all values into single symbol")
     (strformat
-      "(strformat str)"
+      "f\"str\""
       "Perform interpolation on explicit string"
       "  Evaluate expression inside curly braces"
       "  Double curly braces are not evaluated, inserting a single one."
-      "  Equivalent to f\"str\"")))
+      "  Equivalent to strformat(\"str\"")))
 
 ; TODO print func args even if no docstr
 (def (doc proc)

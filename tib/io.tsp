@@ -1,17 +1,17 @@
 (def docstr-reg (append docstr-reg
   '((write
-      "(write file append? . vals)"
+      "write(file append? . vals)"
       "Write all values to file"
       "  File can be file path give as string or the symbols 'stdout or 'stderr"
       "  Append file if append? is true, otherwise override")
     (read
-      "(read . file)"
+      "read(. file)"
       "Return string read from file, or stdin if no file is provided")
     (parse
-      "(parse string)"
+      "parse(string)"
       "Parse Tisp object from given string")
     (load
-      "(load lib)"
+      "load(lib)"
       "Loads the library given as a string"))))
 
 (def (newline . file) ; TODO space and tab functions, accept number of instead

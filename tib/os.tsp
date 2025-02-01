@@ -1,15 +1,19 @@
 (def docstr-reg (append docstr-reg
   '((cd!
-      "(cd! dir)"
+      "cd!(dir)"
       "Change directory")
     (pwd
-      "(pwd)"
+      "pwd()"
       "String of current working directory")
+    (exit!
+      "exit!(status)"
+      "Exit program with status code of given integer"
+      "  Zero for success, non-zero for failure")
     (now
-      "(now)"
+      "now()"
       "Number of seconds since 1970 (unix time stamp)")
     (time
-      "(time expr)"
+      "time(expr)"
       "Time in milliseconds it took to run expression"))))
 
 ; TODO % stack of prev res, %% = fst %
