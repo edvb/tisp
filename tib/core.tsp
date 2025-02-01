@@ -1,6 +1,6 @@
 ;;; core.tsp
 (def (list . lst) "Create list" lst)
-(def quit "type (quit) or press CTRL-D to exit REPL")
+(def quit() '~No REPL to quit from~)
 
 (def defmacro
   (Macro (args . body)

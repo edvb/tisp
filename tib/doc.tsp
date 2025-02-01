@@ -68,6 +68,9 @@
     (error
       "(error func msg)"
       "Throw error, print message with function name given as symbol")
+    (quit
+      "quit"
+      "Exit REPL, equivalent to Ctrl-D")
     (Str
       "(Str . vals)"
       "Convert all values into single string")
@@ -93,7 +96,8 @@
         (error 'doc procprops(proc)::name ": no documentation found"))))
   (if (or (function? proc) (macro? proc))
     (let (docstr: (car procprops(proc)::body))
-      (println (cons procprops(proc)::name procprops(proc)::args))
+      (unless (= procprops(proc)::name 'quit)
+        (println procprops(proc)::name (or procprops(proc)::args "()")))
       (if (string? docstr)
         (println docstr)
         (lookup proc)))
