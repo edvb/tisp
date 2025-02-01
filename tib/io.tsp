@@ -22,6 +22,7 @@
 (def (display . str)
   (map @(cond
           ((string? it) (print "\"" it "\""))
+          ((void? it))
           ((true? it)   (print it)) ; don't quote True since it's self evaluating
           ; TODO if contains non symbol char print as explict sym syntax
           ((symbol? it) (print "'" it))
