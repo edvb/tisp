@@ -36,11 +36,6 @@ main(int argc, char *argv[])
 	tisp_env_lib(st, tibs);
 #endif
 
-	/* TODO SIGTERM to handle garbage collection */
-	struct sigaction sigint;
-	sigint.sa_handler = SIG_IGN;
-	sigaction(SIGINT, &sigint, NULL);
-
 	if (argc == 1) {
 		st->file = "(repl)";
 		goto readstr;
