@@ -929,17 +929,20 @@ tisp_env_init(size_t cap)
 	return st;
 }
 
+/* load lib from string into environment */
 void
 tisp_env_lib(Tsp st, char* lib)
 {
-	Val v;
+	Val v, expr;
 	char *file = st->file;
 	size_t filec = st->filec;
 	st->file = lib;
 	st->filec = 0;
 	skip_ws(st, 1);
-	if ((v = tisp_read(st)))
-		tisp_eval_body(st, st->env, v);
+	v = mk_pair(mk_sym(st, "do"), st->nil);
+	for (Val pos = v ; tsp_fget(st) && (expr = tisp_read_line(st, 0)); pos = cdr(pos))
+		cdr(pos) = mk_pair(expr, st->nil);
+	tisp_eval_body(st, st->env, cdr(v));
 	st->file = file;
 	st->filec = filec;
 }
