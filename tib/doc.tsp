@@ -1,5 +1,5 @@
 ; TODO replace w/ rec, append with def docstr-reg docstr-reg{func: "doc string"}
-(def docstr-reg
+def docstr-reg
   '((car
       "car(lst)"
       "First element of list")
@@ -82,24 +82,24 @@
       "Perform interpolation on explicit string"
       "  Evaluate expression inside curly braces"
       "  Double curly braces are not evaluated, inserting a single one."
-      "  Equivalent to strformat(\"str\"")))
+      "  Equivalent to strformat(\"str\")"))
 
 ; TODO print func args even if no docstr
-(def (doc proc)
+def doc(proc)
   "Get documentation of procedure"
-  (unless (procedure? proc)
-    (error 'doc "documentation only exists for procedures"))
-  (def (lookup proc) ; TODO allow for non proc lookup by make doc macro
-    (let (docstrs: (assoc procprops(proc)::name docstr-reg))
-      (if docstrs
-        (map println (cdr docstrs))
-        (error 'doc procprops(proc)::name ": no documentation found"))))
-  (if (or (function? proc) (macro? proc))
-    (let (docstr: (car procprops(proc)::body))
-      (unless (= procprops(proc)::name 'quit)
-        (println procprops(proc)::name (or procprops(proc)::args "()")))
-      (if (string? docstr)
-        (println docstr)
-        (lookup proc)))
-    (lookup proc))
-  Void)
+  unless procedure?(proc)
+    error 'doc "documentation only exists for procedures"
+  def lookup(proc) ; TODO allow for non proc lookup by make doc macro
+    let (docstrs: assoc(procprops(proc)::name docstr-reg))
+      if docstrs
+        map println cdr(docstrs)
+        error 'doc procprops(proc)::name ": no documentation found"
+  if (or function?(proc) macro?(proc))
+    let (docstr: car(procprops(proc)::body))
+      unless (= procprops(proc)::name 'quit)
+        println procprops(proc)::name (or procprops(proc)::args "()")
+      if string?(docstr)
+        println docstr
+        lookup proc
+    lookup proc
+  Void
