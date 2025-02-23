@@ -264,6 +264,7 @@ tib_env_core(Tsp st)
 	tsp_env_prim(car);
 	tsp_env_prim(cdr);
 	tsp_env_prim(cons);
+	st->types[11]->v.t.func = mk_prim(TSP_PRIM, prim_cons, "Pair");
 	tsp_env_form(quote);
 	tsp_env_prim(eval);
 	tsp_env_name_prim(=, eq);
@@ -272,11 +273,10 @@ tib_env_core(Tsp st)
 
 	tsp_env_prim(typeof);
 	tsp_env_prim(procprops);
-	tsp_env_form(Func);
-	tsp_env_form(Macro);
+	st->types[9]->v.t.func  = mk_prim(TSP_FORM, form_Func,  "Func");
+	st->types[10]->v.t.func = mk_prim(TSP_FORM, form_Macro, "Macro");
 	tsp_env_prim(error);
 
-	tisp_env_add(st, "Rec", mk_prim(TSP_FORM, mk_rec, "Rec"));
 	tsp_env_prim(recmerge);
 	tsp_env_prim(records);
 	tsp_env_form(def);

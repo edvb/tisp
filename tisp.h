@@ -96,11 +96,19 @@ typedef enum {
 	TSP_MACRO = 1 << 10, /* macro: function without evaluated arguments */
 	TSP_PAIR  = 1 << 11, /* pair: building block for lists */
 	TSP_REC   = 1 << 12, /* record: hash table */
+	TSP_TYPE  = 1 << 13, /* record: hash table */
 } TspType;
 #define TSP_RATIONAL (TSP_INT | TSP_RATIO)
 #define TSP_NUM      (TSP_RATIONAL | TSP_DEC)
 /* TODO rename to expr type to math ? */
 #define TSP_EXPR     (TSP_NUM | TSP_SYM | TSP_PAIR)
+
+typedef struct TspTypeVal {
+	TspType t;
+	char *name;
+	Val func;
+	/* Val cond; /1* refinement condition *1/ */
+} TspTypeVal;
 
 /* bultin function written in C, not tisp */
 typedef Val (*Prim)(Tsp, Rec, Val);
@@ -115,6 +123,7 @@ struct Val {
 		struct { char *name; Val args, body; Rec env; } f; /* FUNCTION, MACRO */
 		struct { Val car, cdr; } p;                        /* PAIR */
 		Rec r;                                             /* REC */
+		TspTypeVal t;                                      /* TYPE */
 	} v;
 };
 
@@ -123,6 +132,7 @@ struct Tsp {
 	char *file;
 	size_t filec;
 	Val none, nil, t;
+	Val types[14];
 	Rec env, strs, syms;
 	void **libh;
 	size_t libhc;

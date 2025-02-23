@@ -255,8 +255,8 @@ prim_denominator(Tsp st, Rec env, Val args)
 void
 tib_env_math(Tsp st)
 {
-	tsp_env_prim(Int);
-	tsp_env_prim(Dec);
+	st->types[2]->v.t.func = mk_prim(TSP_PRIM, prim_Int, "Int");
+	st->types[3]->v.t.func = mk_prim(TSP_PRIM, prim_Dec, "Dec");
 	tsp_env_prim(floor);
 	tsp_env_prim(ceil);
 	tsp_env_prim(round);

@@ -46,6 +46,17 @@ static Val eval_proc(Tsp st, Rec env, Val f, Val args);
 
 /* utility functions */
 
+/* return type of tisp value */
+static Val
+tsp_type(Tsp st, Rec env, Val args)
+{
+	tsp_arg_num(args, "Type", 1);
+	int id = 0;
+	for (int i = car(args)->t; i > 1; i = i >> 1)
+		id++;
+	return st->types[id];
+}
+
 /* return named string for each type */
 /* TODO loop through each type bit to print */
 char *
@@ -65,6 +76,7 @@ tsp_type_str(TspType t)
 	case TSP_MACRO: return "Macro";
 	case TSP_PAIR:  return "Pair";
 	case TSP_REC:   return "Rec";
+	case TSP_TYPE:  return "Type";
 	default:
 		if (t == TSP_EXPR)
 			return "Expr";
@@ -249,12 +261,12 @@ rec_add(Rec rec, char *key, Val val)
 
 /* add each vals[i] to rec with key args[i] */
 static Rec
-rec_extend(Rec rec, Val args, Val vals)
+rec_extend(Rec next, Val args, Val vals)
 {
 	Val arg, val;
 	int argnum = TSP_REC_FACTOR * tsp_lstlen(args);
 	/* HACK need extra +1 for when argnum = 0 */
-	Rec ret = rec_new(argnum > 0 ? argnum : -argnum + 1, rec);
+	Rec ret = rec_new(argnum > 0 ? argnum : -argnum + 1, next);
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
 		if (args->t == TSP_PAIR) {
 			arg = car(args);
@@ -282,6 +294,15 @@ mk_val(TspType t)
 	if (!(ret = malloc(sizeof(struct Val))))
 		perror("; malloc"), exit(1);
 	ret->t = t;
+	return ret;
+}
+
+Val
+mk_type(Tsp st, TspType t, char *name, Val func)
+{
+	Val ret = mk_val(TSP_INT);
+	ret->t = TSP_TYPE;
+	ret->v.t = (TspTypeVal){ .t = t, .name = name, .func = func };
 	return ret;
 }
 
@@ -783,6 +804,11 @@ eval_proc(Tsp st, Rec env, Val f, Val args)
 		    !(ret = rec_get(f->v.r, "else")))
 			tsp_warnf("could not find element '%s' in record", car(args)->v.s);
 		return ret;
+	case TSP_TYPE:
+		if (f->v.t.func)
+			return eval_proc(st, env, f->v.t.func, args);
+		tsp_warnf("could not convert to type '%s'", f->v.t.name);
+	case TSP_PAIR: // TODO eval each element as func w/ args: body
 	default:
 		tsp_warnf("attempt to evaluate non procedural type %s", tsp_type_str(f->t));
 	}
@@ -880,6 +906,9 @@ tisp_print(FILE *f, Val v)
 		}
 		putc(')', f);
 		break;
+	case TSP_TYPE:
+		fputs(v->v.t.name, f);
+		break;
 	default:
 		fprintf(stderr, "; tisp: could not print value type %s\n", tsp_type_str(v->t));
 	}
@@ -922,6 +951,28 @@ tisp_env_init(size_t cap)
 	tisp_env_add(st, "Void", st->none);
 	tisp_env_add(st, "bt", st->nil);
 	tisp_env_add(st, "version", mk_str(st, "0.1"));
+
+	/* Types */
+	st->types[0]  = mk_type(st, TSP_NONE,  "TVoid",  NULL);
+	st->types[1]  = mk_type(st, TSP_NIL,   "TNil",   NULL);
+	st->types[2]  = mk_type(st, TSP_INT,   "Int",   NULL);
+	st->types[3]  = mk_type(st, TSP_DEC,   "Dec",   NULL);
+	st->types[4]  = mk_type(st, TSP_RATIO, "Ratio", NULL);
+	st->types[5]  = mk_type(st, TSP_STR,   "Str",   NULL);
+	st->types[6]  = mk_type(st, TSP_SYM,   "Sym",   NULL);
+	st->types[7]  = mk_type(st, TSP_PRIM,  "Prim",  NULL);
+	st->types[8]  = mk_type(st, TSP_FORM,  "Form",  NULL);
+	st->types[9]  = mk_type(st, TSP_FUNC,  "Func",  NULL);
+	st->types[10] = mk_type(st, TSP_MACRO, "Macro", NULL);
+	st->types[11] = mk_type(st, TSP_PAIR,  "Pair",  NULL);
+	/* Val lst = mk_sym(st, "lst"); */
+	/* Val List = mk_func(TSP_FUNC, "List", lst, mk_list(st, 1, lst), st->env); */
+	/* st->types[11] = mk_type(st, TSP_PAIR | TSP_NONE,  "List",  List); */
+	st->types[12] = mk_type(st, TSP_REC,   "Rec",   mk_prim(TSP_FORM, mk_rec,    "Rec"));
+	st->types[13] = mk_type(st, TSP_TYPE,  "Type",  mk_prim(TSP_PRIM, tsp_type,  "Type"));
+	for (int i = 0; i < LEN(st->types); i++)
+		tisp_env_add(st, st->types[i]->v.t.name, st->types[i]);
+		/* TODO define type predicate functions here (nil?, string?, etc) */
 
 	st->libh = NULL;
 	st->libhc = 0;

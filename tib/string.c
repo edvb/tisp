@@ -152,8 +152,8 @@ form_strformat(Tsp st, Rec env, Val args)
 void
 tib_env_string(Tsp st)
 {
-	tsp_env_prim(Sym);
-	tsp_env_prim(Str);
+	st->types[5]->v.t.func = mk_prim(TSP_PRIM, prim_Str, "Str");
+	st->types[6]->v.t.func = mk_prim(TSP_PRIM, prim_Sym, "Sym");
 	tsp_env_prim(strlen);
 	tsp_env_form(strformat);
 }
