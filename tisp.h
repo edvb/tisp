@@ -102,6 +102,12 @@ typedef enum {
 #define TSP_NUM      (TSP_RATIONAL | TSP_DEC)
 /* TODO rename to expr type to math ? */
 #define TSP_EXPR     (TSP_NUM | TSP_SYM | TSP_PAIR)
+#define TSP_TEXT     (TSP_STR | TSP_SYM)
+#define TSP_PROC     (TSP_FUNC | TSP_PRIM | TSP_MACRO | TSP_FORM)
+#define TSP_LIT      (TSP_NONE | TSP_NIL | TSP_NUM | TSP_STR | TSP_PROC)
+#define TSP_LIST     (TSP_PAIR | TSP_NIL)
+#define TSP_CALLABLE (TSP_PROC | TSP_REC | TSP_TYPE) // | TSP_PAIR
+#define TSP_FUNCTOR  (TSP_PAIR | TSP_REC | TSP_TYPE)
 
 typedef struct TspTypeVal {
 	TspType t;

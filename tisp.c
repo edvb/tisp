@@ -78,12 +78,15 @@ tsp_type_str(TspType t)
 	case TSP_REC:   return "Rec";
 	case TSP_TYPE:  return "Type";
 	default:
-		if (t == TSP_EXPR)
-			return "Expr";
-		if (t == TSP_RATIONAL)
-			return "Rational";
-		if (t & TSP_NUM)
-			return "Num";
+		if (t == TSP_EXPR)     return "Expr";
+		if (t == TSP_RATIONAL) return "Rational";
+		if (t &  TSP_NUM)      return "Num";
+		if (t == TSP_TEXT)     return "Text";
+		if (t == TSP_PROC)     return "Proc";
+		if (t == TSP_LIT)      return "Lit";
+		if (t == TSP_LIST)     return "List";
+		if (t == TSP_CALLABLE) return "Callable";
+		if (t == TSP_FUNCTOR)  return "Functor";
 		return "Invalid";
 	}
 }
