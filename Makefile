@@ -75,10 +75,13 @@ install: all
 	@echo installing tsp to $(DESTDIR)$(PREFIX)/bin
 	@sed -e "s@\./@@g" < tsp > $(DESTDIR)$(PREFIX)/bin/tsp
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/tsp
-	@echo installing manual page to $(DESTDIR)$(MANPREFIX)/man1
+	@echo installing manual pages to $(DESTDIR)$(MANPREFIX)/man{1,7}
+	@mkdir -p $(DESTDIR)$(MANPREFIX)/man7
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	@cp -f doc/$(EXE).1 $(DESTDIR)$(MANPREFIX)/man1/
+	@cp -f doc/$(EXE).7 $(DESTDIR)$(MANPREFIX)/man7/
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
+	@chmod 644 $(DESTDIR)$(MANPREFIX)/man7/$(EXE).7
 	@echo installing tibs to $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
 	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
 	@cp -f $(TSP) $(LIB) $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
