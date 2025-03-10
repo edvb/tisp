@@ -73,14 +73,18 @@ def apply(proc args) ; TODO many args
 ; [lines 0..len(lines)] |> foreach (line num) => println(num ": " line)
 def map(proc lst)
   "Return new list created by applying procedure to each element of the input list"
+  walk(@proc(car(it)) lst)
+
+def walk(proc lst)
+  "Recursively apply the procedure to successive sublists of the input list"
   cond
     nil?(lst): Nil
     pair?(lst)
-      cons proc(car(lst))
-           map proc cdr(lst)
+      cons proc(lst)
+           walk proc cdr(lst)
     else: proc(lst)
 
-def (convert from to lst)
+def convert(from to lst)
   "Convert every member from of list into to"
   map @(if (= from it) to it) lst
 
