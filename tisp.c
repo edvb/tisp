@@ -461,6 +461,21 @@ read_int(Tsp st)
 	return ret;
 }
 
+/* return integer read as hexadecimal */
+static Val
+read_hex(Tsp st)
+{
+	char c;
+	int ret = 0;
+	tsp_fincn(st, 2); /* skip the '0x' prefix */
+	for (; (c = tsp_fget(st)) && isxdigit(c); tsp_finc(st))
+		if (isdigit(c))
+			ret = ret * 16 + (c - '0');
+		else
+			ret = ret * 16 + (tolower(c) - 'a' + 10);
+	return mk_int(ret);
+}
+
 /* return read scientific notation */
 static Val
 read_sci(Tsp st, double val, int isint)
@@ -482,6 +497,8 @@ finish:
 static Val
 read_num(Tsp st)
 {
+	if (tsp_fget(st) == '0' && tolower(tsp_fgetat(st, 1)) == 'x')
+		return read_hex(st);
 	int sign = read_sign(st);
 	int num = read_int(st);
 	size_t oldc;
