@@ -19,25 +19,35 @@ def newline(. file) ; TODO space and tab functions, accept number of instead
     write car((or file '(stdout))) file "\n"
     error 'newline "only zero or one file can be given"
 
-def display(. str)
-  map @(cond
-          string?(it): print("\"" it "\"")
-          void?(it):   Nil
-          true?(it):   print(it) ; don't quote True since it's self evaluating
-          symbol?(it): print("'" it) ; TODO if contains non symbol char print as explict sym syntax
-          (pair?(it)
-            print("[")
-            display(car(it))
-            (map Func((x) print(" ") display(x)) cdr(it))
-            print("]"))
-          (record?(it)
-            print("{ ")
-            (map Func((x) print(car(x) ": ") display(cdr(x)) print(" ")) records(it))
-            print("}"))
-          else: print(it))
-       str
-  Void
-def displayln(. str)  apply(display str) newline()
+def display(. vals)
+  "Convert values to string which evaluates to itself
+  Used when displaying output of repl"
+  apply Str
+    map
+      @(cond
+          string?(it): (Str "\"" it "\"") ; TODO insert escape characters for non-printable
+          true?(it):   (Str it) ; don't quote True symbol since it's self evaluating
+          symbol?(it): (Str "'" it) ; TODO if contains non symbol char print as explicit sym syntax
+          pair?(it):
+            (Str
+              "["
+              display(car(it))
+              (or (walk
+                    Func((x) (if pair?(x)
+                               Str(" " display(car(x)))
+                               Str(" . " display(x))))
+                    cdr(it))
+                  "")
+              "]")
+          record?(it):
+            (Str
+              "{ "
+              (or (map Func((x) Str(car(x) ": " display(cdr(x)) " ")) records(it))
+                  "")
+              "}")
+         else: (Str it))
+      vals
+
 def print(. str)      write('stdout Nil . str)
 def println(. str)    print(. str) newline()
 def printerr(. str)   write('stderr Nil . str)

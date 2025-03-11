@@ -26,7 +26,7 @@ def (repl)
       ; TODO push ans to stack of outputs
       let (ans: eval(expr)) ; env{ :% %%: fst(%) }
         unless void?(ans)
-          displayln ans
+          println display(ans)
         (repl)
 
 def (repl-simple)
