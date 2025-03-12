@@ -17,6 +17,8 @@ TSP = tib/core.tsp tib/list.tsp tib/doc.tsp tib/io.tsp tib/math.tsp tib/os.tsp
 DOC = doc/tisp.1.md doc/tisp.7.md
 MAN = $(DOC:.md=)
 
+VERSIONSHORT=$(shell cut -d '.' -f 1,2 <<< $(VERSION))
+
 all: options $(EXE)
 
 options:
@@ -66,13 +68,12 @@ dist: tibs.tsp.h
 	@gzip tisp-$(VERSION).tar
 	@rm -rf tisp-$(VERSION)
 
-# TODO don't cp some if not in dynamic mode
 install: all
-	@echo installing $(EXE) to $(DESTDIR)$(PREFIX)/bin
+	@echo installing $(EXE) $(EXE)$(VERSIONSHORT) tsp to $(DESTDIR)$(PREFIX)/bin
 	@mkdir -p $(DESTDIR)$(PREFIX)/bin
-	@cp -f $(EXE) $(DESTDIR)$(PREFIX)/bin
-	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)
-	@echo installing tsp to $(DESTDIR)$(PREFIX)/bin
+	@cp -f $(EXE) $(DESTDIR)$(PREFIX)/bin/$(EXE)$(VERSIONSHORT)
+	@ln -sf $(EXE)$(VERSIONSHORT) $(DESTDIR)$(PREFIX)/bin/$(EXE)
+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)$(VERSIONSHORT)
 	@sed -e "s@\./@@g" < tsp > $(DESTDIR)$(PREFIX)/bin/tsp
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/tsp
 	@echo installing manual pages to $(DESTDIR)$(MANPREFIX)/man{1,7}
