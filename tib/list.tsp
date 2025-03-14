@@ -73,7 +73,8 @@ def apply(proc args) ; TODO many args
 ; [lines 0..len(lines)] |> foreach (line num) => println(num ": " line)
 def map(proc lst)
   "Return new list created by applying procedure to each element of the input list"
-  walk(@proc(car(it)) lst)
+  ; HACK double check makes this much slower than necessary
+  walk(@proc((if pair?(it) car(it) it)) lst)
 
 def walk(proc lst)
   "Recursively apply the procedure to successive sublists of the input list"
