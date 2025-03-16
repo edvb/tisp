@@ -22,7 +22,7 @@
 #include <time.h>
 #include <unistd.h>
 
-/* TODO sys ls, mv, cp, rm, mkdir, exit */
+/* TODO sys ls, mv, cp, rm, mkdir */
 
 /* change to new directory */
 static Val
@@ -38,7 +38,6 @@ prim_cd(Tsp st, Rec env, Val args)
 	return st->none;
 }
 
-/* TODO rename to cwd ? */
 /* return string of current working directory */
 static Val
 prim_pwd(Tsp st, Rec env, Val args)

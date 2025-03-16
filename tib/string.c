@@ -23,73 +23,24 @@ typedef Val (*MkFn)(Tsp, char*);
 
 /* TODO string tib: lower upper capitalize strpos strsub skipto snipto (python: dir(str))*/
 
-/* TODO NULL check allocs */
-static Val
-val_string(Tsp st, Val args, MkFn mk_fn)
-{
-	Val v;
-	char s[43], *ret = calloc(1, sizeof(char));
-	int len = 1;
-	for (; args->t == TSP_PAIR; args = cdr(args)) {
-		v = car(args);
-		switch (v->t) {
-		case TSP_NONE: break;
-		case TSP_NIL:
-			len += 4;
-			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, "Nil");
-			break;
-		case TSP_INT:
-			snprintf(s, 21, "%d", (int)v->v.n.num);
-			len += strlen(s);
-			s[len] = '\0';
-			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, s);
-			break;
-		case TSP_DEC:
-			snprintf(s, 22, "%.15g", v->v.n.num);
-			len += strlen(s);
-			s[len] = '\0';
-			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, s);
-			break;
-		case TSP_RATIO:
-			snprintf(s, 43, "%d/%d", (int)v->v.n.num, (int)v->v.n.den);
-			len += strlen(s);
-			s[len] = '\0';
-			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, s);
-			break;
-		case TSP_STR:
-		case TSP_SYM:
-			len += strlen(v->v.s);
-			ret = realloc(ret, len*sizeof(char));
-			strcat(ret, v->v.s);
-			break;
-		case TSP_PAIR:
-		default:
-			tsp_warnf("could not convert type %s into string", tsp_type_str(v->t));
-		}
-	}
-	v = mk_fn(st, ret);
-	free(ret);
-	return v;
-}
-
 /* convert all args to a string */
 static Val
 prim_Str(Tsp st, Rec env, Val args)
 {
-	tsp_arg_min(args, "Str", 1);
-	return val_string(st, args, mk_str);
+	char *s;
+	if (!(s = tisp_print(args)))
+		return NULL;
+	return mk_str(st, s);
 }
 
 /* convert all args to a symbol */
 static Val
 prim_Sym(Tsp st, Rec env, Val args)
 {
-	tsp_arg_min(args, "Sym", 1);
-	return val_string(st, args, mk_sym);
+	char *s;
+	if (!(s = tisp_print(args)))
+		return NULL;
+	return mk_sym(st, s);
 }
 
 static Val
@@ -121,6 +72,7 @@ form_strformat(Tsp st, Rec env, Val args)
 			int l;
 			char *file = st->file;
 			size_t filec = st->filec;
+			char *s;
 			st->file = ++str, st->filec = 0;
 			/* TODO skip until } to allow for comments */
 			if (!(v = read_pair(st, '}')))
@@ -130,16 +82,17 @@ form_strformat(Tsp st, Rec env, Val args)
 
 			if (!(v = tisp_eval_list(st, env, v))) /* TODO sandboxed eval, no mutable procs */
 				return NULL;
-			if (!(v = val_string(st, v, mk_str)))
+			if (!(s = tisp_print(v)))
 				return NULL;
 			/* TODO if last = !d run display converter on it */
-			l = strlen(v->v.s);
+			l = strlen(s);
 			ret_len += l;
 
 			if (ret_len >= ret_cap) /* resize output if necessary */
 				if (!(ret = realloc(ret, ret_cap *= 2)))
 					perror("; realloc"), exit(1);
-			memcpy(ret + pos, v->v.s, l);
+			memcpy(ret + pos, s, l);
+			free(s);
 			pos += l;
 		} else {
 			if (*str == '{' || *str == '}') str++; /* only add 1 curly brace when escaped */

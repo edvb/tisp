@@ -67,12 +67,17 @@ readstr:
 		} else { /* otherwise read as file */
 			v = read_parse_eval(st, mk_pair(mk_str(st, argv[i]), st->nil));
 		}
-		if (v && v->t != TSP_NONE)
-			tisp_print(stdout, v);
+		if (v && v->t != TSP_NONE) {
+			char *s = tisp_print(v);
+			fputs(s, stdout);
+			free(s);
+		}
 	}
 
 	/* if (v && v->t != TSP_NONE) */
 		puts("");
+
+	free(st);
 
 	return 0;
 }

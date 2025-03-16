@@ -710,6 +710,10 @@ tisp_read_sugar(Tsp st, Val v)
 	return v;
 }
 
+/* line reading synax sugar:
+ *  - imply parenthesis around new lines
+ *  - indented lines are sub-expressions
+ *  - lines with single expression return just that expression */
 Val
 tisp_read_line(Tsp st, int level)
 {
@@ -855,85 +859,124 @@ tisp_eval(Tsp st, Rec env, Val v)
 
 /* print */
 
-/* main print function */
-/* TODO return Str, unify w/ val_string */
-void
-tisp_print(FILE *f, Val v)
+/* Resize string if its length is larger or equal to its size
+ *   modify size to new max size after grown */
+static char *
+str_grow(char *str, int len, int *size)
 {
+	char *ret = str;
+	if (len >= *size)
+		if (!(ret = realloc(str, *size *= 2)))
+			return free(str), NULL;
+	return ret;
+}
+
+/* Convert record to string */
+static char *
+print_rec(Rec rec)
+{
+	int len = 0;
+	int size = 64;
+	char *ret = calloc(size, sizeof(char));
+	for (Rec r = rec; r; r = r->next)
+		for (int i = 0, c = 0; c < r->size; i++)
+			if (r->items[i].key) {
+				int olen = len;
+				char *key = r->items[i].key;
+				char *val = tisp_print(r->items[i].val);
+				len += strlen(key) + strlen(val) + 2;
+				if (!(ret = str_grow(ret, len, &size)))
+					return NULL;
+				snprintf(ret + strlen(ret), len-olen, "%s:%s", key, val);
+				c++;
+			}
+	return ret;
+}
+
+/* Convert tisp value to string to be printed
+ *  returned string needs to be freed after use */
+char *
+tisp_print(Val v)
+{
+	int len;
+	int size = 64;
+	char *head, *tail, *ret = calloc(size, sizeof(char));
 	switch (v->t) {
 	case TSP_NONE:
-		fputs("Void", f);
+		strcat(ret, "Void");
 		break;
 	case TSP_NIL:
-		fputs("Nil", f);
+		strcat(ret, "Nil");
 		break;
 	case TSP_INT:
-		fprintf(f, "%d", (int) num(v));
+		len = snprintf(NULL, 0, "%d", (int)num(v)) + 1;
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		snprintf(ret, len, "%d", (int)num(v));
 		break;
 	case TSP_DEC:
-		/* TODO fix 1.e-5 print as int 1e-05 */
-		fprintf(f, "%.15g", num(v));
+		len = snprintf(NULL, 0, "%.15G", num(v)) + 3;
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		snprintf(ret, len, "%.15G", num(v));
 		if (num(v) == (int)num(v))
-			fprintf(f, ".0");
+			strcat(ret, ".0");
 		break;
 	case TSP_RATIO:
-		fprintf(f, "%d/%d", (int)num(v), (int)den(v));
+		len = snprintf(NULL, 0, "%d/%d", (int)num(v), (int)den(v)) + 1;
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		snprintf(ret, len, "%d/%d", (int)num(v), (int)den(v));
 		break;
 	case TSP_STR:
 	case TSP_SYM:
-		fputs(v->v.s, f); /* TODO fflush? */
+		len = strlen(v->v.s);
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		strcat(ret, v->v.s);
 		break;
 	case TSP_FUNC:
 	case TSP_MACRO:
-		/* TODO replace with printing function name with type annotaction */
-		fprintf(f, "#<%s%s%s>", /* if proc name is not null print it */
-		            v->t == TSP_FUNC ? "function" : "macro",
-		            v->v.f.name ? ":" : "", /* TODO dont work for anon funcs */
-		            v->v.f.name ? v->v.f.name : "");
+		if (!v->v.f.name) {
+			strcat(ret, "anon");
+			break;
+		}
+		len = strlen(v->v.f.name);
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		strcat(ret, v->v.f.name);
 		break;
 	case TSP_PRIM:
-		fprintf(f, "#<primitive:%s>", v->v.pr.name);
-		break;
 	case TSP_FORM:
-		fprintf(f, "#<form:%s>", v->v.pr.name);
-		break;
-	case TSP_REC:
-		putc('{', f);
-		for (Rec r = v->v.r; r; r = r->next)
-			for (int i = 0, c = 0; c < r->size; i++)
-				if (r->items[i].key) {
-					c++;
-					fprintf(f, " %s: ", r->items[i].key);
-					tisp_print(f, r->items[i].val);
-				} else if (c == TSP_REC_MAX_PRINT) {
-					fputs(" ...", f);
-					break;
-				}
-		fputs(" }", f);
-		break;
-	case TSP_PAIR:
-		putc('(', f);
-		tisp_print(f, car(v));
-		for (v = cdr(v); !nilp(v); v = cdr(v)) {
-			if (v->t == TSP_PAIR) {
-				putc(' ', f);
-				tisp_print(f, car(v));
-			} else {
-				fputs(" . ", f);
-				tisp_print(f, v);
-				break;
-			}
-		}
-		putc(')', f);
+		len = strlen(v->v.pr.name);
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		strcat(ret, v->v.pr.name);
 		break;
 	case TSP_TYPE:
-		fputs(v->v.t.name, f);
+		len = strlen(v->v.t.name);
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		strcat(ret, v->v.t.name);
+		break;
+	case TSP_REC:
+		ret = print_rec(v->v.r);
+		break;
+	case TSP_PAIR:
+		head = tisp_print(car(v));
+		tail = nilp(cdr(v)) ? "" : tisp_print(cdr(v));
+		len = strlen(head) + strlen(tail) + 1;
+		if (!(ret = str_grow(ret, len, &size)))
+			return NULL;
+		snprintf(ret, len, "%s%s", head, tail);
 		break;
 	default:
-		fprintf(stderr, "; tisp: could not print value type %s\n", tsp_type_str(v->t));
+		free(ret);
+		tsp_warnf("could not print type '%s'", tsp_type_str(v->t));
 	}
-	/* fflush(f); */
+	return ret;
 }
+
 
 /* environment */
 

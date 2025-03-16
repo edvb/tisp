@@ -19,7 +19,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define TSP_REC_MAX_PRINT 64
 #define TSP_REC_FACTOR 2
 
 #define TSP_OP_CHARS "_+-*/\\|=^<>.:"
@@ -166,7 +165,7 @@ Val tisp_read_line(Tsp st, int level);
 Val tisp_eval_list(Tsp st, Rec env, Val v);
 Val tisp_eval_body(Tsp st, Rec env, Val v);
 Val tisp_eval(Tsp st, Rec env, Val v);
-void tisp_print(FILE *f, Val v);
+char *tisp_print(Val v);
 
 void tisp_env_add(Tsp st, char *key, Val v);
 Tsp  tisp_env_init(size_t cap);

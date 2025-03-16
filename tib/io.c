@@ -95,8 +95,11 @@ prim_write(Tsp st, Rec env, Val args)
 	if (f == stderr && strncmp(car(args)->v.s, "stderr", 7)) /* validate stderr symbol */
 		tsp_warn("write: expected file name as string, or symbol stdout/stderr");
 
-	for (args = cddr(args); !nilp(args); args = cdr(args))
-		tisp_print(f, car(args));
+	for (args = cddr(args); !nilp(args); args = cdr(args)) {
+		char *out = tisp_print(car(args));
+		fputs(out, f);
+		free(out);
+	}
 
 	if (f == stdout || f == stderr) /* clean up */
 		fflush(f);

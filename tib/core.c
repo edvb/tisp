@@ -151,14 +151,14 @@ form_Macro(Tsp st, Rec env, Val args)
 static Val
 prim_error(Tsp st, Rec env, Val args)
 {
+	char *msg;
 	/* TODO have error auto print function name that was pre-defined */
 	tsp_arg_min(args, "error", 2);
 	tsp_arg_type(car(args), "error", TSP_SYM);
-	/* TODO specify error raised by error func */
-	fprintf(stderr, "; tisp: error: %s: ", car(args)->v.s);
-	for (args = cdr(args); !nilp(args); args = cdr(args))
-		tisp_print(stderr, car(args));
-	fputc('\n', stderr);
+	if (!(msg = tisp_print(cdr(args))))
+		return NULL;
+	fprintf(stderr, "; tisp: error: %s: %s\n", car(args)->v.s, msg);
+	free(msg);
 	return NULL;
 }
 
