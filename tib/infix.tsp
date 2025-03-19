@@ -30,6 +30,7 @@
 ; TODO locally scoped, if in expr wrap func around
 (defmacro (:= var val) `(do (def ,var ,val) ,var))
 (def in assoc) ; TODO work for lists or assoc lists, multi purpose like awk
+; (def ... Pair)
 ; (def in has?)
 ; (def <> compose) ; TODO better op
 ; (def => Func)
@@ -60,7 +61,7 @@
     `(,forms ,val)))
 
 ; replaces need for apply ?
-(defmacro (<| func . args)
+(defmacro (<| func ... args)
   "Func application at read-time"
   `(,func ,@args))
 
@@ -114,7 +115,7 @@
       (shunting-yard push(queue car(exprs)) ops cdr(exprs)))
     (fst apply-ops(ops queue))))
 
-(defmacro (infix . exprs)
+(defmacro (infix ... exprs)
   "Infix binary operations
   > 1 + 2 * 3 + 4^2 = 22
   > + = #<prim:+>

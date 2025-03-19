@@ -14,7 +14,7 @@ def odd?(x)      (= mod(x 2) 1)
 
 ;;; Functions
 
-def (/= . x) (not apply(= x))
+def (/= ... x) (not apply(= x))
 def (*^ x p) (* x (^ 10 p))
 def inc(x) (+ x 1)
 def dec(x) (- x 1)

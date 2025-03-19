@@ -586,7 +586,7 @@ read_pair(Tsp st, char endchar)
 		if (!(v = tisp_read(st)))
 			return NULL;
 		/* pair cdr, end with non-nil (improper list) */
-		if (v->t == TSP_SYM && !strncmp(v->v.s, ".", 2)) {
+		if (v->t == TSP_SYM && !strncmp(v->v.s, "...", 4)) {
 			skip_ws(st, skipnl);
 			if (!(v = tisp_read(st)))
 				return NULL;

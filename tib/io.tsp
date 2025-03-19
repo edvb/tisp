@@ -1,11 +1,11 @@
 def docstr-reg (append docstr-reg
   '((write
-      "write(file append? . vals)"
+      "write(file append? ... vals)"
       "Write all values to file"
       "  File can be file path give as string or the symbols 'stdout or 'stderr"
       "  Append file if append? is true, otherwise override")
     (read
-      "read(. file)"
+      "read(... file)"
       "Return string read from file, or stdin if no file is provided")
     (parse
       "parse(string)"
@@ -14,12 +14,12 @@ def docstr-reg (append docstr-reg
       "load(lib)"
       "Loads the library given as a string")))
 
-def newline(. file) ; TODO space and tab functions, accept number of instead
+def newline(... file) ; TODO space and tab functions, accept number of instead
   if (or nil?(file) nil?(cdr(file)))
     write car((or file '(stdout))) file "\n"
     error 'newline "only zero or one file can be given"
 
-def display(. vals)
+def display(... vals)
   "Convert values to string which evaluates to itself
   Used when displaying output of repl"
   apply Str
@@ -35,7 +35,7 @@ def display(. vals)
               (or (walk
                     Func((x) (if pair?(x)
                                Str(" " display(car(x)))
-                               Str(" . " display(x))))
+                               Str(" ... " display(x))))
                     cdr(it))
                   "")
               "]")
@@ -48,7 +48,7 @@ def display(. vals)
          else: (Str it))
       vals
 
-def print(. str)      write('stdout Nil . str)
-def println(. str)    print(. str) newline()
-def printerr(. str)   write('stderr Nil . str)
-def printerrln(. str) (printerr . str) newline()
+def print(... str)      write('stdout Nil ... str)
+def println(... str)    print(... str) (newline)
+def printerr(... str)   write('stderr Nil ... str)
+def printerrln(... str) printerr(... str) (newline)

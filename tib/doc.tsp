@@ -22,14 +22,14 @@ def docstr-reg
       "  comes from an untrusted source"
       "  Also see: apply")
     (=
-      "(= . vals)"
+      "(= ... vals)"
       "Return boolean depending on if multiple values are all equal")
     (cond
-      "cond . (expr . body)"
+      "cond ... (expr ... body)"
       "Evaluates and returns first body with a true conditional expression"
       "  Also see: if, when, unless")
     (do
-      "do . body"
+      "do ... body"
       "Evaluate each expression in body, returning last"
       "  Also see: do0")
     (typeof
@@ -41,23 +41,23 @@ def docstr-reg
       "  Includes name, args, and body for functions and macros"
       "  Only has name for builtin primitives and special forms")
     (Func
-      "Func args . body"
+      "Func args ... body"
       "Func body"
       "Create anonymous function"
       "  If only body is given, create function with one argument labeled 'it'"
       "  Also see: def")
     (Macro
-      "Macro args . body"
+      "Macro args ... body"
       "Macro body"
       "Create anonymous macro, arguments are not evaluated before given to body"
       "  If only body is given, create macro with one argument labeled 'it'"
       "  Also see: defmacro")
     (def
-      "def var . val"
+      "def var ... val"
       "Define new variable with value"
       "  If value is not given, define a self-evaluating symbol"
       ""
-      "def func(. args) . body"
+      "def func(... args) ... body"
       "Create new function with arguments list and body list")
     (undefine!
       "undefine!(var)"
@@ -72,10 +72,10 @@ def docstr-reg
       "quit"
       "Exit REPL, equivalent to Ctrl-D")
     (Str
-      "Str(. vals)"
+      "Str(... vals)"
       "Convert all values into single string")
     (Sym
-      "Sym(. vals)"
+      "Sym(... vals)"
       "Convert all values into single symbol")
     (strformat
       "f\"str\""

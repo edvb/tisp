@@ -1,15 +1,15 @@
 ;;; core.tsp
-def list(. lst) "Create list" lst
+def list(... lst) "Create list" lst
 def quit() '~No REPL to quit from~
 
 def defmacro
-  Macro (args . body)
+  Macro (args ... body)
     "Define named macro, with argument list and body
   First element of arguments is name of macro
   Also see: def"
     cond
       (pair? args)
-        list 'def (car args) (list 'Macro (cdr args) . body)
+        list 'def (car args) (list 'Macro (cdr args) ... body)
       else
         error 'defmacro "expected macro name and argument List, recieved "
               typeof args
@@ -89,14 +89,14 @@ defmacro (if con a b)
   "Execute a if condition con is true, otherwise run b"
   [cond [con a] [True b]]
 def else True
-defmacro (when con . body)
+defmacro (when con ... body)
   "Execute body if condition con is true"
-  [cond [con [do . body]]]
-defmacro (unless con . body)
+  [cond [con [do ... body]]]
+defmacro (unless con ... body)
   "Execute body unless condition, con, is true"
-  [cond [[not con] [do . body]]]
+  [cond [[not con] [do ... body]]]
 
-defmacro (let vars . body)
+defmacro (let vars ... body)
   "Execute body with new local variables in vars
   vars is a list of name and value pairs"
   [(list* 'Func ()
@@ -106,7 +106,7 @@ defmacro (let vars . body)
           vars)
         body))]
 
-(defmacro (recur proc vars . body)
+(defmacro (recur proc vars ... body)
   "Do recursion within body by calling proc with values for vars
   Also see: let"
   (list 'let
@@ -116,7 +116,7 @@ defmacro (let vars . body)
         (list* proc (map car vars))))
 
 ; TODO support else that is run if no values are equal
-(defmacro (switch val . body)
+(defmacro (switch val ... body)
   "Compare value to first element in each body statement, only running line where they are equal"
   (list* 'cond (map
                  @`((= ,val ,(car it)) ,(cadr it))

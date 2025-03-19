@@ -1,13 +1,13 @@
 ;;; Lists
 
 ; TODO rename to remove *
-def list*(. lst)
+def list*(... lst)
   "Create improper list, last element is not Nil"
   if cdr(lst)
     cons car(lst) apply(list* cdr(lst))
     car lst
 
-def do0(. body)
+def do0(... body)
   "Evaluate each expression in body, returning first
   Also see: do"
   car body
@@ -143,7 +143,7 @@ def every?(elem lst)
   everyp? @(= elem it) lst
 
 ; TODO rewrite, optimize tco?
-def compose(. procs)
+def compose(... procs)
   "Create function made from chaining procedures given"
   cond
     nil?(procs): Func(x x)
