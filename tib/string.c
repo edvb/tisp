@@ -54,13 +54,13 @@ prim_strlen(Tsp st, Rec env, Val args)
 /* perform interpolation on explicit string, evaluating anything inside curly braces */
 /* FIXME nested strings shouldn't need to be escaped*/
 static Val
-form_strformat(Tsp st, Rec env, Val args)
+form_strfmt(Tsp st, Rec env, Val args)
 {
 	char *ret, *str;
 	int ret_len, ret_cap, pos = 0;
 	Val v;
-	tsp_arg_num(args, "strformat", 1);
-	tsp_arg_type(car(args), "strformat", TSP_STR);
+	tsp_arg_num(args, "strfmt", 1);
+	tsp_arg_type(car(args), "strfmt", TSP_STR);
 
 	str = car(args)->v.s;
 	ret_len = strlen(str), ret_cap = 2*ret_len;
@@ -108,5 +108,5 @@ tib_env_string(Tsp st)
 	st->types[5]->v.t.func = mk_prim(TSP_PRIM, prim_Str, "Str");
 	st->types[6]->v.t.func = mk_prim(TSP_PRIM, prim_Sym, "Sym");
 	tsp_env_prim(strlen);
-	tsp_env_form(strformat);
+	tsp_env_form(strfmt);
 }

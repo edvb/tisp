@@ -610,16 +610,16 @@ tisp_read_sexpr(Tsp st)
 	/* TODO merge w/ infix */
 	/* TODO mk const global */
 	static char *prefix[] = {
-		"'",  "quote",
-		"`",  "quasiquote",
-		",@", "unquote-splice", /* always check before , */
-		",",  "unquote",
-		"@",  "Func",
-		"f\"",  "strformat",
-		/* "?",  "try?", */
-		/* "$",  "system!", */
-		/* "-",  "negative", */
-		/* "!",  "not?", */
+		"'",   "quote",
+		"`",   "quasiquote",
+		",@",  "unquote-splice", /* always check before , */
+		",",   "unquote",
+		"@",   "Func",
+		"f\"", "strfmt",
+		/* "?",   "try?", */
+		/* "$",   "system!", */
+		/* "-",   "negative", */
+		/* "!",   "not?", */
 	};
 	skip_ws(st, 1);
 	if (strlen(st->file+st->filec) == 0) /* empty list */

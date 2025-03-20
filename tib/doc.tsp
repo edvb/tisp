@@ -77,12 +77,12 @@ def docstr-reg
     (Sym
       "Sym(... vals)"
       "Convert all values into single symbol")
-    (strformat
+    (strfmt
       "f\"str\""
       "Perform interpolation on explicit string"
       "  Evaluate expression inside curly braces"
       "  Double curly braces are not evaluated, inserting a single one."
-      "  Equivalent to strformat(\"str\")"))
+      "  Equivalent to strfmt(\"str\")"))
 
 ; TODO print func args even if no docstr
 def doc(proc)
