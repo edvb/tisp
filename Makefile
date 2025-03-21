@@ -44,8 +44,6 @@ $(OBJ): $(TIB) tisp.h config.mk
 
 main.o: tibs.tsp.h
 
-test.o: config.mk tibs.tsp.h
-
 $(LIB): $(TIB)
 	@echo $(CC) -o $@
 	@$(CC) -shared -o $@ $(OBJ)
@@ -56,7 +54,7 @@ $(EXE): $(OBJ) $(LIB)
 
 clean:
 	@echo cleaning
-	@rm -f $(OBJ) $(LIB) $(EXE) test test.o tibs.tsp.h
+	@rm -f $(OBJ) $(LIB) $(EXE) test/test test/test.o tibs.tsp.h
 
 dist: tibs.tsp.h
 	@echo creating dist tarball
@@ -97,11 +95,11 @@ uninstall:
 	@echo removing tisp libraries from $(DESTDIR)$(PREFIX)/share/tisp
 	@rm -rf $(DESTDIR)$(PREFIX)/share/tisp/
 
-test: $(OBJ) $(LIB) test.o
+test: $(OBJ) $(LIB) test/tests.h test/test.o
 	@echo running tests
-	@echo $(CC) -o test
-	@$(CC) -o test tisp.o test.o $(LDFLAGS)
-	@./test
+	@echo $(CC) -o test/test
+	@$(CC) -o test/test tisp.o test/test.o $(LDFLAGS)
+	@./test/test
 
 man: $(MAN)
 

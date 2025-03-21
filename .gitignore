@@ -6,7 +6,7 @@
 
 # compiled files
 tisp
-test
+test/test
 tibs.tsp.h
 *.exe
 *.out
