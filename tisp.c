@@ -461,18 +461,19 @@ read_int(Tsp st)
 	return ret;
 }
 
-/* return integer read as hexadecimal */
+/* return integer read in any base: binary, octal, hexadecimal, etc */
+/* TODO error on numbers higher than base (0b2, 0o9, etc) */
 static Val
-read_hex(Tsp st)
+read_base(Tsp st, int base)
 {
 	char c;
 	int ret = 0;
-	tsp_fincn(st, 2); /* skip the '0x' prefix */
+	tsp_fincn(st, 2); /* skip the base signifier prefix (0b, 0o, 0x) */
 	for (; (c = tsp_fget(st)) && isxdigit(c); tsp_finc(st))
 		if (isdigit(c))
-			ret = ret * 16 + (c - '0');
+			ret = ret * base + (c - '0');
 		else
-			ret = ret * 16 + (tolower(c) - 'a' + 10);
+			ret = ret * base + (tolower(c) - 'a' + 10);
 	return mk_int(ret);
 }
 
@@ -497,8 +498,12 @@ finish:
 static Val
 read_num(Tsp st)
 {
-	if (tsp_fget(st) == '0' && tolower(tsp_fgetat(st, 1)) == 'x')
-		return read_hex(st);
+	if (tsp_fget(st) == '0')
+		switch (tolower(tsp_fgetat(st, 1))) {
+		case 'b': return read_base(st, 2);
+		case 'o': return read_base(st, 8);
+		case 'x': return read_base(st, 16);
+		}
 	int sign = read_sign(st);
 	int num = read_int(st);
 	size_t oldc;
