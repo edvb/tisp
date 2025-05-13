@@ -118,15 +118,19 @@ isnum(char *str)
 	       ((*str == '-' || *str == '+') && (isdigit(str[1]) || str[1] == '.'));
 }
 
-/* skip over comments and white space */
-/* TODO support mac/windows line endings */
+/* skips:
+ *  - spaces/tabs
+ *  - newlines, if `skipnl` is true
+ *  - comments, starting with ';' until end of line */
 static void
 skip_ws(Tsp st, int skipnl)
 {
 	const char *s = skipnl ? " \t\n\r" : " \t";
 	while (tsp_fget(st) && (strchr(s, tsp_fget(st)) || tsp_fget(st) == ';')) {
-		st->filec += strspn(st->file+st->filec, s); /* skip white space */
-		for (; tsp_fget(st) == ';'; tsp_finc(st)) /* skip comments until newline */
+		/* skip contiguous white space */
+		st->filec += strspn(st->file+st->filec, s);
+		/* skip comments until newline */
+		for (; tsp_fget(st) == ';'; tsp_finc(st))
 			st->filec += strcspn(st->file+st->filec, "\n") - !skipnl;
 	}
 }
@@ -307,6 +311,8 @@ mk_type(Tsp st, TspType t, char *name, Val func)
 	Val ret = mk_val(TSP_INT);
 	ret->t = TSP_TYPE;
 	ret->v.t = (TspTypeVal){ .t = t, .name = name, .func = func };
+	/* ret->t = TSP_TYPE & t; */
+	/* ret->v.f = (Func){ .name = name, .func = func }; */
 	return ret;
 }
 
@@ -392,18 +398,19 @@ mk_func(TspType t, char *name, Val args, Val body, Rec env)
 	return ret;
 }
 
+/* TODO swap mk_rec and rec_new */
 Val
-mk_rec(Tsp st, Rec env, Val assoc)
+mk_rec(Tsp st, Rec prev, Val records)
 {
 	int cap;
 	Val v, ret = mk_val(TSP_REC);
-	if (!assoc)
-		return ret->v.r = env, ret;
-	cap = TSP_REC_FACTOR * tsp_lstlen(assoc);
+	if (!records)
+		return ret->v.r = prev, ret;
+	cap = TSP_REC_FACTOR * tsp_lstlen(records);
 	ret->v.r = rec_new(cap > 0 ? cap : -cap + 1, NULL);
-	Rec r = rec_new(4, env);
+	Rec r = rec_new(4, prev);
 	rec_add(r, "this", ret);
-	for (Val cur = assoc; cur->t == TSP_PAIR; cur = cdr(cur))
+	for (Val cur = records; cur->t == TSP_PAIR; cur = cdr(cur))
 		if (car(cur)->t == TSP_PAIR && caar(cur)->t & (TSP_SYM|TSP_STR)) {
 			if (!(v = tisp_eval(st, r, cdar(cur)->v.p.car)))
 				return NULL;
@@ -587,7 +594,12 @@ read_pair(Tsp st, char endchar)
 {
 	Val v, ret = mk_pair(NULL, st->nil);
 	int skipnl = endchar != '\n';
-	skip_ws(st, skipnl);
+	skip_ws(st, 1);
+	/* if (!tsp_fget(st)) */
+	/* 	return st->nil; */
+		/* tsp_warnf("reached end before closing '%c'", endchar); */
+	/* TODO replace w/ strchr to also check for NULL and allow }} */
+	/* !strchr(endchars, tsp_fget(st)) */
 	for (Val pos = ret; tsp_fget(st) && tsp_fget(st) != endchar; pos = cdr(pos)) {
 		if (!(v = tisp_read(st)))
 			return NULL;
@@ -600,12 +612,19 @@ read_pair(Tsp st, char endchar)
 			break;
 		}
 		cdr(pos) = mk_pair(v, st->nil);
+		/* if (v->t == TSP_SYM && is_op(v->v.s[0])) { */
+		/* 	is_infix = 1; */
+		/* 	skip_ws(st, 1); */
+		/* } else */
 		skip_ws(st, skipnl);
 	}
 	skip_ws(st, skipnl);
 	if (skipnl && tsp_fget(st) != endchar)
 		tsp_warnf("did not find closing '%c'", endchar);
+		/* tsp_warnf("found more than one element before closing '%c'", endchar); */
 	tsp_finc(st);
+	/* if (is_infix) */
+	/* 	return car(ret) = mk_sym(st, "infix"), ret; */
 	return cdr(ret);
 }
 
@@ -627,7 +646,9 @@ tisp_read_sexpr(Tsp st)
 		/* "-",   "negative", */
 		/* "!",   "not?", */
 	};
-	skip_ws(st, 1);
+	skip_ws(st, 1); /* TODO dont skip nl in read */
+	/* TODO replace w/ fget? */
+	/* if == ] } ) etc say expected value before */
 	if (strlen(st->file+st->filec) == 0) /* empty list */
 		return st->none;
 	if (isnum(st->file+st->filec)) /* number */
@@ -657,7 +678,7 @@ tisp_read_sexpr(Tsp st)
 		if (!(v = read_pair(st, '}'))) return NULL;
 		return mk_pair(mk_sym(st, "Rec"), v);
 	}
-	tsp_warnf("could not read given input '%c' (%d)",
+	tsp_warnf("could not parse given input '%c' (%d)",
 	          st->file[st->filec], (int)st->file[st->filec]);
 }
 
@@ -729,12 +750,17 @@ tisp_read_line(Tsp st, int level)
 	if (ret->t != TSP_PAIR) /* force to be pair */
 		ret = mk_pair(ret, st->nil);
 	for (pos = ret; cdr(pos)->t == TSP_PAIR; pos = cdr(pos)) ; /* get last pair */
-	for (; tsp_fget(st); pos = cdr(pos)) { /* read indented lines as sub expressions */
+	for (; tsp_fget(st); pos = cdr(pos)) { /* read indented lines as sub-expressions */
+		Val v;
 		int newlevel = strspn(st->file+st->filec, "\t ");
 		if (newlevel <= level)
 			break;
 		st->filec += newlevel;
-		cdr(pos) = mk_pair(tisp_read_line(st, newlevel), cdr(pos));
+		/* skip_ws(st, 1); */
+		if (!(v = tisp_read_line(st, newlevel)))
+			return NULL;
+		if (!nilp(v))
+			cdr(pos) = mk_pair(v, cdr(pos));
 	}
 	return nilp(cdr(ret)) ? car(ret) : ret; /* if only 1 element in list, return just it */
 }
@@ -779,7 +805,8 @@ tisp_eval_body(Tsp st, Rec env, Val v)
 				return NULL;
 			if (!(env = rec_extend(f->v.f.env, f->v.f.args, args)))
 				return NULL;
-			v = mk_pair(NULL, f->v.f.body); /* continue loop from body of func call */
+			/* continue loop from body of func call */
+			v = mk_pair(NULL, f->v.f.body);
 		} else if (!(ret = tisp_eval(st, env, car(v))))
 			return NULL;
 	return ret;
@@ -840,7 +867,8 @@ eval_proc(Tsp st, Rec env, Val f, Val args)
 		tsp_warnf("could not convert to type '%s'", f->v.t.name);
 	case TSP_PAIR: // TODO eval each element as func w/ args: body
 	default:
-		tsp_warnf("attempt to evaluate non procedural type %s", tsp_type_str(f->t));
+		tsp_warnf("attempt to evaluate non procedural type '%s' (%s)",
+				tsp_type_str(f->t), tisp_print(f));
 	}
 }
 
