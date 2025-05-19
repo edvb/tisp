@@ -169,7 +169,7 @@ char *tisp_print(Val v);
 
 void tisp_env_add(Tsp st, char *key, Val v);
 Tsp  tisp_env_init(size_t cap);
-void tisp_env_lib(Tsp st, char* lib);
+Val  tisp_env_lib(Tsp st, char* lib);
 
 void tib_env_core(Tsp);
 void tib_env_string(Tsp);
