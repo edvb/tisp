@@ -729,8 +729,10 @@ tisp_read_sugar(Tsp st, Val v)
 		}
 	} else if (tsp_fget(st) == '>' && tsp_fgetat(st, 1) == '>') {
 		tsp_finc(st), tsp_finc(st);
-		if (!(w = tisp_read(st)) || w->t != TSP_PAIR)
+		if (!(w = tisp_read(st)))
 			tsp_warn("invalid UFCS");
+		if (w->t != TSP_PAIR)
+			w = mk_pair(w, st->nil);
 		return mk_pair(car(w), mk_pair(v, cdr(w)));
 	}
 	/* return mk_pair(v, tisp_read(st)); */
