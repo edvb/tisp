@@ -714,10 +714,11 @@ tisp_read_sugar(Tsp st, Val v)
 	} else if (tsp_fget(st) == ':') {
 		tsp_finc(st);
 		switch (tsp_fget(st)) {
-		case '(': /* proc:(lst) => (map proc lst) */
+		case '(': /* proc:(a b c) => (map proc [a b c]) */
 			tsp_finc(st);
 			if (!(w = read_pair(st, ')'))) return NULL;
-			return mk_pair(mk_sym(st, "map"), mk_pair(v, w));
+			return mk_list(st, 3, mk_sym(st, "map"), v,
+			                      mk_pair(mk_sym(st, "list"), w));
 		case ':': /* var::prop => (var 'prop) */
 			tsp_finc(st);
 			if (!(w = read_sym(st, &is_sym))) return NULL;
