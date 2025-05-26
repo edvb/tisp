@@ -67,14 +67,17 @@ dist: tibs.tsp.h
 	@rm -rf tisp-$(VERSION)
 
 install: all
-	@echo installing $(EXE) $(EXE)$(VERSIONSHORT) tsp to $(DESTDIR)$(PREFIX)/bin
+	@echo installing $(DESTDIR)$(PREFIX)/bin/$(EXE)$(VERSIONSHORT)
 	@mkdir -p $(DESTDIR)$(PREFIX)/bin
 	@cp -f $(EXE) $(DESTDIR)$(PREFIX)/bin/$(EXE)$(VERSIONSHORT)
-	@ln -sf $(EXE)$(VERSIONSHORT) $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)$(VERSIONSHORT)
+	@echo installing $(DESTDIR)$(PREFIX)/bin/$(EXE)
+	@ln -sf $(EXE)$(VERSIONSHORT) $(DESTDIR)$(PREFIX)/bin/$(EXE)
+	@echo installing $(DESTDIR)$(PREFIX)/bin/tsp
 	@sed -e "s@\./@@g" < tsp > $(DESTDIR)$(PREFIX)/bin/tsp
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/tsp
-	@echo installing manual pages to $(DESTDIR)$(MANPREFIX)/man{1,7}
+	@echo installing $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
+	@echo installing $(DESTDIR)$(MANPREFIX)/man7/$(EXE).7
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man7
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	@cp -f doc/$(EXE).1 $(DESTDIR)$(MANPREFIX)/man1/
