@@ -462,10 +462,11 @@ read_sign(Tsp st)
 static int
 read_int(Tsp st)
 {
+	char c;
 	int ret = 0;
-	/* TODO skip commas */
-	for (; tsp_fget(st) && isdigit(tsp_fget(st)); tsp_finc(st))
-		ret = ret * 10 + tsp_fget(st) - '0';
+	for (; (c = tsp_fget(st)) && (isdigit(c) || c == '_'); tsp_finc(st))
+		if (c != '_')
+			ret = ret * 10 + (c - '0');
 	return ret;
 }
 
@@ -477,10 +478,10 @@ read_base(Tsp st, int base)
 	char c;
 	int ret = 0;
 	tsp_fincn(st, 2); /* skip the base signifier prefix (0b, 0o, 0x) */
-	for (; (c = tsp_fget(st)) && isxdigit(c); tsp_finc(st))
+	for (; (c = tsp_fget(st)) && (isxdigit(c) || c == '_'); tsp_finc(st))
 		if (isdigit(c))
 			ret = ret * base + (c - '0');
-		else
+		else if (c != '_')
 			ret = ret * base + (tolower(c) - 'a' + 10);
 	return mk_int(ret);
 }
