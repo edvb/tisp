@@ -59,18 +59,17 @@ $ tisp -c "(reverse '(1/2 1/4 1/8 1/16))"
 (1/16 1/8 1/4 1/2)
 ```
 
-## Author
-
-Ed van Bruggen <ed@edryd.org>
-
 ## See Also
 
 tisp(7)
-tsp(1)
 
 See project at <https://edryd.org/projects/tisp>
 
 View source code at <https://git.edryd.org/tisp>
+
+## Author
+
+Edryd van Bruggen <ed@edryd.org>
 
 ## License
 

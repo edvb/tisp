@@ -1,4 +1,4 @@
-.TH TISP 1 "November 2024" "tisp 0.1" 
+.TH TISP 1 "June 2025" "tisp 0.1"
 .PP
 .SH NAME
 tisp \- tiny lisp
@@ -42,6 +42,7 @@ $ tisp
 
 .EE
 .RE
+.PP
 Alternatively you can pass a file name which will be opened and run, outputting the result before exiting.
 .PP
 .RS 4
@@ -53,6 +54,7 @@ $ tisp inc.tsp
 
 .EE
 .RE
+.PP
 Commands can also be piped directing into Tisp through the command line.
 .PP
 .RS 4
@@ -63,6 +65,7 @@ True
 
 .EE
 .RE
+.PP
 Or given directly to Tisp as an argument:
 .PP
 .RS 4
@@ -73,20 +76,22 @@ $ tisp -c "(reverse '(1/2 1/4 1/8 1/16))"
 
 .EE
 .RE
-.SH AUTHOR
-.PP
-Ed van Bruggen <ed@edryd.org>
-.PP
 .SH SEE ALSO
 .PP
-tisp(7) tsp(1)
+tisp(7)
+.PP
 .PP
 See project at <https://edryd.org/projects/tisp>
 .PP
+.PP
 View source code at <https://git.edryd.org/tisp>
+.PP
+.SH AUTHOR
+.PP
+Edryd van Bruggen <ed@edryd.org>
 .PP
 .SH LICENSE
 .PP
-zlib License 
+zlib License
 .PP
 

@@ -1,253 +1,388 @@
 # tisp \- tiny lisp
 
-Tisp is a tiny, terse, and transparent lisp programming language designed to be
-lightweight, modular, extendable, and easy to embedded into other programs.
-Tisp is a functional language which tries to be unambiguous and focus on
-simplicity.  Much of the language is defined with Tisp itself leaving the C
-code as short as possible and maximally orthogonal.
-
-To include Tisp in your project, simply drop the `tisp.c`, `tisp.h`,
-`tibs.tsp.h`, and any lib files into your project to use the necessary
-functions for your program. An example command line interpreter is provided in
-`main.c`.
-
-The language is still in active development and not yet stable. Until the
-`v1.0` release expect non-backwards compatible changes in minor releases.
-
-## Language
-
 Tisp is a strong dynamically typed language (with a powerful first-class static
-type system in the works) inspired mostly by Scheme, with ideas from Python,
-Haskell, Julia, and Elm as well.
+type system in the works) inspired mostly by Scheme, with ideas from Lua,
+Python, Haskell, Julia, and Elm as well.
 
-### General
+## General
 
-#### Comments
+### Expressions
 
-Single line comments with a semicolon, **eg** `(cons 1 2) ; ingnored by tisp
-until new line`.
+Expressions are the building blocks of Tisp scripts, everything in Tisp is an
+expression. They come in many different kinds, shown in the types section
+below.
 
-### Types
+### Comments
 
-#### Nil
+Comments are explanatory notes that are ignored by Tisp.
+They help document how the code works and, more importantly, why it is done that way.
+Comments start with a semicolon (`;`) and continue until the end of the line.
 
-Nil, null, empty, or false, represented as an empty list, **eg** `()`, `nil`
-`false`.
+**Example:** `println "Hello World" ; ingnored by tisp until end of line`.
+
+* Double semicolon `;;` denotes documentation comments.
+* Triple semicolon `;;;` marks section headers.
+
+*Note*: While many scripting languages use `#`, Tisp adopts semicolons
+for easier keyboard access, encouraging frequent use.
+
+## Types
+
+Types are the nouns of Tisp, they describe the different kinds of expressions
+that Tisp can represent and transform.
+
+### Numbers
 
 #### Integers
 
-Whole real numbers, positive or negative with optional `+` or `-` prefixes.
-Also supports scientific notation with an upper or lowercase `e`. The exponent
-should be a positive integer, it can also be negative but that would just round
-to zero for integers.  **eg** `1`, `-48`, `+837e4`, `3E2`.
+Whole numbers with optional `+` or `-` prefixes. Supports scientific notation
+with `e` or `E` followed by another integer.
+
+*Note*: The exponent should be a positive integer, it can also be negative but
+that would round to zero for integers.
+
+**Examples:** `1`, `-48`, `+837e4`, `3E2`.
 
 #### Decimals
 
-Floating point numbers, also know as decimals, are numbers followed by a period
-and an optional mantissa. Like integers they can be positive or negative with
-scientific notation, but still need an integer as an exponent. **eg** `1.`,
-`+3.14`, `-43.00`, `800.001e-3`.
+Floating-point numbers, denoted with decimal point. Supports scientific
+notation with `e` or `E` followed by an integer.
+
+**Examples:** `1.`, `0.018`, `+3.14`, `-.0054`, `800.001e-3`.
 
 #### Rationals
 
-Fraction type, a ratio of two integers. Similar rules apply for numerator and
-dominator as integers (real positive or negative), except for scientific
-notation. Will simplify fraction where possible, and will through error
-on division by zero. **eg** `1/2`, `4/3` `-1/2`, `01/-30`, `-6/-3`.
+Fraction type, a ratio of two integers. Same integer rules apply for numerator
+and dominator, without scientific notation.
 
-#### Booleans
+Automatically simplified, and will through error on division by zero.
 
-In Tisp all values except `Nil` (the empty list `()`) are truthy. The symbols
-`True` and `False` are also defined for explicit booleans, `False` being mapped
-to `Nil`. Functions which return a boolean type should end with `?`.
-**eg** `pair?`, `integer?`, `even?`
+**Examples:** `1/2`, `4/3`, `-1/12`, `01/-30`, `-6/-3`.
 
-#### Void
+### Booleans
 
-Returns nothing. Used to insert a void type in a list or force a function not
-to return anything.
+#### True
+
+All values except `Nil` are truthy, including explicit `True`, integers,
+strings, non-empty lists, etc.
+
+**Examples:** `True`, `1`, `[8 7 6]`, `"any string"`.
+
+#### Nil
+
+Nil represents false, or an empty list.
+
+**Examples:** `Nil`, `False`, `()`.
+
+### Void
+
+Represents the absence of a value. Used to force functions to return nothing or
+as a placeholder in lists.
+
+### Text
 
 #### Strings
 
-String of characters contained inside two double quotes. Any character is
-valid, including actual newlines, execpt for double quotes and backspace which
+String of characters surrounded by double quotes `"`. Any character is
+valid, including newlines, except for double quotes and backslash which
 need to be escaped as `\"` and `\\` respectively. Newlines and tabs can also be
-escaped with `\n` and `\t` **eg** `"foo"`, `"foo bar"`, `"string \"quoted\""`,
-`"C:\\windows\\path"` `\twhite\n\tspace`.
+escaped with `\n` and `\t`
+
+**Examples:** `"foo"`, `"foo bar"`, `"string \"quoted\""`, `"C:\\windows\\path"`,
+`"\tstring\twith   white\n\tspace  "`.
 
 #### Symbols
 
-Case sensitive symbols which are evaluated as variable names. Supports lower and
-upper case letters, numbers, as well as the characters `_+-*/\\^=<>!?@#$%&~`.
-First character can not be a number, if the first character is a `+` or `-`
-then the second digit cannot be a number either. Unlike all the previously
-listed types, symbols are not self evaluating, but instead return the value
-they are defined to. Throws an error if a symbol is evaluated without it being
-previously assigned a value. **eg** `foo`, `foo-bar`, `cat9`, `+`, `>=`,
-`nil?`.
+Case sensitive identifiers which are evaluated as variable names.
+
+Unlike other types, symbols are not self-evaluating, they resolve to their
+defined value and throw an error if undefined.
+
+Valid characters include lower and upper case letters, numbers, and
+`_+-*/\^=<>!?@#$%&~`. They can not start with a number, and if the first
+character is a `+` or `-` then the second digit cannot be a number either.
+
+**Examples**: `foo`, `foo-bar`, `cat9`, `+`, `>=`, `nil?`.
+
+### Collective Nouns
+
+The basic types covered so far can be composed in multiple ways:
+
+#### Pairs
+
+A grouping of exactly two expressions in `(fst ... rst)` notation.
+`fst` is the first element and `rst` is the second element, either can be any
+type (including another pair) and do not have to be the same type.
+
+When evaluated, the first element is a procedure, the rest are its argument,
+and the result is the procedure applied to the argument.
+
+**Examples**: `(1 ... 2)`, `(f ... args)`
 
 #### Lists
 
-Lists composed of one or more elements of any type, including lists themselves.
-Expressed with surrounding parentheses and each element is separated by
-whitespace. When evaluated the procedure found at the first element is run with
-the rest of the elements as arguments. Technically list is not a type, but
-simply a nil-terminated chain of nested pairs. A pair is a group of two and
-only two elements, normally represented as `(a . b)`, with `a` being the first
-element (car/first) and `b` being the second element (cdr/rest). For example
-`(a b c)` is equivilent to `(a . (b . (c . ())))`, but it is often easier to
-express them the first way syntactically. To create an improper list (not
-nil-terminated list) the dot notation can be used, `(1 2 3 . 4)`.
+Ordered sequences of expressions enclosed in parenthesis `( )` or brackets `[
+]` separated by white space.
+Made from chains of pairs ending with an empty list (**eg** `(1 2 3) = (1 ...
+(2 ... (3 ... Nil)))`).
+
+Lists written in parentheses are evaluated as function calls, while those in
+brackets produce lists with their inner expressions evaluated
+(**eg** `[1/2 2/2 3/2] = (list 1/2 1 3/2)`).
+
+The first element of a list can be placed before the parentheses to
+imitate more traditional function call syntax (**eg** `f(x y z) = (f x y z)`).
+
+**Examples**: `(one two three)`, `[proton.mass neutron.mass electron.mass]`,
+`split(notes ",")`, `(now)`
+
+#### Improper Lists
+
+Chains of pairs where the last expression is not `Nil`.
+
+**Examples**: `(Fry Leela Bender ... others)`, `[1 2 3 ... 4]`
+
+#### Records
+
+Records are unordered groupings of one or more key-value pairs separated by a
+colon and enclosed in curly braces.
+Sometimes called dictionaries, hash tables, structs, objects, or maps.
+
+The key is a symbol which maps to a value of any type.
+Each value is evaluated when the record is defined.
+(In the future the key will also support any type, and the value will only be
+evaluated when the key is accessed, much like functions.)
+
+**Examples:** `{ name: "Omar Little"  age: (- 2008 1966)  alive: False }`
 
 #### Functions
 
-Lambda functions created within Tisp itself. Called using list syntax where the
-first element is the function name and any proceeding elements are the
-arguments to be evaluated. For example `(cadr '(1 2 3))` is a list of elements
-`cadr` and `'(1 2 3)`. It calls the function `cadr` which returns the 2nd
-element of the argument given, in this case a list of size 3, which returns
-`2`. **eg** `list`, `not`, `apply`, `map`, `root`, `sqrt`, `print`
+Functions take an input value and produce an output value. This happens by
+evaluating the function’s body expression with the given arguments added to
+the environment. The environment is captured when the function is defined,
+making functions closures.
+
+Typically, the input value is a list of arguments. For example, the expression
+`(inc 54)` calls the function `inc` with a list of one value, the number `54`,
+returning `55`.
+
+**Examples:** `list`, `not`, `apply`, `map`, `sqrt`, `println`
 
 #### Primitives
 
-Procedures built in to the language written in C. Called like regular
-functions, see primitives section for more details. **eg** `car`, `cond`,
-`def`, `write`, `+`
+Functions written in an external language other than tisp, such as the ones
+built-in to the language written in C.
+They behave like normal functions but are opaque, their implementation cannot
+be inspected within the language.
+
+See built-ins section for more examples.
+
+**Examples:** `car`, `write`, `+`
 
 #### Macros
 
-Like lambda functions macros are defined within Tisp and are called in a
-similar fashion. However unlike functions and primitives the arguments are not
-evaluated before being given to the macro, and the output of a macro is
-only evaluated at the end. This means instead of taking in values and returning
-values, macros take in code and return code, allowing you to extend the
-language at compile time. **eg** `if`, `and`, `or`, `let`, `assert`
+Functions that operate at the syntax level, accepting code as input and return
+code as output.
+Unlike functions they receive their arguments unevaluated, and return code that
+gets evaluated in the context the macro is called in.
 
-### Built-ins
+This enables tisp to extend its own syntax, eliminate repetition, construct
+custom languages for specific tasks, or directly transform source code.
 
-Built in primitives written in C included by default.
+**Examples:** `if`, `and`, `or`, `let`
 
-#### car
+#### Forms
 
-Returns first element of given list
+Macros written in an external language; like macros, their arguments
+are not necessarily evaluated, and like primitives, their internals cannot be
+inspected.
 
-#### cdr
+**Examples:** `cond`, `def`, `quote`
+
+## Procedures
+
+Procedures are the verbs of tisp, they describe how expressions change.
+Procedures can be either functions, macros, primitives, or forms.
+
+*Convention*: Procedures which return a boolean type should end with `?` (**eg**
+`pair?`, `integer?`, `even?`), procedures with side-effects should end with `!`
+(**eg** `cd!`, `exit!`).
+
+The following are core procedures implemented in C and provided by default in
+the base environment.
+
+### car
+
+Returns first element of given list.
+
+### cdr
 
 Return rest of the given list, either just the second element if it is a pair,
 or another list with the first element removed.
 
-#### cons
+### cons
 
 Creates a new pair with the two given arguments, first one as the car, second
-as the cdr. Can be chained together to create a list if ending with `nil`.
+as the cdr. Can be chained together to create a list if ending with `Nil`.
 
-#### quote
+### quote
 
-Returns the given argument unevaluated.
+Prevents evaluation of an expression. Used to convert code to data, or create
+lists and symbols without evaluation.
 
-#### eval
+Equivalent to single quote as prefix.
+
+```
+(quote x) ; returns the symbol x
+'(a b c)  ; returns a list of 3 symbols, symbols do not get evaulated
+'(* 3 4)  ; returns a list of 3 expressions, instead of 12
+```
+
+### eval
 
 Evaluates the expression given. Can be dangerous to use as arbitrary code could
 be executed if the input is not from a trusted source. In general `apply`
 should be used when possible.
 
-#### =
+### =
 
-Tests if multiple values are all equal. Returns `Nil` if any are not, and `True`
-if they are.
+Tests if values are all equal. Returns `Nil` if any are not, and `True` if they
+are.
 
-#### cond
+### cond
 
 Evaluates each expression if the given condition corresponding to it is true.
 Runs through all arguments, each is a list with the first element as the
-condition which needs to be `True` after evaluated, and the rest of the list is
+condition which needs to evaluate to `True`, and the rest of the list is
 the body to be run if and only if the condition is met. Used for if/elseif/else
-statements found in C-like languages. Also see `if`,`when`,`unless`,`switch`
-macros in Tisp.
+statements found in C-like languages.
 
-#### typeof
+Also see `if`,`when`,`unless`,`switch`.
+
+### typeof
 
 Returns a string stating the given argument's type.
 
-#### Func
+### Func
 
 Creates anonymous function, first argument is a list of symbols for the names
 of the new function arguments. Rest of the arguments to Func is the body of
-code to be run when the function is called. Also see `def`.
+code to be run when the function is called.
 
-#### Macro
+Also see `def`.
 
-Functions which operate on syntax expressions, and return syntax. Similar to
+### Macro
+
+Transformers which operate on syntax expressions, and return syntax. Similar to
 Func, Macro creates anonymous macro with first argument as macro's argument
 list and rest as macro's body. Unlike functions macros do not evaluate their
 arguments when called, allowing the expressions to be transformed by the macro,
-returning a new expression to be evaluated at run time. Also see `defmacro`
+returning a new expression to be evaluated at run time.
 
-#### def
+Also see `defmacro`.
 
-Create variable with the name of the first argument, with the value of the
-second. If name given is a list use the first element of this list as a new
-functions name and rest of list as its arguments. If only variable name is
-given make it a self evaluating symbol.
+### def
 
-#### set!
+Create new symbol with the name of the first argument, and the value of the
+second. If the name given is a list use the first element of this list as a new
+functions name and rest of list as its arguments. If only one argument is given
+define a self evaluating symbol.
 
-Change the value of the of the variable given by the first argument to the
-second argument. Errors if variable is not defined before.
+### undefine!
 
-#### undefine!
+Remove symbol from environment. Errors if symbol is not defined before.
 
-Remove variable from environment. Errors if variable is not defined before.
+### defined?
 
-#### defined?
+Return boolean on if symbol is defined in the environment.
 
-Return boolean on if variable is defined in the environment.
-
-#### load
+### load
 
 Loads the library given as a string.
 
-#### error
+### error
 
 Throw error, print message given by second argument string with the first
 argument being a symbol of the function throwing the error.
 
-#### version
+## Differences From Lisp
 
-Return string of Tisp's version number.
+### No Mutation
 
-### Differences From Other Lisps
+A value can not be changed after it has been defined (since there is no `set!`
+function).
+The same symbol already defined can be redefined so that a new value shadows
+the previous one, but the value itself is not modified.
+A variable shadowed in a new scope returns to its original value when that
+scope exits.
+For example, a function can not change a variable outside its scope:
 
-By default Tisp's output is valid Tisp code, fully equivalent to the evaluated
-input. Lists and symbols are quoted (`(list 1 2 3) => '(1 2 3)`), errors are
-comments. The only exception is procedural types which will be fixed soon. To
-print value as valid Tisp code use `display` and `displayln`, to get a plain
-output use `print` and `println`.
+```
+def x 64
+def x 54
+def add(a)
+  def x 12
+  + x a
 
-Tisp only has one builtin equality primitive, `=`, which tests integers,
-symbols, strings, and objects which occupy the same space in memory, such as
-primitives.
+add 1   ; = 13
+x       ; = 54 (not 64 or 12)
+```
 
-Symbols are case sensitive, unlike many other older lisps, in order to better
-interface with modern languages.
+### Less Parenthesis
+
+In tisp parenthesis are implied around every new line, and a line indented more
+than the previous one is a sub-expression of it. A line with only one
+expression stays that expression, not a list of length one. For example:
+
+```
+a b c
+  d e
+    f
+  g h i
+```
+
+Becomes:
+
+```
+(a b c
+   (d e
+      f)
+   (g h i))
+```
+
+### Simpler
+
+Tisp only has one builtin equality primitive, `=`, which tests numbers, text,
+lists, and objects which occupy the same space in memory, such as primitives.
 
 Tisp is single value named, so procedures share the same namespace as
 variables. This way functions are full first class citizens. It removes the
 need for common lisp's `defunc` vs `defvar`, `let` vs `flet`, and redundant
 syntax for getting the function from a symbol.
 
-## Author
+Symbols are case sensitive, unlike many other older lisps, in order to better
+interface with modern languages.
 
-Ed van Bruggen <ed@edryd.org>
+### Read-Print Symmetry
+
+By default Tisp's output is valid Tisp code, fully equivalent to the evaluated
+input.
+Lists and symbols are quoted (`(list 1 2 3) => '(1 2 3)`), errors are comments.
+The only exception is anonymous functions/macros which will be supported soon.
+To print value as valid Tisp code use `display` and `displayln`, to get a plain
+output use `print` and `println`.
 
 ## See Also
 
 tisp(1)
-tsp(1)
 
 See project at <https://edryd.org/projects/tisp>
 
 View source code at <https://git.edryd.org/tisp>
+
+## Author
+
+Edryd van Bruggen <ed@edryd.org>
 
 ## License
 
