@@ -17,6 +17,7 @@ TSP = tib/core.tsp tib/list.tsp tib/doc.tsp tib/io.tsp tib/math.tsp tib/os.tsp
 DOC = doc/tisp.1.md doc/tisp.7.md
 MAN = $(DOC:.md=)
 
+MANOPTS = -nCD -t TISP -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`"
 VERSIONSHORT=$(shell cut -d '.' -f 1,2 <<< $(VERSION))
 
 all: options $(EXE)
@@ -55,6 +56,16 @@ $(EXE): $(OBJ) $(LIB)
 clean:
 	@echo cleaning
 	@rm -f $(OBJ) $(LIB) $(EXE) test/test test/test.o tibs.tsp.h
+
+man: $(MAN)
+
+%.1: %.1.md $(EXE)
+	@echo updating man page $@
+	@markman $(MANOPTS) -s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" $< > $@
+
+%.7: %.7.md $(EXE)
+	@echo updating man page $@
+	@markman $(MANOPTS) -7 $< > $@
 
 dist: tibs.tsp.h
 	@echo creating dist tarball
@@ -106,12 +117,4 @@ test: $(OBJ) $(LIB) test/tests.h test/test.o
 	@$(CC) -o test/test tisp.o test/test.o $(LDFLAGS)
 	@./test/test
 
-man: $(MAN)
-
-# TODO only add synopsis for .1 man pages
-$(MAN): $(DOC) $(EXE)
-	@echo updating man page $@
-	@markman -nCD -t TISP -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`" \
-		-s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" $@.md > $@
-
-.PHONY: all options clean dist install uninstall test man
+.PHONY: all options clean man dist install uninstall test
