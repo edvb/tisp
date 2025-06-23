@@ -6,14 +6,14 @@ file name is `-` read from `stdin`. If no files are supplied launch the read-eva
 
 ## Options
 
-#### -c COMMAND
+#### -e EXPRESSION
 
-Read *COMMAND* as a line of Tisp code, evaluate and print result
+Read *EXPRESSION* as a line of Tisp code, evaluate, and print result
 
 #### -r
 
 Launch the REPL prompt. Default if no arguments are given. Useful for
-loading files and then running REPL after. Equivalent to -c '(repl)'
+loading files and then running REPL after. Equivalent to -e '(repl)'
 
 #### -h
 
@@ -55,7 +55,7 @@ True
 Or given directly to Tisp as an argument:
 
 ```
-$ tisp -c "(reverse '(1/2 1/4 1/8 1/16))"
+$ tisp -e "(reverse '(1/2 1/4 1/8 1/16))"
 (1/16 1/8 1/4 1/2)
 ```
 

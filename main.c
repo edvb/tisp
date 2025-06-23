@@ -43,9 +43,9 @@ main(int argc, char *argv[])
 
 	for (; i < argc; i++, v = NULL) {
 		if (argv[i][0] == '-') {
-			if (argv[i][1] == 'c') { /* run next argument as tisp command */
+			if (argv[i][1] == 'e') { /* run next argument as tisp command */
 				if (!(st->file = argv[++i])) {
-					fputs("tisp: expected command after -c\n", stderr);
+					fputs("tisp: expected expression after -e\n", stderr);
 					exit(2);
 				}
 readstr:
@@ -59,7 +59,7 @@ readstr:
 				fprintf(stderr, "tisp v%s (c) 2017-2025 Ed van Bruggen\n", VERSION);
 				exit(0);
 			} else if (argv[i][1]) { /* unsupported argument or help */
-				fputs("usage: tisp [-hrv] [-c COMMAND] [-] [FILE ...]\n", stderr);
+				fputs("usage: tisp [-rhv] [-e EXPRESSION] [FILE ...] [-]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
 				v = read_parse_eval(st, st->nil);

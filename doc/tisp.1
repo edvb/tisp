@@ -4,7 +4,7 @@
 tisp \- tiny lisp
 .PP
 .SH SYNOPSIS
-tisp [-hrv] [-c COMMAND] [-] [FILE ...]
+tisp [-rhv] [-e EXPRESSION] [FILE ...] [-]
 .PP
 .SH DESCRIPTION
 .PP
@@ -12,12 +12,12 @@ Tisp programming language default interpreter.  Read and evaluate all files in o
 .PP
 .SH OPTIONS
 .TP
-\fB-c COMMAND\fP
-Read \fICOMMAND\fP as a line of Tisp code, evaluate and print result
+\fB-e EXPRESSION\fP
+Read \fIEXPRESSION\fP as a line of Tisp code, evaluate, and print result
 .PP
 .TP
 \fB-r\fP
-Launch the REPL prompt. Default if no arguments are given. Useful for loading files and then running REPL after. Equivalent to -c '(repl)'
+Launch the REPL prompt. Default if no arguments are given. Useful for loading files and then running REPL after. Equivalent to -e '(repl)'
 .PP
 .TP
 \fB-h\fP
@@ -71,7 +71,7 @@ Or given directly to Tisp as an argument:
 .RS 4
 .EX
 
-$ tisp -c "(reverse '(1/2 1/4 1/8 1/16))"
+$ tisp -e "(reverse '(1/2 1/4 1/8 1/16))"
 (1/16 1/8 1/4 1/2)
 
 .EE
