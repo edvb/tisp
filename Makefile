@@ -93,6 +93,8 @@ uninstall:
 	@rm -f $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man1
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
+	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man7
+	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).7
 	@echo removing shared libraries from $(DESTDIR)$(PREFIX)/lib/tisp
 	@rm -rf $(DESTDIR)$(PREFIX)/lib/tisp/
 	@echo removing tisp libraries from $(DESTDIR)$(PREFIX)/share/tisp
@@ -106,6 +108,7 @@ test: $(OBJ) $(LIB) test/tests.h test/test.o
 
 man: $(MAN)
 
+# TODO only add synopsis for .1 man pages
 $(MAN): $(DOC) $(EXE)
 	@echo updating man page $@
 	@markman -nCD -t TISP -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`" \
