@@ -30,7 +30,7 @@ def (repl)
         (repl)
 
 def (repl-simple)
-  "Simple REPL interface, only dependencies are builtin functions, no tisp code
+  "Simple REPL interface, only dependencies are builtin functions, no eevo code
   To exit enter quit or press CTRL-D
   See repl for more advanced REPL with prettier printing"
   write 'stdout Nil "> "

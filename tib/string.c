@@ -19,48 +19,48 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-typedef Val (*MkFn)(Tsp, char*);
+typedef Eevo (*MkFn)(EevoSt, char*);
 
 /* TODO string tib: lower upper capitalize strpos strsub skipto snipto (python: dir(str))*/
 
 /* convert all args to a string */
-static Val
-prim_Str(Tsp st, Rec env, Val args)
+static Eevo
+prim_Str(EevoSt st, EevoRec env, Eevo args)
 {
 	char *s;
-	if (!(s = tisp_print(args)))
+	if (!(s = eevo_print(args)))
 		return NULL;
-	return mk_str(st, s);
+	return eevo_str(st, s);
 }
 
 /* convert all args to a symbol */
-static Val
-prim_Sym(Tsp st, Rec env, Val args)
+static Eevo
+prim_Sym(EevoSt st, EevoRec env, Eevo args)
 {
 	char *s;
-	if (!(s = tisp_print(args)))
+	if (!(s = eevo_print(args)))
 		return NULL;
-	return mk_sym(st, s);
+	return eevo_sym(st, s);
 }
 
-static Val
-prim_strlen(Tsp st, Rec env, Val args)
+static Eevo
+prim_strlen(EevoSt st, EevoRec env, Eevo args)
 {
-	tsp_arg_min(args, "strlen", 1);
-	tsp_arg_type(car(args), "strlen", TSP_STR | TSP_SYM);
-	return mk_int(strlen(car(args)->v.s));
+	eevo_arg_min(args, "strlen", 1);
+	eevo_arg_type(car(args), "strlen", EEVO_STR | EEVO_SYM);
+	return eevo_int(strlen(car(args)->v.s));
 }
 
 /* perform interpolation on explicit string, evaluating anything inside curly braces */
 /* FIXME nested strings shouldn't need to be escaped*/
-static Val
-form_strfmt(Tsp st, Rec env, Val args)
+static Eevo
+form_strfmt(EevoSt st, EevoRec env, Eevo args)
 {
 	char *ret, *str;
 	int ret_len, ret_cap, pos = 0;
-	Val v;
-	tsp_arg_num(args, "strfmt", 1);
-	tsp_arg_type(car(args), "strfmt", TSP_STR);
+	Eevo v;
+	eevo_arg_num(args, "strfmt", 1);
+	eevo_arg_type(car(args), "strfmt", EEVO_STR);
 
 	str = car(args)->v.s;
 	ret_len = strlen(str), ret_cap = 2*ret_len;
@@ -80,9 +80,9 @@ form_strfmt(Tsp st, Rec env, Val args)
 			str += st->filec;
 			st->file = file, st->filec = filec;
 
-			if (!(v = tisp_eval_list(st, env, v))) /* TODO sandboxed eval, no mutable procs */
+			if (!(v = eevo_eval_list(st, env, v))) /* TODO sandboxed eval, no mutable procs */
 				return NULL;
-			if (!(s = tisp_print(v)))
+			if (!(s = eevo_print(v)))
 				return NULL;
 			/* TODO if last = !d run display converter on it */
 			l = strlen(s);
@@ -99,14 +99,14 @@ form_strfmt(Tsp st, Rec env, Val args)
 			ret[pos++] = *str++;
 		}
 	ret[pos] = '\0';
-	return mk_str(st, ret);
+	return eevo_str(st, ret);
 }
 
 void
-tib_env_string(Tsp st)
+eevo_env_string(EevoSt st)
 {
-	st->types[5]->v.t.func = mk_prim(TSP_PRIM, prim_Str, "Str");
-	st->types[6]->v.t.func = mk_prim(TSP_PRIM, prim_Sym, "Sym");
-	tsp_env_prim(strlen);
-	tsp_env_form(strfmt);
+	st->types[5]->v.t.func = eevo_prim(EEVO_PRIM, prim_Str, "Str");
+	st->types[6]->v.t.func = eevo_prim(EEVO_PRIM, prim_Sym, "Sym");
+	eevo_env_prim(strlen);
+	eevo_env_form(strfmt);
 }

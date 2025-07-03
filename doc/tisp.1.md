@@ -1,14 +1,15 @@
-# tisp \- tiny lisp
+# eevo \- easy expression value organizer
 
-Tisp programming language default interpreter.  Read and evaluate all files in order given, if
-file name is `-` read from `stdin`. If no files are supplied launch the read-evaluate-print-loop
-(REPL) for interactive running of commands.
+The default interpreter for the eevo programming language.
+Read and evaluate all files in order given, if file name is `-` read from `stdin`.
+If no files are supplied launch the read-evaluate-print-loop (REPL) for
+interactive running of commands.
 
 ## Options
 
 #### -e EXPRESSION
 
-Read *EXPRESSION* as a line of Tisp code, evaluate, and print result
+Read *EXPRESSION* as a line of eevo code, evaluate, and print result
 
 #### -r
 
@@ -29,7 +30,7 @@ Run the program from the command line to type a single command and press enter
 to see the result.
 
 ```
-$ tisp
+$ eevo
 > (cons 1 2)
 '(1 . 2)
 > (list 1 (+ 1 1) 3 (* 2 2))
@@ -41,31 +42,31 @@ the result before exiting.
 
 ```
 $ echo '((Func (x) (+ x 1)) 10)' > inc.tsp
-$ tisp inc.tsp
+$ eevo inc.tsp
 11
 ```
 
-Commands can also be piped directing into Tisp through the command line.
+Commands can also be piped directing into eevo through the command line.
 
 ```
-$ echo '(= "foo" "foo")' | tisp
+$ echo '(= "foo" "foo")' | eevo
 True
 ```
 
-Or given directly to Tisp as an argument:
+Or given directly to eevo as an argument:
 
 ```
-$ tisp -e "(reverse '(1/2 1/4 1/8 1/16))"
+$ eevo -e "(reverse '(1/2 1/4 1/8 1/16))"
 (1/16 1/8 1/4 1/2)
 ```
 
 ## See Also
 
-tisp(7)
+eevo(7)
 
-See project at <https://edryd.org/projects/tisp>
+See project at <https://edryd.org/projects/eevo>
 
-View source code at <https://git.edryd.org/tisp>
+View source code at <https://git.edryd.org/eevo>
 
 ## Author
 

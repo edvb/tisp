@@ -15,23 +15,23 @@
 #define LEN(X) (sizeof(X) / sizeof((X)[0]))
 
 int
-tisp_test(Tsp st, const char *input, const char *expect, int output)
+eevo_test(EevoSt st, const char *input, const char *expect, int output)
 {
-	Val v;
+	Eevo v;
 
 	/* TODO eval expect as well, then compare values? and compare printed strings */
 	if (!(st->file = strdup(input)))
 		return 0;
 	st->filec = 0;
-	if (!(v = tisp_read(st)))
+	if (!(v = eevo_read(st)))
 		return 0;
 
-	if (!(v = tisp_eval(st, st->env, mk_list(st, 2, mk_sym(st, "display"), v)))) {
+	if (!(v = eevo_eval(st, st->env, eevo_list(st, 2, eevo_sym(st, "display"), v)))) {
 		if (output)
 			putchar('\n');
 		return 0;
 	}
-	if (v->t != TSP_STR)
+	if (v->t != EEVO_STR)
 		return 0;
 
 	if (output)
@@ -45,11 +45,11 @@ main(void)
 	int correct = 0, total = 0, seccorrect = 0, sectotal = 0, last = 1;
 	int errors[LEN(tests)] = {0};
 	clock_t t;
-	Tsp st = tisp_env_init(1024);
-	tib_env_core(st);
-	tib_env_math(st);
-	tib_env_string(st);
-	tisp_env_lib(st, tibs);
+	EevoSt st = eevo_env_init(1024);
+	eevo_env_core(st);
+	eevo_env_math(st);
+	eevo_env_string(st);
+	eevo_env_lib(st, tibs);
 
 	t = clock();
 	for (int i = 0; ; i++) {
@@ -63,7 +63,7 @@ main(void)
 						printf(" input: %s\n"
 						       "expect: %s\n"
 						       "output: ", tests[j][0], tests[j][1]);
-						tisp_test(st, tests[j][0], tests[j][1], 1);
+						eevo_test(st, tests[j][0], tests[j][1], 1);
 					}
 				last = i + 1;
 			}
@@ -73,7 +73,7 @@ main(void)
 			seccorrect = 0;
 			sectotal = 0;
 		} else {
-			if (tisp_test(st, tests[i][0], tests[i][1], 0)) {
+			if (eevo_test(st, tests[i][0], tests[i][1], 0)) {
 				correct++;
 				seccorrect++;
 			} else {

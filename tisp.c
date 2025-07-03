@@ -33,7 +33,7 @@
 #define cadr(P) car(cdr(P))
 #define cdar(P) cdr(car(P))
 #define cddr(P) cdr(cdr(P))
-#define nilp(V) ((V)->t == TSP_NIL)
+#define nilp(V) ((V)->t == EEVO_NIL)
 #define num(N) ((N)->v.n.num)
 #define den(N) ((N)->v.n.den)
 
@@ -41,16 +41,16 @@
 #define LEN(X)            (sizeof(X) / sizeof((X)[0]))
 
 /* functions */
-static void rec_add(Rec rec, char *key, Val val);
-static Val eval_proc(Tsp st, Rec env, Val f, Val args);
+static void rec_add(EevoRec rec, char *key, Eevo val);
+static Eevo eval_proc(EevoSt st, EevoRec env, Eevo f, Eevo args);
 
 /* utility functions */
 
-/* return type of tisp value */
-static Val
-tsp_type(Tsp st, Rec env, Val args)
+/* return type of eevo value */
+static Eevo
+eevo_typeof(EevoSt st, EevoRec env, Eevo args)
 {
-	tsp_arg_num(args, "Type", 1);
+	eevo_arg_num(args, "Type", 1);
 	int id = 0;
 	for (int i = car(args)->t; i > 1; i = i >> 1)
 		id++;
@@ -60,34 +60,34 @@ tsp_type(Tsp st, Rec env, Val args)
 /* return named string for each type */
 /* TODO loop through each type bit to print */
 char *
-tsp_type_str(TspType t)
+eevo_type_str(EevoType t)
 {
 	switch (t) {
-	case TSP_NONE:  return "Void";
-	case TSP_NIL:   return "Nil";
-	case TSP_INT:   return "Int";
-	case TSP_DEC:   return "Dec";
-	case TSP_RATIO: return "Ratio";
-	case TSP_STR:   return "Str";
-	case TSP_SYM:   return "Sym";
-	case TSP_PRIM:  return "Prim";
-	case TSP_FORM:  return "Form";
-	case TSP_FUNC:  return "Func";
-	case TSP_MACRO: return "Macro";
-	case TSP_PAIR:  return "Pair";
-	case TSP_REC:   return "Rec";
-	case TSP_TYPE:  return "Type";
-	case TSP_RATIONAL: return "Rational";
-	case TSP_NUM:      return "Num";
-	case TSP_EXPR:     return "Expr";
-	case TSP_TEXT:     return "Text";
-	case TSP_PROC:     return "Proc";
-	case TSP_LIT:      return "Lit";
-	case TSP_LIST:     return "List";
-	case TSP_CALLABLE: return "Callable";
-	case TSP_FUNCTOR:  return "Functor";
+	case EEVO_NONE:  return "Void";
+	case EEVO_NIL:   return "Nil";
+	case EEVO_INT:   return "Int";
+	case EEVO_DEC:   return "Dec";
+	case EEVO_RATIO: return "Ratio";
+	case EEVO_STR:   return "Str";
+	case EEVO_SYM:   return "Sym";
+	case EEVO_PRIM:  return "Prim";
+	case EEVO_FORM:  return "Form";
+	case EEVO_FUNC:  return "Func";
+	case EEVO_MACRO: return "Macro";
+	case EEVO_PAIR:  return "Pair";
+	case EEVO_REC:   return "Rec";
+	case EEVO_TYPE:  return "Type";
+	case EEVO_RATIONAL: return "Rational";
+	case EEVO_NUM:      return "Num";
+	case EEVO_EXPR:     return "Expr";
+	case EEVO_TEXT:     return "Text";
+	case EEVO_PROC:     return "Proc";
+	case EEVO_LIT:      return "Lit";
+	case EEVO_LIST:     return "List";
+	case EEVO_CALLABLE: return "Callable";
+	case EEVO_FUNCTOR:  return "Functor";
 	default:
-		if (t &  TSP_NUM) return "Num";
+		if (t &  EEVO_NUM) return "Num";
 		return "Invalid";
 	}
 }
@@ -98,14 +98,14 @@ is_sym(char c)
 {
 	/* TODO expand for all UTF: if c > 255 */
 	return BETWEEN(c, 'a', 'z') || BETWEEN(c, 'A', 'Z') ||
-	       BETWEEN(c, '0', '9') || strchr(TSP_SYM_CHARS, c);
+	       BETWEEN(c, '0', '9') || strchr(EEVO_SYM_CHARS, c);
 }
 
 /* check if character can be a part of an operator */
 static int
 is_op(char c)
 {
-	return strchr(TSP_OP_CHARS, c) != NULL;
+	return strchr(EEVO_OP_CHARS, c) != NULL;
 }
 
 /* check if character is start of a number */
@@ -123,43 +123,43 @@ isnum(char *str)
  *  - newlines, if `skipnl` is true
  *  - comments, starting with ';' until end of line */
 static void
-skip_ws(Tsp st, int skipnl)
+skip_ws(EevoSt st, int skipnl)
 {
 	const char *s = skipnl ? " \t\n\r" : " \t";
-	while (tsp_fget(st) && (strchr(s, tsp_fget(st)) || tsp_fget(st) == ';')) {
+	while (eevo_fget(st) && (strchr(s, eevo_fget(st)) || eevo_fget(st) == ';')) {
 		/* skip contiguous white space */
 		st->filec += strspn(st->file+st->filec, s);
 		/* skip comments until newline */
-		for (; tsp_fget(st) == ';'; tsp_finc(st))
+		for (; eevo_fget(st) == ';'; eevo_finc(st))
 			st->filec += strcspn(st->file+st->filec, "\n") - !skipnl;
 	}
 }
 
 /* get length of list, if improper list return negative length */
 int
-tsp_lstlen(Val v)
+eevo_lstlen(Eevo v)
 {
 	int len = 0;
-	for (; v->t == TSP_PAIR; v = cdr(v))
+	for (; v->t == EEVO_PAIR; v = cdr(v))
 		len++;
 	return nilp(v) ? len : -(len + 1);
 }
 
 /* check if two values are equal */
 static int
-vals_eq(Val a, Val b)
+vals_eq(Eevo a, Eevo b)
 {
-	if (a->t & TSP_NUM && b->t & TSP_NUM) { /* NUMBERs */
+	if (a->t & EEVO_NUM && b->t & EEVO_NUM) { /* NUMBERs */
 		if (num(a) != num(b) || den(a) != den(b))
 			return 0;
 		return 1;
 	}
 	if (a->t != b->t)
 		return 0;
-	if (a->t == TSP_PAIR) /* PAIR */
+	if (a->t == EEVO_PAIR) /* PAIR */
 		return vals_eq(car(a), car(b)) && vals_eq(cdr(a), cdr(b));
 	/* TODO function var names should not matter in comparison */
-	if (a->t & (TSP_FUNC | TSP_MACRO)) /* FUNCTION, MACRO */
+	if (a->t & (EEVO_FUNC | EEVO_MACRO)) /* FUNCTION, MACRO */
 		return vals_eq(a->v.f.args, b->v.f.args) &&
 		       vals_eq(a->v.f.body, b->v.f.body);
 	if (a != b) /* PRIMITIVE, STRING, SYMBOL, NIL, VOID */
@@ -195,23 +195,23 @@ hash(char *key)
 }
 
 /* create new empty rec with given capacity */
-static Rec
-rec_new(size_t cap, Rec next)
+static EevoRec
+rec_new(size_t cap, EevoRec next)
 {
-	Rec rec;
-	if (!(rec = malloc(sizeof(struct Rec_))))
+	EevoRec rec;
+	if (!(rec = malloc(sizeof(struct EevoRec_))))
 		perror("; malloc"), exit(1);
 	rec->size = 0;
 	rec->cap = cap;
-	if (!(rec->items = calloc(cap, sizeof(struct Entry_))))
+	if (!(rec->items = calloc(cap, sizeof(struct EevoEntry_))))
 		perror("; calloc"), exit(1);
 	rec->next = next;
 	return rec;
 }
 
 /* get entry in one record for the key */
-static Entry
-entry_get(Rec rec, char *key)
+static EevoEntry
+entry_get(EevoRec rec, char *key)
 {
 	int i = hash(key) % rec->cap;
 	char *s;
@@ -226,10 +226,10 @@ entry_get(Rec rec, char *key)
 }
 
 /* get value of given key in each record */
-static Val
-rec_get(Rec rec, char *key)
+static Eevo
+rec_get(EevoRec rec, char *key)
 {
-	Entry e;
+	EevoEntry e;
 	for (; rec; rec = rec->next) {
 		e = entry_get(rec, key);
 		if (e->key)
@@ -240,12 +240,12 @@ rec_get(Rec rec, char *key)
 
 /* enlarge the record to ensure algorithm's efficiency */
 static void
-rec_grow(Rec rec)
+rec_grow(EevoRec rec)
 {
 	int i, ocap = rec->cap;
-	Entry oitems = rec->items;
-	rec->cap *= TSP_REC_FACTOR;
-	if (!(rec->items = calloc(rec->cap, sizeof(struct Entry_))))
+	EevoEntry oitems = rec->items;
+	rec->cap *= EEVO_REC_FACTOR;
+	if (!(rec->items = calloc(rec->cap, sizeof(struct EevoEntry_))))
 		perror("; calloc"), exit(1);
 	for (i = 0; i < ocap; i++) /* repopulate new record with old values */
 		if (oitems[i].key)
@@ -255,39 +255,40 @@ rec_grow(Rec rec)
 
 /* create new key and value pair to the record */
 static void
-rec_add(Rec rec, char *key, Val val)
+rec_add(EevoRec rec, char *key, Eevo val)
 {
-	Entry e = entry_get(rec, key);
+	EevoEntry e = entry_get(rec, key);
 	e->val = val;
 	if (!e->key) {
 		e->key = key;
 		/* grow record if it is more than half full */
-		if (++rec->size > rec->cap / TSP_REC_FACTOR)
+		if (++rec->size > rec->cap / EEVO_REC_FACTOR)
 			rec_grow(rec);
 	}
 }
 
 /* add each vals[i] to rec with key args[i] */
-static Rec
-rec_extend(Rec next, Val args, Val vals)
+static EevoRec
+rec_extend(EevoRec next, Eevo args, Eevo vals)
 {
-	Val arg, val;
-	int argnum = TSP_REC_FACTOR * tsp_lstlen(args);
+	Eevo arg, val;
+	int argnum = EEVO_REC_FACTOR * eevo_lstlen(args);
 	/* HACK need extra +1 for when argnum = 0 */
-	Rec ret = rec_new(argnum > 0 ? argnum : -argnum + 1, next);
+	EevoRec ret = rec_new(argnum > 0 ? argnum : -argnum + 1, next);
 	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
-		if (args->t == TSP_PAIR) {
+		if (args->t == EEVO_PAIR) {
 			arg = car(args);
 			val = car(vals);
 		} else {
 			arg = args;
 			val = vals;
 		}
-		if (arg->t != TSP_SYM)
-			tsp_warnf("expected symbol for argument of function definition, recieved '%s'",
-			          tsp_type_str(arg->t));
+		if (arg->t != EEVO_SYM)
+			eevo_warnf("expected symbol for argument of function definition, "
+			           "recieved '%s'",
+			          eevo_type_str(arg->t));
 		rec_add(ret, arg->v.s, val);
-		if (args->t != TSP_PAIR)
+		if (args->t != EEVO_PAIR)
 			break;
 	}
 	return ret;
@@ -295,102 +296,102 @@ rec_extend(Rec next, Val args, Val vals)
 
 /* make types */
 
-Val
-mk_val(TspType t)
+Eevo
+eevo_val(EevoType t)
 {
-	Val ret;
-	if (!(ret = malloc(sizeof(struct Val_))))
+	Eevo ret;
+	if (!(ret = malloc(sizeof(struct Eevo_))))
 		perror("; malloc"), exit(1);
 	ret->t = t;
 	return ret;
 }
 
-Val
-mk_type(Tsp st, TspType t, char *name, Val func)
+Eevo
+eevo_type(EevoSt st, EevoType t, char *name, Eevo func)
 {
-	Val ret = mk_val(TSP_INT);
-	ret->t = TSP_TYPE;
-	ret->v.t = (TspTypeVal){ .t = t, .name = name, .func = func };
-	/* ret->t = TSP_TYPE & t; */
+	Eevo ret = eevo_val(EEVO_INT);
+	ret->t = EEVO_TYPE;
+	ret->v.t = (EevoTypeVal){ .t = t, .name = name, .func = func };
+	/* ret->t = EEVO_TYPE & t; */
 	/* ret->v.f = (Func){ .name = name, .func = func }; */
 	return ret;
 }
 
-Val
-mk_int(int i)
+Eevo
+eevo_int(int i)
 {
-	Val ret = mk_val(TSP_INT);
+	Eevo ret = eevo_val(EEVO_INT);
 	num(ret) = i;
 	den(ret) = 1;
 	return ret;
 }
 
-Val
-mk_dec(double d)
+Eevo
+eevo_dec(double d)
 {
-	Val ret = mk_val(TSP_DEC);
+	Eevo ret = eevo_val(EEVO_DEC);
 	num(ret) = d;
 	den(ret) = 1;
 	return ret;
 }
 
-Val
-mk_rat(int num, int den)
+Eevo
+eevo_rat(int num, int den)
 {
-	Val ret;
+	Eevo ret;
 	if (den == 0)
-		tsp_warn("division by zero");
+		eevo_warn("division by zero");
 	frac_reduce(&num, &den);
 	if (den < 0) { /* simplify so only numerator is negative */
 		den = abs(den);
 		num = -num;
 	}
 	if (den == 1) /* simplify into integer if denominator is 1 */
-		return mk_int(num);
-	ret = mk_val(TSP_RATIO);
+		return eevo_int(num);
+	ret = eevo_val(EEVO_RATIO);
 	num(ret) = num;
 	den(ret) = den;
 	return ret;
 }
 
-/* TODO combine mk_str and mk_sym, replace st with intern hash */
-Val
-mk_str(Tsp st, char *s)
+/* TODO combine eevo_str and eevo_sym, replace st with intern hash */
+Eevo
+eevo_str(EevoSt st, char *s)
 {
-	Val ret;
+	Eevo ret;
 	if ((ret = rec_get(st->strs, s)))
 		return ret;
-	ret = mk_val(TSP_STR);
+	ret = eevo_val(EEVO_STR);
 	ret->v.s = s;
 	rec_add(st->strs, s, ret);
 	return ret;
 }
 
-Val
-mk_sym(Tsp st, char *s)
+Eevo
+eevo_sym(EevoSt st, char *s)
 {
-	Val ret;
+	Eevo ret;
 	if ((ret = rec_get(st->syms, s)))
 		return ret;
-	ret = mk_val(TSP_SYM);
+	ret = eevo_val(EEVO_SYM);
 	ret->v.s = s;
 	rec_add(st->syms, s, ret);
 	return ret;
 }
 
-Val
-mk_prim(TspType t, Prim pr, char *name)
+Eevo
+eevo_prim(EevoType t, EevoPrim pr, char *name)
 {
-	Val ret = mk_val(t);
+	Eevo ret = eevo_val(t);
 	ret->v.pr.name = name;
 	ret->v.pr.pr = pr;
 	return ret;
 }
 
-Val
-mk_func(TspType t, char *name, Val args, Val body, Rec env)
+Eevo
+eevo_func(EevoType t, char *name, Eevo args, Eevo body, EevoRec env)
 {
-	Val ret = mk_val(t);
+	Eevo ret = eevo_val(t);
 	ret->v.f.name = name;
 	ret->v.f.args = args;
 	ret->v.f.body = body;
@@ -398,49 +399,49 @@ mk_func(TspType t, char *name, Val args, Val body, Rec env)
 	return ret;
 }
 
-/* TODO swap mk_rec and rec_new */
-Val
-mk_rec(Tsp st, Rec prev, Val records)
+/* TODO swap eevo_rec and rec_new */
+Eevo
+eevo_rec(EevoSt st, EevoRec prev, Eevo records)
 {
 	int cap;
-	Val v, ret = mk_val(TSP_REC);
+	Eevo v, ret = eevo_val(EEVO_REC);
 	if (!records)
 		return ret->v.r = prev, ret;
-	cap = TSP_REC_FACTOR * tsp_lstlen(records);
+	cap = EEVO_REC_FACTOR * eevo_lstlen(records);
 	ret->v.r = rec_new(cap > 0 ? cap : -cap + 1, NULL);
-	Rec r = rec_new(4, prev);
+	EevoRec r = rec_new(4, prev);
 	rec_add(r, "this", ret);
-	for (Val cur = records; cur->t == TSP_PAIR; cur = cdr(cur))
-		if (car(cur)->t == TSP_PAIR && caar(cur)->t & (TSP_SYM|TSP_STR)) {
-			if (!(v = tisp_eval(st, r, cdar(cur)->v.p.car)))
+	for (Eevo cur = records; cur->t == EEVO_PAIR; cur = cdr(cur))
+		if (car(cur)->t == EEVO_PAIR && caar(cur)->t & (EEVO_SYM|EEVO_STR)) {
+			if (!(v = eevo_eval(st, r, cdar(cur)->v.p.car)))
 				return NULL;
 			rec_add(ret->v.r, caar(cur)->v.s, v);
-		} else if (car(cur)->t == TSP_SYM) {
-			if (!(v = tisp_eval(st, r, car(cur))))
+		} else if (car(cur)->t == EEVO_SYM) {
+			if (!(v = eevo_eval(st, r, car(cur))))
 				return NULL;
 			rec_add(ret->v.r, car(cur)->v.s, v);
-		} else tsp_warn("Rec: missing key symbol or string");
+		} else eevo_warn("Rec: missing key symbol or string");
 	return ret;
 }
 
-Val
-mk_pair(Val a, Val b)
+Eevo
+eevo_pair(Eevo a, Eevo b)
 {
-	Val ret = mk_val(TSP_PAIR);
+	Eevo ret = eevo_val(EEVO_PAIR);
 	car(ret) = a;
 	cdr(ret) = b;
 	return ret;
 }
 
-Val
-mk_list(Tsp st, int n, ...)
+Eevo
+eevo_list(EevoSt st, int n, ...)
 {
-	Val lst;
+	Eevo lst;
 	va_list argp;
 	va_start(argp, n);
-	lst = mk_pair(va_arg(argp, Val), st->nil);
-	for (Val cur = lst; n > 1; n--, cur = cdr(cur))
-		cdr(cur) = mk_pair(va_arg(argp, Val), st->nil);
+	lst = eevo_pair(va_arg(argp, Eevo), st->nil);
+	for (Eevo cur = lst; n > 1; n--, cur = cdr(cur))
+		cdr(cur) = eevo_pair(va_arg(argp, Eevo), st->nil);
 	va_end(argp);
 	return lst;
 }
@@ -449,22 +450,22 @@ mk_list(Tsp st, int n, ...)
 
 /* read first character of number to determine sign */
 static int
-read_sign(Tsp st)
+read_sign(EevoSt st)
 {
-	switch (tsp_fget(st)) {
-	case '-': tsp_finc(st); return -1;
-	case '+': tsp_finc(st); return 1;
+	switch (eevo_fget(st)) {
+	case '-': eevo_finc(st); return -1;
+	case '+': eevo_finc(st); return 1;
 	default: return 1;
 	}
 }
 
 /* return read integer */
 static int
-read_int(Tsp st)
+read_int(EevoSt st)
 {
 	char c;
 	int ret = 0;
-	for (; (c = tsp_fget(st)) && (isdigit(c) || c == '_'); tsp_finc(st))
+	for (; (c = eevo_fget(st)) && (isdigit(c) || c == '_'); eevo_finc(st))
 		if (c != '_')
 			ret = ret * 10 + (c - '0');
 	return ret;
@@ -472,43 +473,43 @@ read_int(Tsp st)
 
 /* return integer read in any base: binary, octal, hexadecimal, etc */
 /* TODO error on numbers higher than base (0b2, 0o9, etc) */
-static Val
-read_base(Tsp st, int base)
+static Eevo
+read_base(EevoSt st, int base)
 {
 	char c;
 	int ret = 0;
-	tsp_fincn(st, 2); /* skip the base signifier prefix (0b, 0o, 0x) */
-	for (; (c = tsp_fget(st)) && (isxdigit(c) || c == '_'); tsp_finc(st))
+	eevo_fincn(st, 2); /* skip the base signifier prefix (0b, 0o, 0x) */
+	for (; (c = eevo_fget(st)) && (isxdigit(c) || c == '_'); eevo_finc(st))
 		if (isdigit(c))
 			ret = ret * base + (c - '0');
 		else if (c != '_')
 			ret = ret * base + (tolower(c) - 'a' + 10);
-	return mk_int(ret);
+	return eevo_int(ret);
 }
 
 /* return read scientific notation */
-static Val
-read_sci(Tsp st, double val, int isint)
+static Eevo
+read_sci(EevoSt st, double val, int isint)
 {
-	if (tolower(tsp_fget(st)) != 'e')
+	if (tolower(eevo_fget(st)) != 'e')
 		goto finish;
 
-	tsp_finc(st);
+	eevo_finc(st);
 	double sign = read_sign(st) == 1 ? 10.0 : 0.1;
 	for (int expo = read_int(st); expo--; val *= sign) ;
 
 finish:
 	if (isint)
-		return mk_int(val);
-	return mk_dec(val);
+		return eevo_int(val);
+	return eevo_dec(val);
 }
 
 /* return read number */
-static Val
-read_num(Tsp st)
+static Eevo
+read_num(EevoSt st)
 {
-	if (tsp_fget(st) == '0')
-		switch (tolower(tsp_fgetat(st, 1))) {
+	if (eevo_fget(st) == '0')
+		switch (tolower(eevo_fgetat(st, 1))) {
 		case 'b': return read_base(st, 2);
 		case 'o': return read_base(st, 8);
 		case 'x': return read_base(st, 16);
@@ -516,13 +517,13 @@ read_num(Tsp st)
 	int sign = read_sign(st);
 	int num = read_int(st);
 	size_t oldc;
-	switch (tsp_fget(st)) {
+	switch (eevo_fget(st)) {
 	case '/':
 		if (!isnum(st->file + ++st->filec))
-			tsp_warn("incorrect ratio format, no denominator found");
-		return mk_rat(sign * num, read_sign(st) * read_int(st));
+			eevo_warn("incorrect ratio format, no denominator found");
+		return eevo_rat(sign * num, read_sign(st) * read_int(st));
 	case '.':
-		tsp_finc(st);
+		eevo_finc(st);
 		oldc = st->filec;
 		double d = (double) read_int(st);
 		int size = st->filec - oldc;
@@ -562,76 +563,77 @@ esc_str(char *s, int len, int do_esc)
 	return ret;
 }
 
-/* return read string or symbol, depending on mk_fn */
-static Val
-read_str(Tsp st, Val (*mk_fn)(Tsp, char*))
+/* return read string or symbol, depending on eevo_fn */
+static Eevo
+read_str(EevoSt st, Eevo (*eevo_fn)(EevoSt, char*))
 {
 	int len = 0;
 	char *s = st->file + ++st->filec; /* skip starting open quote */
-	char endchar = mk_fn == &mk_str ? '"' : '~';
-	for (; tsp_fget(st) != endchar; tsp_finc(st), len++) /* get length of new escaped string */
-		if (!tsp_fget(st))
-			tsp_warnf("reached end before closing %c", endchar);
-		else if (tsp_fget(st) == '\\' && tsp_fgetat(st, -1) != '\\')
-			tsp_finc(st); /* skip over break condition since it is escaped */
-	tsp_finc(st); /* skip last closing quote */
-	return mk_fn(st, esc_str(s, len, mk_fn == &mk_str)); /* only escape strings */
+	char endchar = eevo_fn == &eevo_str ? '"' : '~';
+	/* get length of new escaped string */
+	for (; eevo_fget(st) != endchar; eevo_finc(st), len++)
+		if (!eevo_fget(st))
+			eevo_warnf("reached end before closing %c", endchar);
+		else if (eevo_fget(st) == '\\' && eevo_fgetat(st, -1) != '\\')
+			eevo_finc(st); /* skip over break condition since it is escaped */
+	eevo_finc(st); /* skip last closing quote */
+	return eevo_fn(st, esc_str(s, len, eevo_fn == &eevo_str)); /* only escape strings */
 }
 
 /* return read symbol */
-static Val
-read_sym(Tsp st, int (*is_char)(char))
+static Eevo
+read_sym(EevoSt st, int (*is_char)(char))
 {
 	int len = 0;
 	char *s = st->file + st->filec;
-	for (; tsp_fget(st) && is_char(tsp_fget(st)); tsp_finc(st))
+	for (; eevo_fget(st) && is_char(eevo_fget(st)); eevo_finc(st))
 		len++; /* get length of new symbol */
-	return mk_sym(st, esc_str(s, len, 0));
+	return eevo_sym(st, esc_str(s, len, 0));
 }
 
 /* return read list, pair, or improper list */
-Val
-read_pair(Tsp st, char endchar)
+Eevo
+read_pair(EevoSt st, char endchar)
 {
-	Val v, ret = mk_pair(NULL, st->nil);
+	Eevo v, ret = eevo_pair(NULL, st->nil);
 	int skipnl = endchar != '\n';
 	skip_ws(st, 1);
-	/* if (!tsp_fget(st)) */
+	/* if (!eevo_fget(st)) */
 	/* 	return st->nil; */
-		/* tsp_warnf("reached end before closing '%c'", endchar); */
+		/* eevo_warnf("reached end before closing '%c'", endchar); */
 	/* TODO replace w/ strchr to also check for NULL and allow }} */
-	/* !strchr(endchars, tsp_fget(st)) */
-	for (Val pos = ret; tsp_fget(st) && tsp_fget(st) != endchar; pos = cdr(pos)) {
-		if (!(v = tisp_read(st)))
+	/* !strchr(endchars, eevo_fget(st)) */
+	for (Eevo pos = ret; eevo_fget(st) && eevo_fget(st) != endchar; pos = cdr(pos)) {
+		if (!(v = eevo_read(st)))
 			return NULL;
 		/* pair cdr, end with non-nil (improper list) */
-		if (v->t == TSP_SYM && !strncmp(v->v.s, "...", 4)) {
+		if (v->t == EEVO_SYM && !strncmp(v->v.s, "...", 4)) {
 			skip_ws(st, skipnl);
-			if (!(v = tisp_read(st)))
+			if (!(v = eevo_read(st)))
 				return NULL;
 			cdr(pos) = v;
 			break;
 		}
-		cdr(pos) = mk_pair(v, st->nil);
-		/* if (v->t == TSP_SYM && is_op(v->v.s[0])) { */
+		cdr(pos) = eevo_pair(v, st->nil);
+		/* if (v->t == EEVO_SYM && is_op(v->v.s[0])) { */
 		/* 	is_infix = 1; */
 		/* 	skip_ws(st, 1); */
 		/* } else */
 		skip_ws(st, skipnl);
 	}
 	skip_ws(st, skipnl);
-	if (skipnl && tsp_fget(st) != endchar)
-		tsp_warnf("did not find closing '%c'", endchar);
-		/* tsp_warnf("found more than one element before closing '%c'", endchar); */
-	tsp_finc(st);
+	if (skipnl && eevo_fget(st) != endchar)
+		eevo_warnf("did not find closing '%c'", endchar);
+		/* eevo_warnf("found more than one element before closing '%c'", endchar); */
+	eevo_finc(st);
 	/* if (is_infix) */
-	/* 	return car(ret) = mk_sym(st, "infix"), ret; */
+	/* 	return car(ret) = eevo_sym(st, "infix"), ret; */
 	return cdr(ret);
 }
 
-/* reads given string returning its tisp value */
-Val
-tisp_read_sexpr(Tsp st)
+/* reads given string returning its eevo value */
+Eevo
+eevo_read_sexpr(EevoSt st)
 {
 	/* TODO merge w/ infix */
 	/* TODO mk const global */
@@ -654,90 +656,90 @@ tisp_read_sexpr(Tsp st)
 		return st->none;
 	if (isnum(st->file+st->filec)) /* number */
 		return read_num(st);
-	if (tsp_fget(st) == '"') /* string */
-		return read_str(st, mk_str);
-	if (tsp_fget(st) == '~') /* explicit symbol */
-		return read_str(st, mk_sym);
+	if (eevo_fget(st) == '"') /* string */
+		return read_str(st, eevo_str);
+	if (eevo_fget(st) == '~') /* explicit symbol */
+		return read_str(st, eevo_sym);
 	for (int i = 0; i < LEN(prefix); i += 2) { /* character prefix */
 		if (!strncmp(st->file+st->filec, prefix[i], strlen(prefix[i]))) {
-			Val v;
-			tsp_fincn(st, strlen(prefix[i]) - (prefix[i][1] == '"'));
-			if (!(v = tisp_read(st))) return NULL;
-			return mk_list(st, 2, mk_sym(st, prefix[i+1]), v);
+			Eevo v;
+			eevo_fincn(st, strlen(prefix[i]) - (prefix[i][1] == '"'));
+			if (!(v = eevo_read(st))) return NULL;
+			return eevo_list(st, 2, eevo_sym(st, prefix[i+1]), v);
 		}
 	}
-	if (is_op(tsp_fget(st))) /* operators */
+	if (is_op(eevo_fget(st))) /* operators */
 		return read_sym(st, &is_op);
-	if (is_sym(tsp_fget(st))) /* symbols */
+	if (is_sym(eevo_fget(st))) /* symbols */
 		return read_sym(st, &is_sym);
-	if (tsp_fget(st) == '(') /* list */
-		return tsp_finc(st), read_pair(st, ')');
-	if (tsp_fget(st) == '[') /* list */
-		return tsp_finc(st), mk_pair(mk_sym(st, "list"), read_pair(st, ']'));
-	if (tsp_fget(st) == '{') { /* record */
-		Val v; tsp_finc(st);
+	if (eevo_fget(st) == '(') /* list */
+		return eevo_finc(st), read_pair(st, ')');
+	if (eevo_fget(st) == '[') /* list */
+		return eevo_finc(st), eevo_pair(eevo_sym(st, "list"), read_pair(st, ']'));
+	if (eevo_fget(st) == '{') { /* record */
+		Eevo v; eevo_finc(st);
 		if (!(v = read_pair(st, '}'))) return NULL;
-		return mk_pair(mk_sym(st, "Rec"), v);
+		return eevo_pair(eevo_sym(st, "Rec"), v);
 	}
-	tsp_warnf("could not parse given input '%c' (%d)",
+	eevo_warnf("could not parse given input '%c' (%d)",
 	          st->file[st->filec], (int)st->file[st->filec]);
 }
 
 /* read single value, made up of s-expression and optional syntax sugar */
-Val
-tisp_read(Tsp st)
+Eevo
+eevo_read(EevoSt st)
 {
-	Val v;
-	if (!(v = tisp_read_sexpr(st)))
+	Eevo v;
+	if (!(v = eevo_read_sexpr(st)))
 		return NULL;
 	/* HACK find more general way to do this */
-	while (tsp_fget(st) == '(' || tsp_fget(st) == ':' || tsp_fget(st) == '>' ||
-	       tsp_fget(st) == '{')
-		v = tisp_read_sugar(st, v);
+	while (eevo_fget(st) == '(' || eevo_fget(st) == ':' || eevo_fget(st) == '>' ||
+	       eevo_fget(st) == '{')
+		v = eevo_read_sugar(st, v);
 	return v;
 }
 
 /* read extra syntax sugar on top of s-expressions */
-Val
-tisp_read_sugar(Tsp st, Val v)
+Eevo
+eevo_read_sugar(EevoSt st, Eevo v)
 {
-	Val lst, w;
-	if (tsp_fget(st) == '(') { /* func(x y) => (func x y) */
+	Eevo lst, w;
+	if (eevo_fget(st) == '(') { /* func(x y) => (func x y) */
 		/* FIXME @it(3) */
-		tsp_finc(st);
+		eevo_finc(st);
 		if (!(lst = read_pair(st, ')'))) return NULL;
-		return mk_pair(v, lst);
-	} else if (tsp_fget(st) == '{') { /* rec{ key: value } => (recmerge rec { key: value }) */
-		tsp_finc(st);
+		return eevo_pair(v, lst);
+	} else if (eevo_fget(st) == '{') { /* rec{ key: value } => (recmerge rec { key: value }) */
+		eevo_finc(st);
 		if (!(lst = read_pair(st, '}'))) return NULL;
-		return mk_list(st, 3, mk_sym(st, "recmerge"), v,
-		                      mk_pair(mk_sym(st, "Rec"), lst));
-	} else if (tsp_fget(st) == ':') {
-		tsp_finc(st);
-		switch (tsp_fget(st)) {
+		return eevo_list(st, 3, eevo_sym(st, "recmerge"), v,
+		                      eevo_pair(eevo_sym(st, "Rec"), lst));
+	} else if (eevo_fget(st) == ':') {
+		eevo_finc(st);
+		switch (eevo_fget(st)) {
 		case '(': /* proc:(a b c) => (map proc [a b c]) */
-			tsp_finc(st);
+			eevo_finc(st);
 			if (!(w = read_pair(st, ')'))) return NULL;
-			return mk_list(st, 3, mk_sym(st, "map"), v,
-			                      mk_pair(mk_sym(st, "list"), w));
+			return eevo_list(st, 3, eevo_sym(st, "map"), v,
+			                      eevo_pair(eevo_sym(st, "list"), w));
 		case ':': /* var::prop => (var 'prop) */
-			tsp_finc(st);
+			eevo_finc(st);
 			if (!(w = read_sym(st, &is_sym))) return NULL;
-			return mk_list(st, 2, v, mk_list(st, 2, mk_sym(st, "quote"), w));
+			return eevo_list(st, 2, v, eevo_list(st, 2, eevo_sym(st, "quote"), w));
 		default: /* key: val => (key val) */
 			skip_ws(st, 1);
-			if (!(w = tisp_read(st))) return NULL;
-			return mk_list(st, 2, v, w);
+			if (!(w = eevo_read(st))) return NULL;
+			return eevo_list(st, 2, v, w);
 		}
-	} else if (tsp_fget(st) == '>' && tsp_fgetat(st, 1) == '>') {
-		tsp_finc(st), tsp_finc(st);
-		if (!(w = tisp_read(st)))
-			tsp_warn("invalid UFCS");
-		if (w->t != TSP_PAIR)
-			w = mk_pair(w, st->nil);
-		return mk_pair(car(w), mk_pair(v, cdr(w)));
+	} else if (eevo_fget(st) == '>' && eevo_fgetat(st, 1) == '>') {
+		eevo_finc(st), eevo_finc(st);
+		if (!(w = eevo_read(st)))
+			eevo_warn("invalid UFCS");
+		if (w->t != EEVO_PAIR)
+			w = eevo_pair(w, st->nil);
+		return eevo_pair(car(w), eevo_pair(v, cdr(w)));
 	}
-	/* return mk_pair(v, tisp_read(st)); */
+	/* return eevo_pair(v, eevo_read(st)); */
 	return v;
 }
 
@@ -745,26 +747,26 @@ tisp_read_sugar(Tsp st, Val v)
  *  - imply parenthesis around new lines
  *  - indented lines are sub-expressions
  *  - lines with single expression return just that expression */
-Val
-tisp_read_line(Tsp st, int level)
+Eevo
+eevo_read_line(EevoSt st, int level)
 {
-	Val pos, ret;
+	Eevo pos, ret;
 	if (!(ret = read_pair(st, '\n'))) /* read line */
 		return NULL;
-	if (ret->t != TSP_PAIR) /* force to be pair */
-		ret = mk_pair(ret, st->nil);
-	for (pos = ret; cdr(pos)->t == TSP_PAIR; pos = cdr(pos)) ; /* get last pair */
-	for (; tsp_fget(st); pos = cdr(pos)) { /* read indented lines as sub-expressions */
-		Val v;
+	if (ret->t != EEVO_PAIR) /* force to be pair */
+		ret = eevo_pair(ret, st->nil);
+	for (pos = ret; cdr(pos)->t == EEVO_PAIR; pos = cdr(pos)) ; /* get last pair */
+	for (; eevo_fget(st); pos = cdr(pos)) { /* read indented lines as sub-expressions */
+		Eevo v;
 		int newlevel = strspn(st->file+st->filec, "\t ");
 		if (newlevel <= level)
 			break;
 		st->filec += newlevel;
 		/* skip_ws(st, 1); */
-		if (!(v = tisp_read_line(st, newlevel)))
+		if (!(v = eevo_read_line(st, newlevel)))
 			return NULL;
 		if (!nilp(v))
-			cdr(pos) = mk_pair(v, cdr(pos));
+			cdr(pos) = eevo_pair(v, cdr(pos));
 	}
 	return nilp(cdr(ret)) ? car(ret) : ret; /* if only 1 element in list, return just it */
 }
@@ -772,122 +774,122 @@ tisp_read_line(Tsp st, int level)
 /* eval */
 
 /* evaluate each element of list */
-/* TODO arg for tisp_eval or expand_macro */
-Val
-tisp_eval_list(Tsp st, Rec env, Val v)
+/* TODO arg for eevo_eval or expand_macro */
+Eevo
+eevo_eval_list(EevoSt st, EevoRec env, Eevo v)
 {
-	Val ret = mk_pair(NULL, st->nil), ev;
-	for (Val cur = ret; !nilp(v); v = cdr(v), cur = cdr(cur)) {
-		if (v->t != TSP_PAIR) { /* last element in improper list */
-			if (!(ev = tisp_eval(st, env, v)))
+	Eevo ret = eevo_pair(NULL, st->nil), ev;
+	for (Eevo cur = ret; !nilp(v); v = cdr(v), cur = cdr(cur)) {
+		if (v->t != EEVO_PAIR) { /* last element in improper list */
+			if (!(ev = eevo_eval(st, env, v)))
 				return NULL;
 			cdr(cur) = ev;
 			return cdr(ret);
 		}
-		if (!(ev = tisp_eval(st, env, car(v))))
+		if (!(ev = eevo_eval(st, env, car(v))))
 			return NULL;
-		cdr(cur) = mk_pair(ev, st->nil);
+		cdr(cur) = eevo_pair(ev, st->nil);
 	}
 	return cdr(ret);
 }
 
 /* evaluate all elements of list returning last */
-Val
-tisp_eval_body(Tsp st, Rec env, Val v)
+Eevo
+eevo_eval_body(EevoSt st, EevoRec env, Eevo v)
 {
-	Val ret = st->none;
-	for (; v->t == TSP_PAIR; v = cdr(v))
-		if (nilp(cdr(v)) && car(v)->t == TSP_PAIR) { /* func call is last, do tail call */
-			Val f, args;
-			if (!(f = tisp_eval(st, env, caar(v))))
+	Eevo ret = st->none;
+	for (; v->t == EEVO_PAIR; v = cdr(v))
+		if (nilp(cdr(v)) && car(v)->t == EEVO_PAIR) { /* func call is last, do tail call */
+			Eevo f, args;
+			if (!(f = eevo_eval(st, env, caar(v))))
 				return NULL;
-			if (f->t != TSP_FUNC)
+			if (f->t != EEVO_FUNC)
 				return eval_proc(st, env, f, cdar(v));
-			tsp_arg_num(cdar(v), f->v.f.name ? f->v.f.name : "anon",
-			            tsp_lstlen(f->v.f.args));
-			if (!(args = tisp_eval_list(st, env, cdar(v))))
+			eevo_arg_num(cdar(v), f->v.f.name ? f->v.f.name : "anon",
+			            eevo_lstlen(f->v.f.args));
+			if (!(args = eevo_eval_list(st, env, cdar(v))))
 				return NULL;
 			if (!(env = rec_extend(f->v.f.env, f->v.f.args, args)))
 				return NULL;
 			/* continue loop from body of func call */
-			v = mk_pair(NULL, f->v.f.body);
-		} else if (!(ret = tisp_eval(st, env, car(v))))
+			v = eevo_pair(NULL, f->v.f.body);
+		} else if (!(ret = eevo_eval(st, env, car(v))))
 			return NULL;
 	return ret;
 }
 
 static void
-prepend_bt(Tsp st, Rec env, Val f)
+prepend_bt(EevoSt st, EevoRec env, Eevo f)
 {
 	if (!f->v.f.name) /* no need to record anonymous functions */
 		return;
 	for (; env->next; env = env->next) ; /* bt var located at base env */
-	Entry e = entry_get(env, "bt");
-	if (e->val->t == TSP_PAIR && car(e->val)->t == TSP_SYM &&
+	EevoEntry e = entry_get(env, "bt");
+	if (e->val->t == EEVO_PAIR && car(e->val)->t == EEVO_SYM &&
 	    !strncmp(f->v.f.name, car(e->val)->v.s, strlen(car(e->val)->v.s)))
 		return; /* don't record same function on recursion */
-	e->val = mk_pair(mk_sym(st, f->v.f.name), e->val);
+	e->val = eevo_pair(eevo_sym(st, f->v.f.name), e->val);
 }
 
 /* evaluate procedure f with arguments */
-static Val
-eval_proc(Tsp st, Rec env, Val f, Val args)
+static Eevo
+eval_proc(EevoSt st, EevoRec env, Eevo f, Eevo args)
 {
-	Val ret;
-	Rec fenv;
+	Eevo ret;
+	EevoRec fenv;
 	/* evaluate function and primitive arguments before being passed */
 	switch (f->t) {
-	case TSP_PRIM:
-		if (!(args = tisp_eval_list(st, env, args)))
+	case EEVO_PRIM:
+		if (!(args = eevo_eval_list(st, env, args)))
 			return NULL;
 		/* FALLTHROUGH */
-	case TSP_FORM:
+	case EEVO_FORM:
 		return (*f->v.pr.pr)(st, env, args);
-	case TSP_FUNC:
-		if (!(args = tisp_eval_list(st, env, args)))
+	case EEVO_FUNC:
+		if (!(args = eevo_eval_list(st, env, args)))
 			return NULL;
 		/* FALLTHROUGH */
-	case TSP_MACRO:
-		tsp_arg_num(args, f->v.f.name ? f->v.f.name : "anon", tsp_lstlen(f->v.f.args));
+	case EEVO_MACRO:
+		eevo_arg_num(args, f->v.f.name ? f->v.f.name : "anon", eevo_lstlen(f->v.f.args));
 		if (!(fenv = rec_extend(f->v.f.env, f->v.f.args, args)))
 			return NULL;
-		if (!(ret = tisp_eval_body(st, fenv, f->v.f.body)))
+		if (!(ret = eevo_eval_body(st, fenv, f->v.f.body)))
 			return prepend_bt(st, env, f), NULL;
-		if (f->t == TSP_MACRO) /* TODO remove w/ expand_macro */
-			ret = tisp_eval(st, env, ret);
+		if (f->t == EEVO_MACRO) /* TODO remove w/ expand_macro */
+			ret = eevo_eval(st, env, ret);
 		return ret;
-	case TSP_REC:
-		if (!(args = tisp_eval_list(st, env, args)))
+	case EEVO_REC:
+		if (!(args = eevo_eval_list(st, env, args)))
 			return NULL;
-		tsp_arg_num(args, "record", 1);
-		tsp_arg_type(car(args), "record", TSP_SYM);
+		eevo_arg_num(args, "record", 1);
+		eevo_arg_type(car(args), "record", EEVO_SYM);
 		if (!(ret = rec_get(f->v.r, car(args)->v.s)) &&
 		    !(ret = rec_get(f->v.r, "else")))
-			tsp_warnf("could not find element '%s' in record", car(args)->v.s);
+			eevo_warnf("could not find element '%s' in record", car(args)->v.s);
 		return ret;
-	case TSP_TYPE:
+	case EEVO_TYPE:
 		if (f->v.t.func)
 			return eval_proc(st, env, f->v.t.func, args);
-		tsp_warnf("could not convert to type '%s'", f->v.t.name);
-	case TSP_PAIR: // TODO eval each element as func w/ args: body
+		eevo_warnf("could not convert to type '%s'", f->v.t.name);
+	case EEVO_PAIR: // TODO eval each element as func w/ args: body
 	default:
-		tsp_warnf("attempt to evaluate non procedural type '%s' (%s)",
-				tsp_type_str(f->t), tisp_print(f));
+		eevo_warnf("attempt to evaluate non procedural type '%s' (%s)",
+				eevo_type_str(f->t), eevo_print(f));
 	}
 }
 
 /* evaluate given value */
-Val
-tisp_eval(Tsp st, Rec env, Val v)
+Eevo
+eevo_eval(EevoSt st, EevoRec env, Eevo v)
 {
-	Val f;
+	Eevo f;
 	switch (v->t) {
-	case TSP_SYM:
+	case EEVO_SYM:
 		if (!(f = rec_get(env, v->v.s)))
-			tsp_warnf("could not find symbol '%s'", v->v.s);
+			eevo_warnf("could not find symbol '%s'", v->v.s);
 		return f;
-	case TSP_PAIR:
-		if (!(f = tisp_eval(st, env, car(v))))
+	case EEVO_PAIR:
+		if (!(f = eevo_eval(st, env, car(v))))
 			return NULL;
 		return eval_proc(st, env, f, cdr(v));
 	default:
@@ -911,17 +913,17 @@ str_grow(char *str, int len, int *size)
 
 /* Convert record to string */
 static char *
-print_rec(Rec rec)
+print_rec(EevoRec rec)
 {
 	int len = 0;
 	int size = 64;
 	char *ret = calloc(size, sizeof(char));
-	for (Rec r = rec; r; r = r->next)
+	for (EevoRec r = rec; r; r = r->next)
 		for (int i = 0, c = 0; c < r->size; i++)
 			if (r->items[i].key) {
 				int olen = len;
 				char *key = r->items[i].key;
-				char *val = tisp_print(r->items[i].val);
+				char *val = eevo_print(r->items[i].val);
 				len += strlen(key) + strlen(val) + 2;
 				if (!(ret = str_grow(ret, len, &size)))
 					return NULL;
@@ -931,28 +933,28 @@ print_rec(Rec rec)
 	return ret;
 }
 
-/* Convert tisp value to string to be printed
- *  returned string needs to be freed after use */
+/* Convert eevo value to string to be printed
+ *   returned string needs to be freed after use */
 char *
-tisp_print(Val v)
+eevo_print(Eevo v)
 {
 	int len;
 	int size = 64;
 	char *head, *tail, *ret = calloc(size, sizeof(char));
 	switch (v->t) {
-	case TSP_NONE:
+	case EEVO_NONE:
 		strcat(ret, "Void");
 		break;
-	case TSP_NIL:
+	case EEVO_NIL:
 		strcat(ret, "Nil");
 		break;
-	case TSP_INT:
+	case EEVO_INT:
 		len = snprintf(NULL, 0, "%d", (int)num(v)) + 1;
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
 		snprintf(ret, len, "%d", (int)num(v));
 		break;
-	case TSP_DEC:
+	case EEVO_DEC:
 		len = snprintf(NULL, 0, "%.15G", num(v)) + 3;
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
@@ -960,21 +962,21 @@ tisp_print(Val v)
 		if (num(v) == (int)num(v))
 			strcat(ret, ".0");
 		break;
-	case TSP_RATIO:
+	case EEVO_RATIO:
 		len = snprintf(NULL, 0, "%d/%d", (int)num(v), (int)den(v)) + 1;
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
 		snprintf(ret, len, "%d/%d", (int)num(v), (int)den(v));
 		break;
-	case TSP_STR:
-	case TSP_SYM:
+	case EEVO_STR:
+	case EEVO_SYM:
 		len = strlen(v->v.s);
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
 		strcat(ret, v->v.s);
 		break;
-	case TSP_FUNC:
-	case TSP_MACRO:
+	case EEVO_FUNC:
+	case EEVO_MACRO:
 		if (!v->v.f.name) {
 			strcat(ret, "anon");
 			break;
@@ -984,25 +986,25 @@ tisp_print(Val v)
 			return NULL;
 		strcat(ret, v->v.f.name);
 		break;
-	case TSP_PRIM:
-	case TSP_FORM:
+	case EEVO_PRIM:
+	case EEVO_FORM:
 		len = strlen(v->v.pr.name);
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
 		strcat(ret, v->v.pr.name);
 		break;
-	case TSP_TYPE:
+	case EEVO_TYPE:
 		len = strlen(v->v.t.name);
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
 		strcat(ret, v->v.t.name);
 		break;
-	case TSP_REC:
+	case EEVO_REC:
 		ret = print_rec(v->v.r);
 		break;
-	case TSP_PAIR:
-		head = tisp_print(car(v));
-		tail = nilp(cdr(v)) ? "" : tisp_print(cdr(v));
+	case EEVO_PAIR:
+		head = eevo_print(car(v));
+		tail = nilp(cdr(v)) ? "" : eevo_print(cdr(v));
 		len = strlen(head) + strlen(tail) + 1;
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
@@ -1010,7 +1012,7 @@ tisp_print(Val v)
 		break;
 	default:
 		free(ret);
-		tsp_warnf("could not print type '%s'", tsp_type_str(v->t));
+		eevo_warnf("could not print type '%s'", eevo_type_str(v->t));
 	}
 	return ret;
 }
@@ -1020,17 +1022,17 @@ tisp_print(Val v)
 
 /* add new variable of name key and value v to the given environment */
 void
-tisp_env_add(Tsp st, char *key, Val v)
+eevo_env_add(EevoSt st, char *key, Eevo v)
 {
 	rec_add(st->env, key, v);
 }
 
-/* initialise tisp's state and global environment */
-Tsp
-tisp_env_init(size_t cap)
+/* initialise eevo's state and global environment */
+EevoSt
+eevo_env_init(size_t cap)
 {
-	Tsp st;
-	if (!(st = malloc(sizeof(struct Tsp_))))
+	EevoSt st;
+	if (!(st = malloc(sizeof(struct EevoSt_))))
 		perror("; malloc"), exit(1);
 
 	st->file = NULL;
@@ -1041,62 +1043,62 @@ tisp_env_init(size_t cap)
 	st->syms = rec_new(cap, NULL);
 
 	/* TODO make globals */
-	st->nil = mk_val(TSP_NIL);
-	st->none = mk_val(TSP_NONE);
-	st->t = mk_val(TSP_SYM);
+	st->nil = eevo_val(EEVO_NIL);
+	st->none = eevo_val(EEVO_NONE);
+	st->t = eevo_val(EEVO_SYM);
 	st->t->v.s = "True";
 
 	st->env = rec_new(cap, NULL);
-	tisp_env_add(st, "True", st->t);
-	tisp_env_add(st, "Nil", st->nil);
-	tisp_env_add(st, "Void", st->none);
-	tisp_env_add(st, "bt", st->nil);
-	tisp_env_add(st, "version", mk_str(st, "0.1"));
+	eevo_env_add(st, "True", st->t);
+	eevo_env_add(st, "Nil", st->nil);
+	eevo_env_add(st, "Void", st->none);
+	eevo_env_add(st, "bt", st->nil);
+	eevo_env_add(st, "version", eevo_str(st, "0.1"));
 
 	/* Types */
-	st->types[0]  = mk_type(st, TSP_NONE,  "TVoid",  NULL);
-	st->types[1]  = mk_type(st, TSP_NIL,   "TNil",   NULL);
-	st->types[2]  = mk_type(st, TSP_INT,   "Int",   NULL);
-	st->types[3]  = mk_type(st, TSP_DEC,   "Dec",   NULL);
-	st->types[4]  = mk_type(st, TSP_RATIO, "Ratio", NULL);
-	st->types[5]  = mk_type(st, TSP_STR,   "Str",   NULL);
-	st->types[6]  = mk_type(st, TSP_SYM,   "Sym",   NULL);
-	st->types[7]  = mk_type(st, TSP_PRIM,  "Prim",  NULL);
-	st->types[8]  = mk_type(st, TSP_FORM,  "Form",  NULL);
-	st->types[9]  = mk_type(st, TSP_FUNC,  "Func",  NULL);
-	st->types[10] = mk_type(st, TSP_MACRO, "Macro", NULL);
-	st->types[11] = mk_type(st, TSP_PAIR,  "Pair",  NULL);
-	/* Val lst = mk_sym(st, "lst"); */
-	/* Val List = mk_func(TSP_FUNC, "List", lst, mk_list(st, 1, lst), st->env); */
-	/* st->types[11] = mk_type(st, TSP_PAIR | TSP_NONE,  "List",  List); */
-	st->types[12] = mk_type(st, TSP_REC,   "Rec",   mk_prim(TSP_FORM, mk_rec,    "Rec"));
-	st->types[13] = mk_type(st, TSP_TYPE,  "Type",  mk_prim(TSP_PRIM, tsp_type,  "Type"));
+	st->types[0]  = eevo_type(st, EEVO_NONE,  "TVoid", NULL);
+	st->types[1]  = eevo_type(st, EEVO_NIL,   "TNil",  NULL);
+	st->types[2]  = eevo_type(st, EEVO_INT,   "Int",   NULL);
+	st->types[3]  = eevo_type(st, EEVO_DEC,   "Dec",   NULL);
+	st->types[4]  = eevo_type(st, EEVO_RATIO, "Ratio", NULL);
+	st->types[5]  = eevo_type(st, EEVO_STR,   "Str",   NULL);
+	st->types[6]  = eevo_type(st, EEVO_SYM,   "Sym",   NULL);
+	st->types[7]  = eevo_type(st, EEVO_PRIM,  "Prim",  NULL);
+	st->types[8]  = eevo_type(st, EEVO_FORM,  "Form",  NULL);
+	st->types[9]  = eevo_type(st, EEVO_FUNC,  "Func",  NULL);
+	st->types[10] = eevo_type(st, EEVO_MACRO, "Macro", NULL);
+	st->types[11] = eevo_type(st, EEVO_PAIR,  "Pair",  NULL);
+	/* Eevo lst = eevo_sym(st, "lst"); */
+	/* Eevo List = eevo_func(EEVO_FUNC, "List", lst, eevo_list(st, 1, lst), st->env); */
+	/* st->types[11] = eevo_type(st, EEVO_PAIR | EEVO_NONE,  "List",  List); */
+	st->types[12] = eevo_type(st, EEVO_REC,   "Rec",   eevo_prim(EEVO_FORM, eevo_rec,    "Rec"));
+	st->types[13] = eevo_type(st, EEVO_TYPE,  "Type",  eevo_prim(EEVO_PRIM, eevo_typeof, "Type"));
 	for (int i = 0; i < LEN(st->types); i++)
-		tisp_env_add(st, st->types[i]->v.t.name, st->types[i]);
+		eevo_env_add(st, st->types[i]->v.t.name, st->types[i]);
 		/* TODO define type predicate functions here (nil?, string?, etc) */
 
 	st->libh = NULL;
 	st->libhc = 0;
 
-	/* tisp_env_lib(st, tibs); */
+	/* eevo_env_lib(st, libs); */
 
 	return st;
 }
 
 /* load lib from string into environment */
-Val
-tisp_env_lib(Tsp st, char* lib)
+Eevo
+eevo_env_lib(EevoSt st, char* lib)
 {
-	Val parsed, expr, ret;
+	Eevo parsed, expr, ret;
 	char *file = st->file;
 	size_t filec = st->filec;
 	st->file = lib;
 	st->filec = 0;
 	skip_ws(st, 1);
-	parsed = mk_pair(mk_sym(st, "do"), st->nil);
-	for (Val pos = parsed; tsp_fget(st) && (expr = tisp_read_line(st, 0)); pos = cdr(pos))
-		cdr(pos) = mk_pair(expr, st->nil);
-	ret = tisp_eval_body(st, st->env, cdr(parsed));
+	parsed = eevo_pair(eevo_sym(st, "do"), st->nil);
+	for (Eevo pos = parsed; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = cdr(pos))
+		cdr(pos) = eevo_pair(expr, st->nil);
+	ret = eevo_eval_body(st, st->env, cdr(parsed));
 	st->file = file;
 	st->filec = filec;
 	return ret;

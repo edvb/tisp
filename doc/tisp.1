@@ -1,19 +1,19 @@
-.TH TISP 1 "June 2025" "tisp 0.1"
+.TH TISP 1 "July 2025" "tisp 0.1"
 .PP
 .SH NAME
-tisp \- tiny lisp
+eevo \- easy expression value organizer
 .PP
 .SH SYNOPSIS
-tisp [-rhv] [-e EXPRESSION] [FILE ...] [-]
+eevo [-rhv] [-e EXPRESSION] [FILE ...] [-]
 .PP
 .SH DESCRIPTION
 .PP
-Tisp programming language default interpreter.  Read and evaluate all files in order given, if file name is '-' read from 'stdin'. If no files are supplied launch the read-evaluate-print-loop (REPL) for interactive running of commands.
+The default interpreter for the eevo programming language. Read and evaluate all files in order given, if file name is '-' read from 'stdin'. If no files are supplied launch the read-evaluate-print-loop (REPL) for interactive running of commands.
 .PP
 .SH OPTIONS
 .TP
 \fB-e EXPRESSION\fP
-Read \fIEXPRESSION\fP as a line of Tisp code, evaluate, and print result
+Read \fIEXPRESSION\fP as a line of eevo code, evaluate, and print result
 .PP
 .TP
 \fB-r\fP
@@ -34,7 +34,7 @@ Run the program from the command line to type a single command and press enter t
 .RS 4
 .EX
 
-$ tisp
+$ eevo
 > (cons 1 2)
 '(1 . 2)
 > (list 1 (+ 1 1) 3 (* 2 2))
@@ -49,42 +49,42 @@ Alternatively you can pass a file name which will be opened and run, outputting 
 .EX
 
 $ echo '((Func (x) (+ x 1)) 10)' > inc.tsp
-$ tisp inc.tsp
+$ eevo inc.tsp
 11
 
 .EE
 .RE
 .PP
-Commands can also be piped directing into Tisp through the command line.
+Commands can also be piped directing into eevo through the command line.
 .PP
 .RS 4
 .EX
 
-$ echo '(= "foo" "foo")' | tisp
+$ echo '(= "foo" "foo")' | eevo
 True
 
 .EE
 .RE
 .PP
-Or given directly to Tisp as an argument:
+Or given directly to eevo as an argument:
 .PP
 .RS 4
 .EX
 
-$ tisp -e "(reverse '(1/2 1/4 1/8 1/16))"
+$ eevo -e "(reverse '(1/2 1/4 1/8 1/16))"
 (1/16 1/8 1/4 1/2)
 
 .EE
 .RE
 .SH SEE ALSO
 .PP
-tisp(7)
+eevo(7)
 .PP
 .PP
-See project at <https://edryd.org/projects/tisp>
+See project at <https://edryd.org/projects/eevo>
 .PP
 .PP
-View source code at <https://git.edryd.org/tisp>
+View source code at <https://git.edryd.org/eevo>
 .PP
 .SH AUTHOR
 .PP

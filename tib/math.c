@@ -22,59 +22,59 @@
 #include <math.h>
 
 #define EVAL_CHECK(A, V, NAME, TYPE) do {  \
-	if (!(A = tisp_eval(st, vars, V))) \
+	if (!(A = eevo_eval(st, vars, V))) \
 		return NULL;               \
-	tsp_arg_type(A, NAME, TYPE);       \
+	eevo_arg_type(A, NAME, TYPE);       \
 } while(0)
 
-/* wrapper functions to be returned by mk_num, all need same arguments */
-static Val
+/* wrapper functions to be returned by eevo_num, all need same arguments */
+static Eevo
 create_int(double num, double den)
 {
 	assert(den == 1);
-	return mk_int(num);
+	return eevo_int(num);
 }
 
-static Val
+static Eevo
 create_dec(double num, double den)
 {
 	assert(den == 1);
-	return mk_dec(num);
+	return eevo_dec(num);
 }
 
-static Val
+static Eevo
 create_rat(double num, double den)
 {
-	return mk_rat(num, den);
+	return eevo_rat(num, den);
 }
 
 /* return pointer to one of the preceding functions depending on what
  * number should be created by the following arithmetic functions
  * force arg is used to force number to one type:
  *   0 -> no force, 1 -> force ratio/int, 2 -> force decimal */
-static Val
-(*mk_num(TspType a, TspType b, int force))(double, double)
+static Eevo
+(*eevo_num(EevoType a, EevoType b, int force))(double, double)
 {
 	if (force == 1)
 		return &create_rat;
 	if (force == 2)
 		return &create_dec;
-	if (a & TSP_DEC || b & TSP_DEC)
+	if (a & EEVO_DEC || b & EEVO_DEC)
 		return &create_dec;
-	if (a & TSP_RATIO || b & TSP_RATIO)
+	if (a & EEVO_RATIO || b & EEVO_RATIO)
 		return &create_rat;
 	return &create_int;
 }
 
 #define PRIM_ROUND(NAME, FORCE)                                      \
-static Val                                                           \
-prim_##NAME(Tsp st, Rec vars, Val args)                              \
+static Eevo                                                           \
+prim_##NAME(EevoSt st, EevoRec vars, Eevo args)                              \
 {                                                                    \
-	Val n;                                                       \
-	tsp_arg_num(args, #NAME, 1);                                 \
+	Eevo n;                                                       \
+	eevo_arg_num(args, #NAME, 1);                                 \
 	n = car(args);                                               \
-	tsp_arg_type(n, #NAME, TSP_NUM);                             \
-	return (mk_num(n->t, n->t, FORCE))(NAME(num(n)/den(n)), 1.); \
+	eevo_arg_type(n, #NAME, EEVO_NUM);                             \
+	return (eevo_num(n->t, n->t, FORCE))(NAME(num(n)/den(n)), 1.); \
 }
 
 /* define int and dec as identity functions to use them in the same macro */
@@ -88,118 +88,118 @@ PRIM_ROUND(round, 0)
 PRIM_ROUND(floor, 0)
 PRIM_ROUND(ceil,  0)
 
-static Val
-prim_add(Tsp st, Rec vars, Val args)
+static Eevo
+prim_add(EevoSt st, EevoRec vars, Eevo args)
 {
-	Val a, b;
-	tsp_arg_num(args, "+", 2);
+	Eevo a, b;
+	eevo_arg_num(args, "+", 2);
 	a = car(args), b = cadr(args);
-	tsp_arg_type(a, "+", TSP_NUM);
-	tsp_arg_type(b, "+", TSP_NUM);
-	if (a->t & TSP_DEC || b->t & TSP_DEC)
-		return mk_dec((num(a)/den(a)) + (num(b)/den(b)));
-	return (mk_num(a->t, b->t, 0))
+	eevo_arg_type(a, "+", EEVO_NUM);
+	eevo_arg_type(b, "+", EEVO_NUM);
+	if (a->t & EEVO_DEC || b->t & EEVO_DEC)
+		return eevo_dec((num(a)/den(a)) + (num(b)/den(b)));
+	return (eevo_num(a->t, b->t, 0))
 		(num(a) * den(b) + den(a) * num(b),
 		 den(a) * den(b));
 }
 
-static Val
-prim_sub(Tsp st, Rec vars, Val args)
+static Eevo
+prim_sub(EevoSt st, EevoRec vars, Eevo args)
 {
-	Val a, b;
-	int len = tsp_lstlen(args);
+	Eevo a, b;
+	int len = eevo_lstlen(args);
 	if (len != 2 && len != 1)
-		tsp_warnf("-: expected 1 or 2 arguments, recieved %d", len);
+		eevo_warnf("-: expected 1 or 2 arguments, recieved %d", len);
 	a = car(args);
-	tsp_arg_type(a, "-", TSP_NUM);
+	eevo_arg_type(a, "-", EEVO_NUM);
 	if (len == 1) {
 		b = a;
-		a = mk_int(0);
+		a = eevo_int(0);
 	} else {
 		b = cadr(args);
-		tsp_arg_type(b, "-", TSP_NUM);
+		eevo_arg_type(b, "-", EEVO_NUM);
 	}
-	if (a->t & TSP_DEC || b->t & TSP_DEC)
-		return mk_dec((num(a)/den(a)) - (num(b)/den(b)));
-	return (mk_num(a->t, b->t, 0))
+	if (a->t & EEVO_DEC || b->t & EEVO_DEC)
+		return eevo_dec((num(a)/den(a)) - (num(b)/den(b)));
+	return (eevo_num(a->t, b->t, 0))
 		(num(a) * den(b) - den(a) * num(b),
 		 den(a) * den(b));
 }
 
-static Val
-prim_mul(Tsp st, Rec vars, Val args)
+static Eevo
+prim_mul(EevoSt st, EevoRec vars, Eevo args)
 {
-	Val a, b;
-	tsp_arg_num(args, "*", 2);
+	Eevo a, b;
+	eevo_arg_num(args, "*", 2);
 	a = car(args), b = cadr(args);
-	tsp_arg_type(a, "*", TSP_NUM);
-	tsp_arg_type(b, "*", TSP_NUM);
-	if (a->t & TSP_DEC || b->t & TSP_DEC)
-		return mk_dec((num(a)/den(a)) * (num(b)/den(b)));
-	return (mk_num(a->t, b->t, 0))(num(a) * num(b), den(a) * den(b));
+	eevo_arg_type(a, "*", EEVO_NUM);
+	eevo_arg_type(b, "*", EEVO_NUM);
+	if (a->t & EEVO_DEC || b->t & EEVO_DEC)
+		return eevo_dec((num(a)/den(a)) * (num(b)/den(b)));
+	return (eevo_num(a->t, b->t, 0))(num(a) * num(b), den(a) * den(b));
 
 }
 
-static Val
-prim_div(Tsp st, Rec vars, Val args)
+static Eevo
+prim_div(EevoSt st, EevoRec vars, Eevo args)
 {
-	Val a, b;
-	int len = tsp_lstlen(args);
+	Eevo a, b;
+	int len = eevo_lstlen(args);
 	if (len != 2 && len != 1)
-		tsp_warnf("/: expected 1 or 2 arguments, recieved %d", len);
+		eevo_warnf("/: expected 1 or 2 arguments, recieved %d", len);
 	a = car(args);
-	tsp_arg_type(a, "/", TSP_NUM);
+	eevo_arg_type(a, "/", EEVO_NUM);
 	if (len == 1) {
 		b = a;
-		a = mk_int(1);
+		a = eevo_int(1);
 	} else {
 		b = cadr(args);
-		tsp_arg_type(b, "/", TSP_NUM);
+		eevo_arg_type(b, "/", EEVO_NUM);
 	}
-	if (a->t & TSP_DEC || b->t & TSP_DEC)
-		return mk_dec((num(a)/den(a)) / (num(b)/den(b)));
-	return (mk_num(a->t, b->t, 1))(num(a) * den(b), den(a) * num(b));
+	if (a->t & EEVO_DEC || b->t & EEVO_DEC)
+		return eevo_dec((num(a)/den(a)) / (num(b)/den(b)));
+	return (eevo_num(a->t, b->t, 1))(num(a) * den(b), den(a) * num(b));
 }
 
-static Val
-prim_mod(Tsp st, Rec vars, Val args)
+static Eevo
+prim_mod(EevoSt st, EevoRec vars, Eevo args)
 {
-	Val a, b;
-	tsp_arg_num(args, "mod", 2);
+	Eevo a, b;
+	eevo_arg_num(args, "mod", 2);
 	a = car(args), b = cadr(args);
-	tsp_arg_type(a, "mod", TSP_INT);
-	tsp_arg_type(b, "mod", TSP_INT);
+	eevo_arg_type(a, "mod", EEVO_INT);
+	eevo_arg_type(b, "mod", EEVO_INT);
 	if (num(b) == 0)
-		tsp_warn("division by zero");
-	return mk_int((int)num(a) % abs((int)num(b)));
+		eevo_warn("division by zero");
+	return eevo_int((int)num(a) % abs((int)num(b)));
 }
 
 /* TODO if given function as 2nd arg run it on first arg */
-static Val
-prim_pow(Tsp st, Rec vars, Val args)
+static Eevo
+prim_pow(EevoSt st, EevoRec vars, Eevo args)
 {
-	Val b, p;
+	Eevo b, p;
 	double bnum, bden;
-	tsp_arg_num(args, "pow", 2);
+	eevo_arg_num(args, "pow", 2);
 	b = car(args), p = cadr(args);
-	tsp_arg_type(b, "pow", TSP_EXPR);
-	tsp_arg_type(p, "pow", TSP_EXPR);
+	eevo_arg_type(b, "pow", EEVO_EXPR);
+	eevo_arg_type(p, "pow", EEVO_EXPR);
 	bnum = pow(num(b), num(p)/den(p));
 	bden = pow(den(b), num(p)/den(p));
 	if ((bnum == (int)bnum && bden == (int)bden) ||
-	     b->t & TSP_DEC || p->t & TSP_DEC)
-		return mk_num(b->t, p->t, 0)(bnum, bden);
-	return mk_list(st, 3, mk_sym(st, "^"), b, p);
+	     b->t & EEVO_DEC || p->t & EEVO_DEC)
+		return eevo_num(b->t, p->t, 0)(bnum, bden);
+	return eevo_list(st, 3, eevo_sym(st, "^"), b, p);
 }
 
 #define PRIM_COMPARE(NAME, OP)                          \
-static Val                                              \
-prim_##NAME(Tsp st, Rec vars, Val args)                 \
+static Eevo                                              \
+prim_##NAME(EevoSt st, EevoRec vars, Eevo args)                 \
 {                                                       \
-	if (tsp_lstlen(args) != 2)                      \
+	if (eevo_lstlen(args) != 2)                      \
 		return st->t;                           \
-	tsp_arg_type(car(args), #OP, TSP_NUM);          \
-	tsp_arg_type(car(cdr(args)), #OP, TSP_NUM);     \
+	eevo_arg_type(car(args), #OP, EEVO_NUM);          \
+	eevo_arg_type(car(cdr(args)), #OP, EEVO_NUM);     \
 	return ((num(car(args))*den(car(cdr(args)))) OP \
 		(num(car(cdr(args)))*den(car(args)))) ? \
 		st->t : st->nil;                        \
@@ -211,14 +211,14 @@ PRIM_COMPARE(lte, <=)
 PRIM_COMPARE(gte, >=)
 
 #define PRIM_TRIG(NAME)                                      \
-static Val                                                   \
-prim_##NAME(Tsp st, Rec vars, Val args)                      \
+static Eevo                                                   \
+prim_##NAME(EevoSt st, EevoRec vars, Eevo args)                      \
 {                                                            \
-	tsp_arg_num(args, #NAME, 1);                         \
-	tsp_arg_type(car(args), #NAME, TSP_EXPR);            \
-	if (car(args)->t & TSP_DEC)                          \
-		return mk_dec(NAME(num(car(args))));         \
-	return mk_list(st, 2, mk_sym(st, #NAME), car(args)); \
+	eevo_arg_num(args, #NAME, 1);                         \
+	eevo_arg_type(car(args), #NAME, EEVO_EXPR);            \
+	if (car(args)->t & EEVO_DEC)                          \
+		return eevo_dec(NAME(num(car(args))));         \
+	return eevo_list(st, 2, eevo_sym(st, #NAME), car(args)); \
 }
 
 PRIM_TRIG(sin)
@@ -236,57 +236,57 @@ PRIM_TRIG(atanh)
 PRIM_TRIG(exp)
 PRIM_TRIG(log)
 
-static Val
-prim_numerator(Tsp st, Rec env, Val args)
+static Eevo
+prim_numerator(EevoSt st, EevoRec env, Eevo args)
 {
-	tsp_arg_num(args, "numerator", 1);
-	tsp_arg_type(car(args), "numerator", TSP_INT | TSP_RATIO);
-	return mk_int(car(args)->v.n.num);
+	eevo_arg_num(args, "numerator", 1);
+	eevo_arg_type(car(args), "numerator", EEVO_INT | EEVO_RATIO);
+	return eevo_int(car(args)->v.n.num);
 }
 
-static Val
-prim_denominator(Tsp st, Rec env, Val args)
+static Eevo
+prim_denominator(EevoSt st, EevoRec env, Eevo args)
 {
-	tsp_arg_num(args, "denominator", 1);
-	tsp_arg_type(car(args), "denominator", TSP_INT | TSP_RATIO);
-	return mk_int(car(args)->v.n.den);
+	eevo_arg_num(args, "denominator", 1);
+	eevo_arg_type(car(args), "denominator", EEVO_INT | EEVO_RATIO);
+	return eevo_int(car(args)->v.n.den);
 }
 
 void
-tib_env_math(Tsp st)
+eevo_env_math(EevoSt st)
 {
-	st->types[2]->v.t.func = mk_prim(TSP_PRIM, prim_Int, "Int");
-	st->types[3]->v.t.func = mk_prim(TSP_PRIM, prim_Dec, "Dec");
-	tsp_env_prim(floor);
-	tsp_env_prim(ceil);
-	tsp_env_prim(round);
-	tsp_env_prim(numerator);
-	tsp_env_prim(denominator);
+	st->types[2]->v.t.func = eevo_prim(EEVO_PRIM, prim_Int, "Int");
+	st->types[3]->v.t.func = eevo_prim(EEVO_PRIM, prim_Dec, "Dec");
+	eevo_env_prim(floor);
+	eevo_env_prim(ceil);
+	eevo_env_prim(round);
+	eevo_env_prim(numerator);
+	eevo_env_prim(denominator);
 
-	tsp_env_name_prim(+, add);
-	tsp_env_name_prim(-, sub);
-	tsp_env_name_prim(*, mul);
-	tsp_env_name_prim(/, div);
-	tsp_env_prim(mod);
-	tsp_env_name_prim(^, pow);
+	eevo_env_name_prim(+, add);
+	eevo_env_name_prim(-, sub);
+	eevo_env_name_prim(*, mul);
+	eevo_env_name_prim(/, div);
+	eevo_env_prim(mod);
+	eevo_env_name_prim(^, pow);
 
-	tsp_env_name_prim(<,  lt);
-	tsp_env_name_prim(>,  gt);
-	tsp_env_name_prim(<=, lte);
-	tsp_env_name_prim(>=, gte);
+	eevo_env_name_prim(<,  lt);
+	eevo_env_name_prim(>,  gt);
+	eevo_env_name_prim(<=, lte);
+	eevo_env_name_prim(>=, gte);
 
-	tsp_env_prim(sin);
-	tsp_env_prim(cos);
-	tsp_env_prim(tan);
-	tsp_env_prim(sinh);
-	tsp_env_prim(cosh);
-	tsp_env_prim(tanh);
-	tsp_env_name_prim(arcsin,  asin);
-	tsp_env_name_prim(arccos,  acos);
-	tsp_env_name_prim(arctan,  atan);
-	tsp_env_name_prim(arcsinh, asinh);
-	tsp_env_name_prim(arccosh, acosh);
-	tsp_env_name_prim(arctanh, atanh);
-	tsp_env_prim(exp);
-	tsp_env_prim(log);
+	eevo_env_prim(sin);
+	eevo_env_prim(cos);
+	eevo_env_prim(tan);
+	eevo_env_prim(sinh);
+	eevo_env_prim(cosh);
+	eevo_env_prim(tanh);
+	eevo_env_name_prim(arcsin,  asin);
+	eevo_env_name_prim(arccos,  acos);
+	eevo_env_name_prim(arctan,  atan);
+	eevo_env_name_prim(arcsinh, asinh);
+	eevo_env_name_prim(arccosh, acosh);
+	eevo_env_name_prim(arctanh, atanh);
+	eevo_env_prim(exp);
+	eevo_env_prim(log);
 }

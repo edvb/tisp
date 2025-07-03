@@ -1,6 +1,6 @@
-# tisp \- tiny lisp
+# eevo \- easy expression value organizer
 
-Tisp is a strong dynamically typed language (with a powerful first-class static
+eevo is a strong dynamically typed language (with a powerful first-class static
 type system in the works) inspired mostly by Scheme, with ideas from Lua,
 Python, Haskell, Julia, and Elm as well.
 
@@ -8,28 +8,28 @@ Python, Haskell, Julia, and Elm as well.
 
 ### Expressions
 
-Expressions are the building blocks of Tisp scripts, everything in Tisp is an
+Expressions are the building blocks of eevo scripts, everything in eevo is an
 expression. They come in many different kinds, shown in the types section
 below.
 
 ### Comments
 
-Comments are explanatory notes that are ignored by Tisp.
+Comments are explanatory notes that are ignored by eevo.
 They help document how the code works and, more importantly, why it is done that way.
 Comments start with a semicolon (`;`) and continue until the end of the line.
 
-**Example:** `println "Hello World" ; ingnored by tisp until end of line`.
+**Example:** `println "Hello World" ; ingnored by eevo until end of line`.
 
 * Double semicolon `;;` denotes documentation comments.
 * Triple semicolon `;;;` marks section headers.
 
-*Note*: While many scripting languages use `#`, Tisp adopts semicolons
-for easier keyboard access, encouraging frequent use.
+*Note*: While many scripting languages use `#`, eevo adopts semicolons
+for more convenient keyboard access, encouraging frequent use.
 
 ## Types
 
-Types are the nouns of Tisp, they describe the different kinds of expressions
-that Tisp can represent and transform.
+Types are the nouns of eevo, they describe the different kinds of expressions
+that eevo can represent and transform.
 
 ### Numbers
 
@@ -170,7 +170,7 @@ returning `55`.
 
 #### Primitives
 
-Functions written in an external language other than tisp, such as the ones
+Functions written in an external language other than eevo, such as the ones
 built-in to the language written in C.
 They behave like normal functions but are opaque, their implementation cannot
 be inspected within the language.
@@ -186,7 +186,7 @@ code as output.
 Unlike functions they receive their arguments unevaluated, and return code that
 gets evaluated in the context the macro is called in.
 
-This enables tisp to extend its own syntax, eliminate repetition, construct
+This enables eevo to extend its own syntax, eliminate repetition, construct
 custom languages for specific tasks, or directly transform source code.
 
 **Examples:** `if`, `and`, `or`, `let`
@@ -201,7 +201,7 @@ inspected.
 
 ## Procedures
 
-Procedures are the verbs of tisp, they describe how expressions change.
+Procedures are the verbs of eevo, they describe how expressions change.
 Procedures can be either functions, macros, primitives, or forms.
 
 *Convention*: Procedures which return a boolean type should end with `?` (**eg**
@@ -330,7 +330,7 @@ x       ; = 54 (not 64 or 12)
 
 ### Less Parenthesis
 
-In tisp parenthesis are implied around every new line, and a line indented more
+In eevo parenthesis are implied around every new line, and a line indented more
 than the previous one is a sub-expression of it. A line with only one
 expression stays that expression, not a list of length one. For example:
 
@@ -352,10 +352,10 @@ Becomes:
 
 ### Simpler
 
-Tisp only has one builtin equality primitive, `=`, which tests numbers, text,
+eevo only has one builtin equality primitive, `=`, which tests numbers, text,
 lists, and objects which occupy the same space in memory, such as primitives.
 
-Tisp is single value named, so procedures share the same namespace as
+eevo is single value named, so procedures share the same namespace as
 variables. This way functions are full first class citizens. It removes the
 need for common lisp's `defunc` vs `defvar`, `let` vs `flet`, and redundant
 syntax for getting the function from a symbol.
@@ -365,20 +365,20 @@ interface with modern languages.
 
 ### Read-Print Symmetry
 
-By default Tisp's output is valid Tisp code, fully equivalent to the evaluated
+By default eevo's output is valid eevo code, fully equivalent to the evaluated
 input.
 Lists and symbols are quoted (`(list 1 2 3) => '(1 2 3)`), errors are comments.
 The only exception is anonymous functions/macros which will be supported soon.
-To print value as valid Tisp code use `display` and `displayln`, to get a plain
-output use `print` and `println`.
+To print a value as valid eevo code use `display` and `displayln`, to get a
+plain output use `print` and `println`.
 
 ## See Also
 
-tisp(1)
+eevo(1)
 
-See project at <https://edryd.org/projects/tisp>
+See project at <https://edryd.org/projects/eevo>
 
-View source code at <https://git.edryd.org/tisp>
+View source code at <https://git.edryd.org/eevo>
 
 ## Author
 

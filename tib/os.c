@@ -25,69 +25,69 @@
 /* TODO sys ls, mv, cp, rm, mkdir */
 
 /* change to new directory */
-static Val
-prim_cd(Tsp st, Rec env, Val args)
+static Eevo
+prim_cd(EevoSt st, EevoRec env, Eevo args)
 {
-	Val dir;
-	tsp_arg_num(args, "cd!", 1);
+	Eevo dir;
+	eevo_arg_num(args, "cd!", 1);
 	dir = car(args);
-	if (!(dir->t & (TSP_STR|TSP_SYM)))
-		tsp_warnf("cd!: expected string or symbol, received %s", tsp_type_str(dir->t));
+	if (!(dir->t & (EEVO_STR|EEVO_SYM)))
+		eevo_warnf("cd!: expected string or symbol, received %s", eevo_type_str(dir->t));
 	if (chdir(dir->v.s))
 		return perror("; error: cd"), NULL;
 	return st->none;
 }
 
 /* return string of current working directory */
-static Val
-prim_pwd(Tsp st, Rec env, Val args)
+static Eevo
+prim_pwd(EevoSt st, EevoRec env, Eevo args)
 {
-	tsp_arg_num(args, "pwd", 0);
+	eevo_arg_num(args, "pwd", 0);
 	char cwd[PATH_MAX];
 	if (!getcwd(cwd, sizeof(cwd)) && cwd[0] != '(')
-		tsp_warn("pwd: could not get current directory");
-	return mk_str(st, cwd);
+		eevo_warn("pwd: could not get current directory");
+	return eevo_str(st, cwd);
 }
 
 /* exit program with return value of given int */
-static Val
-prim_exit(Tsp st, Rec env, Val args)
+static Eevo
+prim_exit(EevoSt st, EevoRec env, Eevo args)
 {
-	tsp_arg_num(args, "exit!", 1);
-	tsp_arg_type(car(args), "exit!", TSP_INT);
+	eevo_arg_num(args, "exit!", 1);
+	eevo_arg_type(car(args), "exit!", EEVO_INT);
 	exit((int)car(args)->v.n.num);
 }
 
 /* TODO time formating */
 /* return number of seconds since 1970 (unix time stamp) */
-static Val
-prim_now(Tsp st, Rec env, Val args)
+static Eevo
+prim_now(EevoSt st, EevoRec env, Eevo args)
 {
-	tsp_arg_num(args, "now", 0);
-	return mk_int(time(NULL));
+	eevo_arg_num(args, "now", 0);
+	return eevo_int(time(NULL));
 }
 
 /* TODO time-avg: run timeit N times and take average */
 /* return time in miliseconds taken to run command given */
-static Val
-form_time(Tsp st, Rec env, Val args)
+static Eevo
+form_time(EevoSt st, EevoRec env, Eevo args)
 {
-	Val v;
+	Eevo v;
 	clock_t t;
-	tsp_arg_num(args, "time", 1);
+	eevo_arg_num(args, "time", 1);
 	t = clock();
-	if (!(v = tisp_eval(st, env, car(args))))
+	if (!(v = eevo_eval(st, env, car(args))))
 		return NULL;
 	t = clock() - t;
-	return mk_dec(((double)t)/CLOCKS_PER_SEC*100);
+	return eevo_dec(((double)t)/CLOCKS_PER_SEC*100);
 }
 
 void
-tib_env_os(Tsp st)
+eevo_env_os(EevoSt st)
 {
-	tsp_env_name_prim(cd!, cd);
-	tsp_env_prim(pwd);
-	tsp_env_name_prim(exit!, exit);
-	tsp_env_prim(now);
-	tsp_env_form(time);
+	eevo_env_name_prim(cd!, cd);
+	eevo_env_prim(pwd);
+	eevo_env_name_prim(exit!, exit);
+	eevo_env_prim(now);
+	eevo_env_form(time);
 }

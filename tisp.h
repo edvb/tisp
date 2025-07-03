@@ -18,167 +18,166 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-#ifndef TISP_H
-#define TISP_H
+#ifndef EEVO_H
+#define EEVO_H
 
 #include <stdlib.h>
 #include <stdio.h>
 
-#define TSP_REC_FACTOR 2
+#define EEVO_REC_FACTOR 2
 
-#define TSP_OP_CHARS "_+-*/\\|=^<>.:"
-#define TSP_SYM_CHARS "_!?" "@#$%&~" "*-"
+#define EEVO_OP_CHARS "_+-*/\\|=^<>.:"
+#define EEVO_SYM_CHARS "_!?" "@#$%&~" "*-"
 
-#define tsp_warnf(M, ...) do {                                    \
-	fprintf(stderr, "; tisp: error: " M "\n", ##__VA_ARGS__); \
+#define eevo_warnf(M, ...) do {                                    \
+	fprintf(stderr, "; eevo: error: " M "\n", ##__VA_ARGS__); \
 	return NULL;                                              \
 } while(0)
-#define tsp_warn(M) do {                           \
-	fprintf(stderr, "; tisp: error: " M "\n"); \
+#define eevo_warn(M) do {                           \
+	fprintf(stderr, "; eevo: error: " M "\n"); \
 	return NULL;                               \
 } while(0)
 
 /* TODO test general condition */
-#define tsp_arg_min(ARGS, NAME, NARGS) do {                                      \
-	if (tsp_lstlen(ARGS) < NARGS)                                            \
-		tsp_warnf("%s: expected at least %d argument%s, received %d",    \
-		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS)); \
+#define eevo_arg_min(ARGS, NAME, NARGS) do {                                      \
+	if (eevo_lstlen(ARGS) < NARGS)                                            \
+		eevo_warnf("%s: expected at least %d argument%s, received %d",    \
+		           NAME, NARGS, NARGS > 1 ? "s" : "", eevo_lstlen(ARGS)); \
 } while(0)
-#define tsp_arg_max(ARGS, NAME, NARGS) do {                                          \
-	if (tsp_lstlen(ARGS) > NARGS)                                                \
-		tsp_warnf("%s: expected at no more than %d argument%s, received %d", \
-		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS));     \
+#define eevo_arg_max(ARGS, NAME, NARGS) do {                                          \
+	if (eevo_lstlen(ARGS) > NARGS)                                                \
+		eevo_warnf("%s: expected at no more than %d argument%s, received %d", \
+		           NAME, NARGS, NARGS > 1 ? "s" : "", eevo_lstlen(ARGS));     \
 } while(0)
-#define tsp_arg_num(ARGS, NAME, NARGS) do {                                      \
-	if (NARGS > -1 && tsp_lstlen(ARGS) != NARGS)                             \
-		tsp_warnf("%s: expected %d argument%s, received %d",             \
-		           NAME, NARGS, NARGS > 1 ? "s" : "", tsp_lstlen(ARGS)); \
+#define eevo_arg_num(ARGS, NAME, NARGS) do {                                      \
+	if (NARGS > -1 && eevo_lstlen(ARGS) != NARGS)                             \
+		eevo_warnf("%s: expected %d argument%s, received %d",             \
+		           NAME, NARGS, NARGS > 1 ? "s" : "", eevo_lstlen(ARGS)); \
 } while(0)
-#define tsp_arg_type(ARG, NAME, TYPE) do {                                     \
+#define eevo_arg_type(ARG, NAME, TYPE) do {                                     \
 	if (!(ARG->t & (TYPE)))                                                \
-		tsp_warnf(NAME ": expected %s, received %s",                   \
-		                tsp_type_str(TYPE), tsp_type_str(ARG->t));     \
+		eevo_warnf(NAME ": expected %s, received %s",                   \
+		                eevo_type_str(TYPE), eevo_type_str(ARG->t));     \
 } while(0)
 
-#define tsp_env_name_prim(NAME, FN) tisp_env_add(st, #NAME, mk_prim(TSP_PRIM, prim_##FN, #NAME))
-#define tsp_env_prim(NAME)          tsp_env_name_prim(NAME, NAME)
-#define tsp_env_name_form(NAME, FN) tisp_env_add(st, #NAME, mk_prim(TSP_FORM, form_##FN, #NAME))
-#define tsp_env_form(NAME)          tsp_env_name_form(NAME, NAME)
+#define eevo_env_name_prim(NAME, FN) eevo_env_add(st, #NAME, eevo_prim(EEVO_PRIM, prim_##FN, #NAME))
+#define eevo_env_prim(NAME)          eevo_env_name_prim(NAME, NAME)
+#define eevo_env_name_form(NAME, FN) eevo_env_add(st, #NAME, eevo_prim(EEVO_FORM, form_##FN, #NAME))
+#define eevo_env_form(NAME)          eevo_env_name_form(NAME, NAME)
 
-#define tsp_fgetat(ST, O) ST->file[ST->filec+O]
-#define tsp_fget(ST) tsp_fgetat(ST,0)
-#define tsp_finc(ST) ST->filec++
-#define tsp_fincn(ST, N) ST->filec += N
+#define eevo_fgetat(ST, O) ST->file[ST->filec+O]
+#define eevo_fget(ST) eevo_fgetat(ST,0)
+#define eevo_finc(ST) ST->filec++
+#define eevo_fincn(ST, N) ST->filec += N
 
-struct Val_;
-typedef struct Val_ *Val;
-typedef struct Tsp_ *Tsp;
+struct Eevo_;
+typedef struct Eevo_ *Eevo;
+typedef struct EevoSt_ *EevoSt;
 
-typedef struct Entry_ *Entry;
+typedef struct EevoEntry_ *EevoEntry;
 
-typedef struct Rec_ {
+typedef struct EevoRec_ {
 	int size, cap;
-	struct Entry_ {
+	struct EevoEntry_ {
 		char *key;
-		Val val;
+		Eevo val;
 	} *items;
-	struct Rec_ *next;
-} *Rec;
+	struct EevoRec_ *next;
+} *EevoRec;
 
-/* possible tisp object types */
+/* possible eevo value types */
 typedef enum {
-	TSP_NONE  = 1 << 0,  /* void */
-	TSP_NIL   = 1 << 1,  /* nil: false, empty list */
-	TSP_INT   = 1 << 2,  /* integer: whole number */
-	TSP_DEC   = 1 << 3,  /* decimal: floating point number */
-	TSP_RATIO = 1 << 4,  /* ratio: numerator/denominator */
-	TSP_STR   = 1 << 5,  /* string: immutable characters */
-	TSP_SYM   = 1 << 6,  /* symbol: variable names */
-	TSP_PRIM  = 1 << 7,  /* primitive: built-in function */
-	TSP_FORM  = 1 << 8,  /* special form: built-in macro */
-	TSP_FUNC  = 1 << 9,  /* function: procedure written is tisp */
-	TSP_MACRO = 1 << 10, /* macro: function without evaluated arguments */
-	TSP_PAIR  = 1 << 11, /* pair: building block for lists */
-	TSP_REC   = 1 << 12, /* record: hash table */
-	TSP_TYPE  = 1 << 13, /* record: hash table */
-	TSP_RATIONAL = TSP_INT | TSP_RATIO,
-	TSP_NUM      = TSP_RATIONAL | TSP_DEC,
+	EEVO_NONE  = 1 << 0,  /* void */
+	EEVO_NIL   = 1 << 1,  /* nil: false, empty list */
+	EEVO_INT   = 1 << 2,  /* integer: whole number */
+	EEVO_DEC   = 1 << 3,  /* decimal: floating point number */
+	EEVO_RATIO = 1 << 4,  /* ratio: numerator/denominator */
+	EEVO_STR   = 1 << 5,  /* string: immutable characters */
+	EEVO_SYM   = 1 << 6,  /* symbol: variable names */
+	EEVO_PRIM  = 1 << 7,  /* primitive: built-in function */
+	EEVO_FORM  = 1 << 8,  /* special form: built-in macro */
+	EEVO_FUNC  = 1 << 9,  /* function: procedure written is eevo */
+	EEVO_MACRO = 1 << 10, /* macro: function without evaluated arguments */
+	EEVO_PAIR  = 1 << 11, /* pair: building block for lists */
+	EEVO_REC   = 1 << 12, /* record: hash table */
+	EEVO_TYPE  = 1 << 13, /* type: kind of eevo value */
+	EEVO_RATIONAL = EEVO_INT | EEVO_RATIO,
+	EEVO_NUM      = EEVO_RATIONAL | EEVO_DEC,
 	/* TODO rename to expr type to math ? */
-	TSP_EXPR     = TSP_NUM | TSP_SYM | TSP_PAIR,
-	TSP_TEXT     = TSP_STR | TSP_SYM,
-	TSP_PROC     = TSP_FUNC | TSP_PRIM | TSP_MACRO | TSP_FORM,
-	TSP_LIT      = TSP_NONE | TSP_NIL | TSP_NUM | TSP_STR | TSP_PROC,
-	TSP_LIST     = TSP_PAIR | TSP_NIL,
-	TSP_CALLABLE = TSP_PROC | TSP_REC | TSP_TYPE, // | TSP_PAIR
-	TSP_FUNCTOR  = TSP_PAIR | TSP_REC | TSP_TYPE,
-} TspType;
+	EEVO_EXPR     = EEVO_NUM | EEVO_SYM | EEVO_PAIR,
+	EEVO_TEXT     = EEVO_STR | EEVO_SYM,
+	EEVO_PROC     = EEVO_FUNC | EEVO_PRIM | EEVO_MACRO | EEVO_FORM,
+	EEVO_LIT      = EEVO_NONE | EEVO_NIL | EEVO_NUM | EEVO_STR | EEVO_PROC,
+	EEVO_LIST     = EEVO_PAIR | EEVO_NIL,
+	EEVO_CALLABLE = EEVO_PROC | EEVO_REC | EEVO_TYPE, // | EEVO_PAIR
+	EEVO_FUNCTOR  = EEVO_PAIR | EEVO_REC | EEVO_TYPE,
+} EevoType;
 
-typedef struct TspTypeVal {
-	TspType t;
+typedef struct EevoTypeVal_ {
+	EevoType t;
 	char *name;
-	Val func;
-	/* Val cond; /1* refinement condition *1/ */
-} TspTypeVal;
+	Eevo func;
+	/* Eevo cond; /1* refinement condition *1/ */
+} EevoTypeVal;
 
-/* bultin function written in C, not tisp */
-typedef Val (*Prim)(Tsp, Rec, Val);
+/* bultin function written in C, not eevo */
+typedef Eevo (*EevoPrim)(EevoSt, EevoRec, Eevo);
 
-/* tisp object */
-struct Val_ {
-	TspType t; /* NONE, NIL */
+/* eevo object */
+struct Eevo_ {
+	EevoType t; /* NONE, NIL */
 	union {
-		char *s;                                           /* STRING, SYMBOL */
-		struct { double num, den; } n;                     /* NUMBER */
-		struct { char *name; Prim pr; } pr;                /* PRIMITIVE, FORM */
-		struct { char *name; Val args, body; Rec env; } f; /* FUNCTION, MACRO */
-		struct { Val car, cdr; } p;                        /* PAIR */
-		Rec r;                                             /* REC */
-		TspTypeVal t;                                      /* TYPE */
+		char *s;                                                /* STRING, SYMBOL */
+		struct { double num, den; } n;                          /* NUMBER */
+		struct { char *name; EevoPrim pr; } pr;                 /* PRIMITIVE, FORM */
+		struct { char *name; Eevo args, body; EevoRec env; } f; /* FUNCTION, MACRO */
+		struct { Eevo car, cdr; } p;                            /* PAIR */
+		EevoRec r;                                              /* REC */
+		EevoTypeVal t;                                          /* TYPE */
 	} v;
 };
 
-/* tisp state and global environment */
-struct Tsp_ {
+/* eevo state and global environment */
+struct EevoSt_ {
 	char *file;
 	size_t filec;
-	Val none, nil, t;
-	Val types[14];
-	Rec env, strs, syms;
+	Eevo none, nil, t;
+	Eevo types[14];
+	EevoRec env, strs, syms;
 	void **libh;
 	size_t libhc;
 };
 
-char *tsp_type_str(TspType t);
-int tsp_lstlen(Val v);
+char *eevo_type_str(EevoType t);
+int eevo_lstlen(Eevo v);
 
-Val mk_int(int i);
-Val mk_dec(double d);
-Val mk_rat(int num, int den);
-Val mk_str(Tsp st, char *s);
-Val mk_sym(Tsp st, char *s);
-Val mk_prim(TspType t, Prim prim, char *name);
-Val mk_func(TspType t, char *name, Val args, Val body, Rec env);
-Val mk_rec(Tsp st, Rec env, Val assoc);
-Val mk_pair(Val a, Val b);
-Val mk_list(Tsp st, int n, ...);
+Eevo eevo_int(int i);
+Eevo eevo_dec(double d);
+Eevo eevo_rat(int num, int den);
+Eevo eevo_str(EevoSt st, char *s);
+Eevo eevo_sym(EevoSt st, char *s);
+Eevo eevo_prim(EevoType t, EevoPrim prim, char *name);
+Eevo eevo_func(EevoType t, char *name, Eevo args, Eevo body, EevoRec env);
+Eevo eevo_rec(EevoSt st, EevoRec prev, Eevo records);
+Eevo eevo_pair(Eevo a, Eevo b);
+Eevo eevo_list(EevoSt st, int n, ...);
 
-Val read_pair(Tsp st, char endchar);
-Val tisp_read_sexpr(Tsp st);
-Val tisp_read(Tsp st);
-Val tisp_read_sugar(Tsp st, Val v);
-Val tisp_read_line(Tsp st, int level);
-Val tisp_eval_list(Tsp st, Rec env, Val v);
-Val tisp_eval_body(Tsp st, Rec env, Val v);
-Val tisp_eval(Tsp st, Rec env, Val v);
-char *tisp_print(Val v);
+Eevo eevo_read_sexpr(EevoSt st);
+Eevo eevo_read(EevoSt st);
+Eevo eevo_read_sugar(EevoSt st, Eevo v);
+Eevo eevo_read_line(EevoSt st, int level);
+Eevo eevo_eval_list(EevoSt st, EevoRec env, Eevo v);
+Eevo eevo_eval_body(EevoSt st, EevoRec env, Eevo v);
+Eevo eevo_eval(EevoSt st, EevoRec env, Eevo v);
+char *eevo_print(Eevo v);
 
-void tisp_env_add(Tsp st, char *key, Val v);
-Tsp  tisp_env_init(size_t cap);
-Val  tisp_env_lib(Tsp st, char* lib);
+void   eevo_env_add(EevoSt st, char *key, Eevo v);
+EevoSt eevo_env_init(size_t cap);
+Eevo   eevo_env_lib(EevoSt st, char* lib);
 
-void tib_env_core(Tsp);
-void tib_env_string(Tsp);
-void tib_env_math(Tsp);
-void tib_env_io(Tsp);
-void tib_env_os(Tsp);
-#endif // TISP_H
+void eevo_env_core(EevoSt);
+void eevo_env_string(EevoSt);
+void eevo_env_math(EevoSt);
+void eevo_env_io(EevoSt);
+void eevo_env_os(EevoSt);
+#endif // EEVO_H

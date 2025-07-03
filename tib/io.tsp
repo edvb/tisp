@@ -9,7 +9,7 @@ def docstr-reg (append docstr-reg
       "Return string read from file, or stdin if no file is provided")
     (parse
       "parse(string)"
-      "Parse Tisp object from given string")
+      "Parse eevo value from given string")
     (load
       "load(lib)"
       "Loads the library given as a string")))

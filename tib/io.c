@@ -55,7 +55,7 @@ read_file(char *fname)
 	if (!fname) /* read from stdin if no file given */
 		fd = 0;
 	else if ((fd = open(fname, O_RDONLY)) < 0)
-		tsp_warnf("could not find file '%s'", fname);
+		eevo_warnf("could not find file '%s'", fname);
 	while ((n = read(fd, buf, sizeof(buf))) > 0) {
 		file = realloc(file, len + n + 1);
 		if (!file) perror("; realloc"), exit(1);
@@ -68,35 +68,35 @@ read_file(char *fname)
 	if (fd) /* close file if not stdin */
 		close(fd);
 	if (n < 0)
-		tsp_warnf("could not read file '%s'", fname);
+		eevo_warnf("could not read file '%s'", fname);
 	return file;
 }
 
 /* write all arguemnts to given file, or stdout/stderr, without newline */
 /* first argument is file name, second is option to append file */
-static Val
-prim_write(Tsp st, Rec env, Val args)
+static Eevo
+prim_write(EevoSt st, EevoRec env, Eevo args)
 {
 	FILE *f;
 	const char *mode = "w";
-	tsp_arg_min(args, "write", 2);
+	eevo_arg_min(args, "write", 2);
 
 	/* if second argument is true, append file don't write over */
 	if (!nilp(cadr(args)))
 		mode = "a";
 	/* first argument can either be the symbol stdout or stderr, or the file as a string */
-	if (car(args)->t == TSP_SYM)
+	if (car(args)->t == EEVO_SYM)
 		f = !strncmp(car(args)->v.s, "stdout", 7) ? stdout : stderr;
-	else if (car(args)->t != TSP_STR)
-		tsp_warnf("write: expected file name as string, received %s",
-		           tsp_type_str(car(args)->t));
+	else if (car(args)->t != EEVO_STR)
+		eevo_warnf("write: expected file name as string, received %s",
+		           eevo_type_str(car(args)->t));
 	else if (!(f = fopen(car(args)->v.s, mode)))
-		tsp_warnf("write: could not load file '%s'", car(args)->v.s);
+		eevo_warnf("write: could not load file '%s'", car(args)->v.s);
 	if (f == stderr && strncmp(car(args)->v.s, "stderr", 7)) /* validate stderr symbol */
-		tsp_warn("write: expected file name as string, or symbol stdout/stderr");
+		eevo_warn("write: expected file name as string, or symbol stdout/stderr");
 
 	for (args = cddr(args); !nilp(args); args = cdr(args)) {
-		char *out = tisp_print(car(args));
+		char *out = eevo_print(car(args));
 		fputs(out, f);
 		free(out);
 	}
@@ -109,72 +109,72 @@ prim_write(Tsp st, Rec env, Val args)
 }
 
 /* return string of given file or read from stdin */
-static Val
-prim_read(Tsp st, Rec env, Val args)
+static Eevo
+prim_read(EevoSt st, EevoRec env, Eevo args)
 {
 	char *file, *fname = NULL; /* read from stdin by default */
-	tsp_arg_max(args, "read", 1);
-	if (tsp_lstlen(args) == 1) { /* if file name given as string, read it */
-		tsp_arg_type(car(args), "read", TSP_STR);
+	eevo_arg_max(args, "read", 1);
+	if (eevo_lstlen(args) == 1) { /* if file name given as string, read it */
+		eevo_arg_type(car(args), "read", EEVO_STR);
 		fname = car(args)->v.s;
 	}
 	if (!(file = read_file(fname)))
 		return st->nil;
-	return mk_str(st, file);
+	return eevo_str(st, file);
 }
 
-/* parse string as tisp expression, return 'quit if given no arguments */
-static Val
-prim_parse(Tsp st, Rec env, Val args)
+/* parse string as eevo expression, return 'quit if given no arguments */
+static Eevo
+prim_parse(EevoSt st, EevoRec env, Eevo args)
 {
-	Val ret, expr;
+	Eevo ret, expr;
 	char *file = st->file;
 	size_t filec = st->filec;
-	tsp_arg_num(args, "parse", 1);
+	eevo_arg_num(args, "parse", 1);
 	expr = car(args);
 	if (nilp(expr))
-		return mk_sym(st, "quit");
-	tsp_arg_type(expr, "parse", TSP_STR);
+		return eevo_sym(st, "quit");
+	eevo_arg_type(expr, "parse", EEVO_STR);
 	st->file = expr->v.s;
 	st->filec = 0;
-	ret = mk_pair(mk_sym(st, "do"), st->nil);
-	for (Val pos = ret; tsp_fget(st) && (expr = tisp_read_line(st, 0)); pos = cdr(pos))
-		cdr(pos) = mk_pair(expr, st->nil);
+	ret = eevo_pair(eevo_sym(st, "do"), st->nil);
+	for (Eevo pos = ret; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = cdr(pos))
+		cdr(pos) = eevo_pair(expr, st->nil);
 	st->file = file;
 	st->filec = filec;
-	if (cdr(ret)->t == TSP_PAIR && nilp(cddr(ret)))
+	if (cdr(ret)->t == EEVO_PAIR && nilp(cddr(ret)))
 		return cadr(ret); /* if only 1 expression parsed, return just it */
 	return ret;
 }
 
-/* loads tisp file or C dynamic library */
-static Val
-prim_load(Tsp st, Rec env, Val args)
+/* loads eevo file or C dynamic library */
+static Eevo
+prim_load(EevoSt st, EevoRec env, Eevo args)
 {
-	Val tib;
-	void (*tibenv)(Tsp);
+	Eevo tib;
+	void (*tibenv)(EevoSt);
 	char name[PATH_MAX];
 	const char *paths[] = {
-		"/usr/local/lib/tisp/pkgs/", "/usr/lib/tisp/pkgs/", "./", NULL
+		"/usr/local/lib/eevo/pkgs/", "/usr/lib/eevo/pkgs/", "./", NULL
 	};
 
-	tsp_arg_num(args, "load", 1);
+	eevo_arg_num(args, "load", 1);
 	tib = car(args);
-	tsp_arg_type(tib, "load", TSP_STR);
+	eevo_arg_type(tib, "load", EEVO_STR);
 
 	for (int i = 0; paths[i]; i++) {
 		strcpy(name, paths[i]);
 		strcat(name, tib->v.s);
-		strcat(name, ".tsp");
+		strcat(name, ".evo");
 		if (access(name, R_OK) != -1) {
 			char *file = read_file(name);
-			Val body = prim_parse(st, env, mk_pair(mk_sym(st, file), st->nil));
-			tisp_eval_body(st, env, body);
+			Eevo body = prim_parse(st, env, eevo_pair(eevo_sym(st, file), st->nil));
+			eevo_eval_body(st, env, body);
 			return st->none;
 		}
 	}
 
-	/* If not tisp file, try loading shared object library */
+	/* If not eevo file, try loading shared object library */
 	if (!(st->libh = realloc(st->libh, (st->libhc+1)*sizeof(void*))))
 		perror("; realloc"), exit(1);
 
@@ -183,15 +183,15 @@ prim_load(Tsp st, Rec env, Val args)
 	strcat(name, tib->v.s);
 	strcat(name, ".so");
 	if (!(st->libh[st->libhc] = dlopen(name, RTLD_LAZY)))
-		tsp_warnf("load: could not load '%s':\n; %s", tib->v.s, dlerror());
+		eevo_warnf("load: could not load '%s':\n; %s", tib->v.s, dlerror());
 	dlerror();
 
 	memset(name, 0, sizeof(name));
-	strcpy(name, "tib_env_");
+	strcpy(name, "eevo_env_");
 	strcat(name, tib->v.s);
 	tibenv = dlsym(st->libh[st->libhc], name);
 	if (dlerror())
-		tsp_warnf("load: could not run '%s':\n; %s", tib->v.s, dlerror());
+		eevo_warnf("load: could not run '%s':\n; %s", tib->v.s, dlerror());
 	(*tibenv)(st);
 
 	st->libhc++;
@@ -199,10 +199,10 @@ prim_load(Tsp st, Rec env, Val args)
 }
 
 void
-tib_env_io(Tsp st)
+eevo_env_io(EevoSt st)
 {
-	tsp_env_prim(write);
-	tsp_env_prim(read);
-	tsp_env_prim(parse);
-	tsp_env_prim(load);
+	eevo_env_prim(write);
+	eevo_env_prim(read);
+	eevo_env_prim(parse);
+	eevo_env_prim(load);
 }

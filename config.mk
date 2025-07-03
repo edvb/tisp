@@ -18,9 +18,5 @@ LDFLAGS = -O3 -Wl,-rpath=$(DESTDIR)$(PREFIX)/lib/tisp $(LIBS)
 # turn off debug mode by default
 DEBUG ?= 0
 
-# do not load tibs statically, use load procedure instead
-# TODO include -ldl when on, enable (load) of shared libs
-# CFLAGS += -DTIB_DYNAMIC
-
 # compiler and linker
 CC ?= cc
