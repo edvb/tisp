@@ -5,9 +5,9 @@
 \#*\#
 
 # compiled files
-tisp
+eevo
 test/test
-tibs.tsp.h
+core.evo.h
 *.exe
 *.out
 *.app

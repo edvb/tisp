@@ -7,8 +7,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "../tisp.h"
-#include "../tibs.tsp.h"
+#include "../eevo.h"
+#include "../core.evo.h"
 
 #include "tests.h"
 
@@ -49,7 +49,7 @@ main(void)
 	eevo_env_core(st);
 	eevo_env_math(st);
 	eevo_env_string(st);
-	eevo_env_lib(st, tibs);
+	eevo_env_lib(st, eevo_core);
 
 	t = clock();
 	for (int i = 0; ; i++) {

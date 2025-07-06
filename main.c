@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tisp.h"
+#include "eevo.h"
 #ifndef EEVO_NOCORE
-#  include "tibs.tsp.h"
+#  include "core.evo.h"
 #endif
 
 /* read, parse, and eval file given as single element list, or empty list for stdin */
@@ -33,7 +33,7 @@ main(int argc, char *argv[])
 	eevo_env_io(st);
 	eevo_env_os(st);
 	eevo_env_string(st);
-	eevo_env_lib(st, tibs);
+	eevo_env_lib(st, eevo_core);
 #endif
 
 	if (argc == 1) {

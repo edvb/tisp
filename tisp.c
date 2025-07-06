@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tisp.h"
+#include "eevo.h"
 
 #define car(P)  ((P)->v.p.car)
 #define cdr(P)  ((P)->v.p.cdr)
@@ -1105,8 +1105,8 @@ eevo_env_lib(EevoSt st, char* lib)
 }
 
 
-#include "tib/core.c"
-#include "tib/string.c"
-#include "tib/math.c"
-#include "tib/io.c"
-#include "tib/os.c"
+#include "core/core.c"
+#include "core/string.c"
+#include "core/math.c"
+#include "core/io.c"
+#include "core/os.c"

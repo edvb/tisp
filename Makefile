@@ -1,4 +1,4 @@
-# tisp - tiny lisp
+# eevo - easy expression value organizer
 # See LICENSE file for copyright and license details.
 
 include config.mk
@@ -8,16 +8,14 @@ CFLAGS += -g -Og
 LDFLAGS += -g -Og
 endif
 
-EXE = tisp
+EXE = eevo
 SRC = tisp.c main.c
-TIB = tib/core.c tib/string.c tib/math.c tib/io.c tib/os.c
 OBJ = $(SRC:.c=.o)
-LIB = $(TIB:.c=.so)
-TSP = tib/core.tsp tib/list.tsp tib/doc.tsp tib/io.tsp tib/math.tsp tib/os.tsp
-DOC = doc/tisp.1.md doc/tisp.7.md
+LIB = $(CORE:.c=.so)
+DOC = doc/eevo.1.md doc/eevo.7.md
 MAN = $(DOC:.md=)
 
-MANOPTS = -nCD -t TISP -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`"
+MANOPTS = -nCD -t EEVO -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`"
 VERSIONSHORT=$(shell cut -d '.' -f 1,2 <<< $(VERSION))
 
 all: options $(EXE)
@@ -27,9 +25,9 @@ options:
 	@echo "CFLAGS  = $(CFLAGS)"
 	@echo "LDFLAGS = $(LDFLAGS)"
 
-tibs.tsp.h: $(TSP)
+core.evo.h: $(EVO)
 	@echo xxd $@
-	@echo "char tibs[] = { " > $@
+	@echo "char eevo_core[] = { " > $@
 	@cat $^ | xxd -i - >> $@
 	@echo ", 0x00};" >> $@
 
@@ -41,11 +39,11 @@ tibs.tsp.h: $(TSP)
 	@echo $(CC) $<
 	@$(CC) -c -o $@ $< $(CFLAGS)
 
-$(OBJ): $(TIB) tisp.h config.mk
+$(OBJ): $(CORE) eevo.h config.mk
 
-main.o: tibs.tsp.h
+main.o: core.evo.h
 
-$(LIB): $(TIB)
+$(LIB): $(CORE)
 	@echo $(CC) -o $@
 	@$(CC) -shared -o $@ $(OBJ)
 
@@ -55,7 +53,7 @@ $(EXE): $(OBJ) $(LIB)
 
 clean:
 	@echo cleaning
-	@rm -f $(OBJ) $(LIB) $(EXE) test/test test/test.o tibs.tsp.h
+	@rm -f $(OBJ) $(LIB) $(EXE) test/test test/test.o core.evo.h
 
 man: $(MAN)
 
@@ -67,15 +65,15 @@ man: $(MAN)
 	@echo updating man page $@
 	@markman $(MANOPTS) -7 $< > $@
 
-dist: tibs.tsp.h
+dist: core.evo.h
 	@echo creating dist tarball
-	@mkdir -p tisp-$(VERSION)
-	@cp tisp.h tibs.tsp.h tisp-$(VERSION)
-	@sed '/^#include "tib/d' tisp.c > tisp-$(VERSION)/tisp.c
-	@cat $(TIB) >> tisp-$(VERSION)/tisp.c
-	@tar -cf tisp-$(VERSION).tar tisp-$(VERSION)
-	@gzip tisp-$(VERSION).tar
-	@rm -rf tisp-$(VERSION)
+	@mkdir -p eevo-$(VERSION)
+	@cp eevo.h core.evo.h eevo-$(VERSION)
+	@sed '/^#include "core/d' tisp.c > eevo-$(VERSION)/eevo.c
+	@cat $(CORE) >> eevo-$(VERSION)/eevo.c
+	@tar -cf eevo-$(VERSION).tar eevo-$(VERSION)
+	@gzip eevo-$(VERSION).tar
+	@rm -rf eevo-$(VERSION)
 
 install: all
 	@echo installing $(DESTDIR)$(PREFIX)/bin/$(EXE)$(VERSIONSHORT)
@@ -95,9 +93,9 @@ install: all
 	@cp -f doc/$(EXE).7 $(DESTDIR)$(MANPREFIX)/man7/
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man7/$(EXE).7
-	@echo installing tibs to $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
-	@mkdir -p $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
-	@cp -f $(TSP) $(LIB) $(DESTDIR)$(PREFIX)/lib/tisp/pkgs/std
+	@echo installing core to $(DESTDIR)$(PREFIX)/lib/eevo/pkgs/core
+	@mkdir -p $(DESTDIR)$(PREFIX)/lib/eevo/pkgs/core
+	@cp -f $(EVO) $(LIB) $(DESTDIR)$(PREFIX)/lib/eevo/pkgs/core
 
 uninstall:
 	@echo removing $(EXE) from $(DESTDIR)$(PREFIX)/bin
@@ -106,10 +104,10 @@ uninstall:
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man7
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).7
-	@echo removing shared libraries from $(DESTDIR)$(PREFIX)/lib/tisp
-	@rm -rf $(DESTDIR)$(PREFIX)/lib/tisp/
-	@echo removing tisp libraries from $(DESTDIR)$(PREFIX)/share/tisp
-	@rm -rf $(DESTDIR)$(PREFIX)/share/tisp/
+	@echo removing shared libraries from $(DESTDIR)$(PREFIX)/lib/eevo
+	@rm -rf $(DESTDIR)$(PREFIX)/lib/eevo/
+	@echo removing eevo libraries from $(DESTDIR)$(PREFIX)/share/eevo
+	@rm -rf $(DESTDIR)$(PREFIX)/share/eevo/
 
 test: $(OBJ) $(LIB) test/tests.h test/test.o
 	@echo running tests
