@@ -9,7 +9,7 @@ LDFLAGS += -g -Og
 endif
 
 EXE = eevo
-SRC = tisp.c main.c
+SRC = eevo.c main.c
 OBJ = $(SRC:.c=.o)
 LIB = $(CORE:.c=.so)
 DOC = doc/eevo.1.md doc/eevo.7.md
@@ -69,7 +69,7 @@ dist: core.evo.h
 	@echo creating dist tarball
 	@mkdir -p eevo-$(VERSION)
 	@cp eevo.h core.evo.h eevo-$(VERSION)
-	@sed '/^#include "core/d' tisp.c > eevo-$(VERSION)/eevo.c
+	@sed '/^#include "core/d' eevo.c > eevo-$(VERSION)/eevo.c
 	@cat $(CORE) >> eevo-$(VERSION)/eevo.c
 	@tar -cf eevo-$(VERSION).tar eevo-$(VERSION)
 	@gzip eevo-$(VERSION).tar
@@ -82,9 +82,9 @@ install: all
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(EXE)$(VERSIONSHORT)
 	@echo installing $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@ln -sf $(EXE)$(VERSIONSHORT) $(DESTDIR)$(PREFIX)/bin/$(EXE)
-	@echo installing $(DESTDIR)$(PREFIX)/bin/tsp
-	@sed -e "s@\./@@g" < tsp > $(DESTDIR)$(PREFIX)/bin/tsp
-	@chmod 755 $(DESTDIR)$(PREFIX)/bin/tsp
+	@echo installing $(DESTDIR)$(PREFIX)/bin/evo
+	@sed -e "s@\./@@g" < evo > $(DESTDIR)$(PREFIX)/bin/evo
+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/evo
 	@echo installing $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@echo installing $(DESTDIR)$(MANPREFIX)/man7/$(EXE).7
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man7
@@ -112,7 +112,7 @@ uninstall:
 test: $(OBJ) $(LIB) test/tests.h test/test.o
 	@echo running tests
 	@echo $(CC) -o test/test
-	@$(CC) -o test/test tisp.o test/test.o $(LDFLAGS)
+	@$(CC) -o test/test eevo.o test/test.o $(LDFLAGS)
 	@./test/test
 
 .PHONY: all options clean man dist install uninstall test

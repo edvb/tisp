@@ -1,4 +1,4 @@
-;;; core.tsp
+;;; core.evo
 def list(... lst) "Create list" lst
 def quit() '~No REPL to quit from~
 

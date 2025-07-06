@@ -41,8 +41,8 @@ Alternatively you can pass a file name which will be opened and run, outputting
 the result before exiting.
 
 ```
-$ echo '((Func (x) (+ x 1)) 10)' > inc.tsp
-$ eevo inc.tsp
+$ echo '((Func (x) (+ x 1)) 10)' > inc.evo
+$ eevo inc.evo
 11
 ```
 
