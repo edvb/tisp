@@ -30,7 +30,7 @@ prim_cd(EevoSt st, EevoRec env, Eevo args)
 {
 	Eevo dir;
 	eevo_arg_num(args, "cd!", 1);
-	dir = car(args);
+	dir = fst(args);
 	if (!(dir->t & (EEVO_STR|EEVO_SYM)))
 		eevo_warnf("cd!: expected string or symbol, received %s", eevo_type_str(dir->t));
 	if (chdir(dir->v.s))
@@ -54,8 +54,8 @@ static Eevo
 prim_exit(EevoSt st, EevoRec env, Eevo args)
 {
 	eevo_arg_num(args, "exit!", 1);
-	eevo_arg_type(car(args), "exit!", EEVO_INT);
-	exit((int)car(args)->v.n.num);
+	eevo_arg_type(fst(args), "exit!", EEVO_INT);
+	exit((int)fst(args)->v.n.num);
 }
 
 /* TODO time formating */
@@ -76,7 +76,7 @@ form_time(EevoSt st, EevoRec env, Eevo args)
 	clock_t t;
 	eevo_arg_num(args, "time", 1);
 	t = clock();
-	if (!(v = eevo_eval(st, env, car(args))))
+	if (!(v = eevo_eval(st, env, fst(args))))
 		return NULL;
 	t = clock() - t;
 	return eevo_dec(((double)t)/CLOCKS_PER_SEC*100);

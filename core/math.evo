@@ -97,8 +97,8 @@ def dot(v w)
   "Dot product of lists v and w
    Sum of the products of elements of both lists"
   if v
-    + (* car(v) car(w))
-      dot cdr(v) cdr(w)
+    + (* fst(v) fst(w))
+      dot rst(v) rst(w)
     0
 def norm(v) ; TODO combine with abs
   "Normalize list"
@@ -110,7 +110,7 @@ def mean(lst)
   > mean [5 6 7 8]     ; 13/2"
   recur loop (lst: lst  len: 0  avg: 0)
     if pair?(lst)
-      loop cdr(lst) inc(len) (+ avg car(lst))
+      loop rst(lst) inc(len) (+ avg fst(lst))
       / avg len
 
 def range(start end)

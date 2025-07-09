@@ -1,14 +1,14 @@
 ; TODO replace w/ rec, append with def docstr-reg docstr-reg{func: "doc string"}
 def docstr-reg
-  '((car
-      "car(lst)"
+  '((fst
+      "fst(lst)"
       "First element of list")
-    (cdr
-      "cdr(lst)"
+    (rst
+      "rst(lst)"
       "Rest of list after first element, or second element of pair")
     (cons
       "cons(a d)"
-      "Create new pair with a car of a and cdr of d")
+      "Create new pair with a fst of a and rst of d")
     (quote
       "quote(expr)"
       "'expr"
@@ -92,10 +92,10 @@ def doc(proc)
   def lookup(proc) ; TODO allow for non proc lookup by make doc macro
     let (docstrs: assoc(procprops(proc)::name docstr-reg))
       if docstrs
-        map println cdr(docstrs)
+        map println rst(docstrs)
         error 'doc procprops(proc)::name ": no documentation found"
   if (or function?(proc) macro?(proc))
-    let (docstr: car(procprops(proc)::body))
+    let (docstr: fst(procprops(proc)::body))
       unless (= procprops(proc)::name 'quit)
         println procprops(proc)::name (or procprops(proc)::args "()")
       if string?(docstr)

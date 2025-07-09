@@ -160,7 +160,7 @@ Functions written in an external language other than eevo, such as the ones buil
 See built-ins section for more examples.
 .PP
 .IP
-\fBExamples:\fP 'car', 'write', '+'
+\fBExamples:\fP 'fst', 'write', '+'
 .PP
 .TP
 \fBMacros\fP
@@ -189,17 +189,17 @@ Procedures are the verbs of eevo, they describe how expressions change. Procedur
 .PP
 The following are core procedures implemented in C and provided by default in the base environment.
 .PP
-.SS car
+.SS fst
 .PP
 Returns first element of given list.
 .PP
-.SS cdr
+.SS rst
 .PP
 Return rest of the given list, either just the second element if it is a pair, or another list with the first element removed.
 .PP
 .SS cons
 .PP
-Creates a new pair with the two given arguments, first one as the car, second as the cdr. Can be chained together to create a list if ending with 'Nil'.
+Creates a new pair with the two given arguments, first one as the fst, second as the rst. Can be chained together to create a list if ending with 'Nil'.
 .PP
 .SS quote
 .PP

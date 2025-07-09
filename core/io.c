@@ -82,21 +82,21 @@ prim_write(EevoSt st, EevoRec env, Eevo args)
 	eevo_arg_min(args, "write", 2);
 
 	/* if second argument is true, append file don't write over */
-	if (!nilp(cadr(args)))
+	if (!nilp(snd(args)))
 		mode = "a";
 	/* first argument can either be the symbol stdout or stderr, or the file as a string */
-	if (car(args)->t == EEVO_SYM)
-		f = !strncmp(car(args)->v.s, "stdout", 7) ? stdout : stderr;
-	else if (car(args)->t != EEVO_STR)
+	if (fst(args)->t == EEVO_SYM)
+		f = !strncmp(fst(args)->v.s, "stdout", 7) ? stdout : stderr;
+	else if (fst(args)->t != EEVO_STR)
 		eevo_warnf("write: expected file name as string, received %s",
-		           eevo_type_str(car(args)->t));
-	else if (!(f = fopen(car(args)->v.s, mode)))
-		eevo_warnf("write: could not load file '%s'", car(args)->v.s);
-	if (f == stderr && strncmp(car(args)->v.s, "stderr", 7)) /* validate stderr symbol */
+		           eevo_type_str(fst(args)->t));
+	else if (!(f = fopen(fst(args)->v.s, mode)))
+		eevo_warnf("write: could not load file '%s'", fst(args)->v.s);
+	if (f == stderr && strncmp(fst(args)->v.s, "stderr", 7)) /* validate stderr symbol */
 		eevo_warn("write: expected file name as string, or symbol stdout/stderr");
 
-	for (args = cddr(args); !nilp(args); args = cdr(args)) {
-		char *out = eevo_print(car(args));
+	for (args = rrst(args); !nilp(args); args = rst(args)) {
+		char *out = eevo_print(fst(args));
 		fputs(out, f);
 		free(out);
 	}
@@ -115,8 +115,8 @@ prim_read(EevoSt st, EevoRec env, Eevo args)
 	char *file, *fname = NULL; /* read from stdin by default */
 	eevo_arg_max(args, "read", 1);
 	if (eevo_lstlen(args) == 1) { /* if file name given as string, read it */
-		eevo_arg_type(car(args), "read", EEVO_STR);
-		fname = car(args)->v.s;
+		eevo_arg_type(fst(args), "read", EEVO_STR);
+		fname = fst(args)->v.s;
 	}
 	if (!(file = read_file(fname)))
 		return st->nil;
@@ -131,19 +131,19 @@ prim_parse(EevoSt st, EevoRec env, Eevo args)
 	char *file = st->file;
 	size_t filec = st->filec;
 	eevo_arg_num(args, "parse", 1);
-	expr = car(args);
+	expr = fst(args);
 	if (nilp(expr))
 		return eevo_sym(st, "quit");
 	eevo_arg_type(expr, "parse", EEVO_STR);
 	st->file = expr->v.s;
 	st->filec = 0;
 	ret = eevo_pair(eevo_sym(st, "do"), st->nil);
-	for (Eevo pos = ret; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = cdr(pos))
-		cdr(pos) = eevo_pair(expr, st->nil);
+	for (Eevo pos = ret; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = rst(pos))
+		rst(pos) = eevo_pair(expr, st->nil);
 	st->file = file;
 	st->filec = filec;
-	if (cdr(ret)->t == EEVO_PAIR && nilp(cddr(ret)))
-		return cadr(ret); /* if only 1 expression parsed, return just it */
+	if (rst(ret)->t == EEVO_PAIR && nilp(rrst(ret)))
+		return snd(ret); /* if only 1 expression parsed, return just it */
 	return ret;
 }
 
@@ -159,7 +159,7 @@ prim_load(EevoSt st, EevoRec env, Eevo args)
 	};
 
 	eevo_arg_num(args, "load", 1);
-	tib = car(args);
+	tib = fst(args);
 	eevo_arg_type(tib, "load", EEVO_STR);
 
 	for (int i = 0; paths[i]; i++) {

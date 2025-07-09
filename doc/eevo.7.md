@@ -177,7 +177,7 @@ be inspected within the language.
 
 See built-ins section for more examples.
 
-**Examples:** `car`, `write`, `+`
+**Examples:** `fst`, `write`, `+`
 
 #### Macros
 
@@ -211,19 +211,19 @@ Procedures can be either functions, macros, primitives, or forms.
 The following are core procedures implemented in C and provided by default in
 the base environment.
 
-### car
+### fst
 
 Returns first element of given list.
 
-### cdr
+### rst
 
 Return rest of the given list, either just the second element if it is a pair,
 or another list with the first element removed.
 
 ### cons
 
-Creates a new pair with the two given arguments, first one as the car, second
-as the cdr. Can be chained together to create a list if ending with `Nil`.
+Creates a new pair with the two given arguments, first one as the fst, second
+as the rst. Can be chained together to create a list if ending with `Nil`.
 
 ### quote
 

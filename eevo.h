@@ -131,7 +131,7 @@ struct Eevo_ {
 		struct { double num, den; } n;                          /* NUMBER */
 		struct { char *name; EevoPrim pr; } pr;                 /* PRIMITIVE, FORM */
 		struct { char *name; Eevo args, body; EevoRec env; } f; /* FUNCTION, MACRO */
-		struct { Eevo car, cdr; } p;                            /* PAIR */
+		struct { Eevo fst, rst; } p;                            /* PAIR */
 		EevoRec r;                                              /* REC */
 		EevoTypeVal t;                                          /* TYPE */
 	} v;

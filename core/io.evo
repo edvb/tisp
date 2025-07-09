@@ -15,8 +15,8 @@ def docstr-reg (append docstr-reg
       "Loads the library given as a string")))
 
 def newline(... file) ; TODO space and tab functions, accept number of instead
-  if (or nil?(file) nil?(cdr(file)))
-    write car((or file '(stdout))) file "\n"
+  if (or nil?(file) nil?(rst(file)))
+    write fst((or file '(stdout))) file "\n"
     error 'newline "only zero or one file can be given"
 
 def display(... vals)
@@ -31,18 +31,18 @@ def display(... vals)
           pair?(it):
             (Str
               "["
-              display(car(it))
+              display(fst(it))
               (or (walk
                     Func((x) (if pair?(x)
-                               Str(" " display(car(x)))
+                               Str(" " display(fst(x)))
                                Str(" ... " display(x))))
-                    cdr(it))
+                    rst(it))
                   "")
               "]")
           record?(it):
             (Str
               "{ "
-              (or (map Func((x) Str(car(x) ": " display(cdr(x)) " ")) records(it))
+              (or (map Func((x) Str(fst(x) ": " display(rst(x)) " ")) records(it))
                   "")
               "}")
          else: (Str it))

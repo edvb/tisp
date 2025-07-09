@@ -27,12 +27,12 @@
 
 #include "eevo.h"
 
-#define car(P)  ((P)->v.p.car)
-#define cdr(P)  ((P)->v.p.cdr)
-#define caar(P) car(car(P))
-#define cadr(P) car(cdr(P))
-#define cdar(P) cdr(car(P))
-#define cddr(P) cdr(cdr(P))
+#define fst(P)  ((P)->v.p.fst)
+#define rst(P)  ((P)->v.p.rst)
+#define snd(P)  fst(rst(P))
+#define ffst(P) fst(fst(P))
+#define rfst(P) rst(fst(P))
+#define rrst(P) rst(rst(P))
 #define nilp(V) ((V)->t == EEVO_NIL)
 #define num(N) ((N)->v.n.num)
 #define den(N) ((N)->v.n.den)
@@ -52,7 +52,7 @@ eevo_typeof(EevoSt st, EevoRec env, Eevo args)
 {
 	eevo_arg_num(args, "Type", 1);
 	int id = 0;
-	for (int i = car(args)->t; i > 1; i = i >> 1)
+	for (int i = fst(args)->t; i > 1; i = i >> 1)
 		id++;
 	return st->types[id];
 }
@@ -140,7 +140,7 @@ int
 eevo_lstlen(Eevo v)
 {
 	int len = 0;
-	for (; v->t == EEVO_PAIR; v = cdr(v))
+	for (; v->t == EEVO_PAIR; v = rst(v))
 		len++;
 	return nilp(v) ? len : -(len + 1);
 }
@@ -157,7 +157,7 @@ vals_eq(Eevo a, Eevo b)
 	if (a->t != b->t)
 		return 0;
 	if (a->t == EEVO_PAIR) /* PAIR */
-		return vals_eq(car(a), car(b)) && vals_eq(cdr(a), cdr(b));
+		return vals_eq(fst(a), fst(b)) && vals_eq(rst(a), rst(b));
 	/* TODO function var names should not matter in comparison */
 	if (a->t & (EEVO_FUNC | EEVO_MACRO)) /* FUNCTION, MACRO */
 		return vals_eq(a->v.f.args, b->v.f.args) &&
@@ -275,10 +275,10 @@ rec_extend(EevoRec next, Eevo args, Eevo vals)
 	int argnum = EEVO_REC_FACTOR * eevo_lstlen(args);
 	/* HACK need extra +1 for when argnum = 0 */
 	EevoRec ret = rec_new(argnum > 0 ? argnum : -argnum + 1, next);
-	for (; !nilp(args); args = cdr(args), vals = cdr(vals)) {
+	for (; !nilp(args); args = rst(args), vals = rst(vals)) {
 		if (args->t == EEVO_PAIR) {
-			arg = car(args);
-			val = car(vals);
+			arg = fst(args);
+			val = fst(vals);
 		} else {
 			arg = args;
 			val = vals;
@@ -411,15 +411,15 @@ eevo_rec(EevoSt st, EevoRec prev, Eevo records)
 	ret->v.r = rec_new(cap > 0 ? cap : -cap + 1, NULL);
 	EevoRec r = rec_new(4, prev);
 	rec_add(r, "this", ret);
-	for (Eevo cur = records; cur->t == EEVO_PAIR; cur = cdr(cur))
-		if (car(cur)->t == EEVO_PAIR && caar(cur)->t & (EEVO_SYM|EEVO_STR)) {
-			if (!(v = eevo_eval(st, r, cdar(cur)->v.p.car)))
+	for (Eevo cur = records; cur->t == EEVO_PAIR; cur = rst(cur))
+		if (fst(cur)->t == EEVO_PAIR && ffst(cur)->t & (EEVO_SYM|EEVO_STR)) {
+			if (!(v = eevo_eval(st, r, fst(rfst(cur)))))
 				return NULL;
-			rec_add(ret->v.r, caar(cur)->v.s, v);
-		} else if (car(cur)->t == EEVO_SYM) {
-			if (!(v = eevo_eval(st, r, car(cur))))
+			rec_add(ret->v.r, ffst(cur)->v.s, v);
+		} else if (fst(cur)->t == EEVO_SYM) {
+			if (!(v = eevo_eval(st, r, fst(cur))))
 				return NULL;
-			rec_add(ret->v.r, car(cur)->v.s, v);
+			rec_add(ret->v.r, fst(cur)->v.s, v);
 		} else eevo_warn("Rec: missing key symbol or string");
 	return ret;
 }
@@ -428,8 +428,8 @@ Eevo
 eevo_pair(Eevo a, Eevo b)
 {
 	Eevo ret = eevo_val(EEVO_PAIR);
-	car(ret) = a;
-	cdr(ret) = b;
+	fst(ret) = a;
+	rst(ret) = b;
 	return ret;
 }
 
@@ -440,8 +440,8 @@ eevo_list(EevoSt st, int n, ...)
 	va_list argp;
 	va_start(argp, n);
 	lst = eevo_pair(va_arg(argp, Eevo), st->nil);
-	for (Eevo cur = lst; n > 1; n--, cur = cdr(cur))
-		cdr(cur) = eevo_pair(va_arg(argp, Eevo), st->nil);
+	for (Eevo cur = lst; n > 1; n--, cur = rst(cur))
+		rst(cur) = eevo_pair(va_arg(argp, Eevo), st->nil);
 	va_end(argp);
 	return lst;
 }
@@ -603,18 +603,18 @@ read_pair(EevoSt st, char endchar)
 		/* eevo_warnf("reached end before closing '%c'", endchar); */
 	/* TODO replace w/ strchr to also check for NULL and allow }} */
 	/* !strchr(endchars, eevo_fget(st)) */
-	for (Eevo pos = ret; eevo_fget(st) && eevo_fget(st) != endchar; pos = cdr(pos)) {
+	for (Eevo pos = ret; eevo_fget(st) && eevo_fget(st) != endchar; pos = rst(pos)) {
 		if (!(v = eevo_read(st)))
 			return NULL;
-		/* pair cdr, end with non-nil (improper list) */
+		/* pair rest, end with non-nil (improper list) */
 		if (v->t == EEVO_SYM && !strncmp(v->v.s, "...", 4)) {
 			skip_ws(st, skipnl);
 			if (!(v = eevo_read(st)))
 				return NULL;
-			cdr(pos) = v;
+			rst(pos) = v;
 			break;
 		}
-		cdr(pos) = eevo_pair(v, st->nil);
+		rst(pos) = eevo_pair(v, st->nil);
 		/* if (v->t == EEVO_SYM && is_op(v->v.s[0])) { */
 		/* 	is_infix = 1; */
 		/* 	skip_ws(st, 1); */
@@ -627,8 +627,8 @@ read_pair(EevoSt st, char endchar)
 		/* eevo_warnf("found more than one element before closing '%c'", endchar); */
 	eevo_finc(st);
 	/* if (is_infix) */
-	/* 	return car(ret) = eevo_sym(st, "infix"), ret; */
-	return cdr(ret);
+	/* 	return fst(ret) = eevo_sym(st, "infix"), ret; */
+	return rst(ret);
 }
 
 /* reads given string returning its eevo value */
@@ -737,7 +737,7 @@ eevo_read_sugar(EevoSt st, Eevo v)
 			eevo_warn("invalid UFCS");
 		if (w->t != EEVO_PAIR)
 			w = eevo_pair(w, st->nil);
-		return eevo_pair(car(w), eevo_pair(v, cdr(w)));
+		return eevo_pair(fst(w), eevo_pair(v, rst(w)));
 	}
 	/* return eevo_pair(v, eevo_read(st)); */
 	return v;
@@ -755,8 +755,8 @@ eevo_read_line(EevoSt st, int level)
 		return NULL;
 	if (ret->t != EEVO_PAIR) /* force to be pair */
 		ret = eevo_pair(ret, st->nil);
-	for (pos = ret; cdr(pos)->t == EEVO_PAIR; pos = cdr(pos)) ; /* get last pair */
-	for (; eevo_fget(st); pos = cdr(pos)) { /* read indented lines as sub-expressions */
+	for (pos = ret; rst(pos)->t == EEVO_PAIR; pos = rst(pos)) ; /* get last pair */
+	for (; eevo_fget(st); pos = rst(pos)) { /* read indented lines as sub-expressions */
 		Eevo v;
 		int newlevel = strspn(st->file+st->filec, "\t ");
 		if (newlevel <= level)
@@ -766,9 +766,9 @@ eevo_read_line(EevoSt st, int level)
 		if (!(v = eevo_read_line(st, newlevel)))
 			return NULL;
 		if (!nilp(v))
-			cdr(pos) = eevo_pair(v, cdr(pos));
+			rst(pos) = eevo_pair(v, rst(pos));
 	}
-	return nilp(cdr(ret)) ? car(ret) : ret; /* if only 1 element in list, return just it */
+	return nilp(rst(ret)) ? fst(ret) : ret; /* if only 1 element in list, return just it */
 }
 
 /* eval */
@@ -779,41 +779,41 @@ Eevo
 eevo_eval_list(EevoSt st, EevoRec env, Eevo v)
 {
 	Eevo ret = eevo_pair(NULL, st->nil), ev;
-	for (Eevo cur = ret; !nilp(v); v = cdr(v), cur = cdr(cur)) {
+	for (Eevo cur = ret; !nilp(v); v = rst(v), cur = rst(cur)) {
 		if (v->t != EEVO_PAIR) { /* last element in improper list */
 			if (!(ev = eevo_eval(st, env, v)))
 				return NULL;
-			cdr(cur) = ev;
-			return cdr(ret);
+			rst(cur) = ev;
+			return rst(ret);
 		}
-		if (!(ev = eevo_eval(st, env, car(v))))
+		if (!(ev = eevo_eval(st, env, fst(v))))
 			return NULL;
-		cdr(cur) = eevo_pair(ev, st->nil);
+		rst(cur) = eevo_pair(ev, st->nil);
 	}
-	return cdr(ret);
+	return rst(ret);
 }
 
 /* evaluate all elements of list returning last */
 Eevo
-eevo_eval_body(EevoSt st, EevoRec env, Eevo v)
+eevo_eval_body(EevoSt st, EevoRec env, Eevo body)
 {
 	Eevo ret = st->none;
-	for (; v->t == EEVO_PAIR; v = cdr(v))
-		if (nilp(cdr(v)) && car(v)->t == EEVO_PAIR) { /* func call is last, do tail call */
+	for (; body->t == EEVO_PAIR; body = rst(body))
+		if (nilp(rst(body)) && fst(body)->t == EEVO_PAIR) { /* func call is last, do tail call */
 			Eevo f, args;
-			if (!(f = eevo_eval(st, env, caar(v))))
+			if (!(f = eevo_eval(st, env, ffst(body))))
 				return NULL;
 			if (f->t != EEVO_FUNC)
-				return eval_proc(st, env, f, cdar(v));
-			eevo_arg_num(cdar(v), f->v.f.name ? f->v.f.name : "anon",
+				return eval_proc(st, env, f, rfst(body));
+			eevo_arg_num(rfst(body), f->v.f.name ? f->v.f.name : "anon",
 			            eevo_lstlen(f->v.f.args));
-			if (!(args = eevo_eval_list(st, env, cdar(v))))
+			if (!(args = eevo_eval_list(st, env, rfst(body))))
 				return NULL;
 			if (!(env = rec_extend(f->v.f.env, f->v.f.args, args)))
 				return NULL;
 			/* continue loop from body of func call */
-			v = eevo_pair(NULL, f->v.f.body);
-		} else if (!(ret = eevo_eval(st, env, car(v))))
+			body = eevo_pair(NULL, f->v.f.body);
+		} else if (!(ret = eevo_eval(st, env, fst(body))))
 			return NULL;
 	return ret;
 }
@@ -825,8 +825,8 @@ prepend_bt(EevoSt st, EevoRec env, Eevo f)
 		return;
 	for (; env->next; env = env->next) ; /* bt var located at base env */
 	EevoEntry e = entry_get(env, "bt");
-	if (e->val->t == EEVO_PAIR && car(e->val)->t == EEVO_SYM &&
-	    !strncmp(f->v.f.name, car(e->val)->v.s, strlen(car(e->val)->v.s)))
+	if (e->val->t == EEVO_PAIR && fst(e->val)->t == EEVO_SYM &&
+	    !strncmp(f->v.f.name, fst(e->val)->v.s, strlen(fst(e->val)->v.s)))
 		return; /* don't record same function on recursion */
 	e->val = eevo_pair(eevo_sym(st, f->v.f.name), e->val);
 }
@@ -862,10 +862,10 @@ eval_proc(EevoSt st, EevoRec env, Eevo f, Eevo args)
 		if (!(args = eevo_eval_list(st, env, args)))
 			return NULL;
 		eevo_arg_num(args, "record", 1);
-		eevo_arg_type(car(args), "record", EEVO_SYM);
-		if (!(ret = rec_get(f->v.r, car(args)->v.s)) &&
+		eevo_arg_type(fst(args), "record", EEVO_SYM);
+		if (!(ret = rec_get(f->v.r, fst(args)->v.s)) &&
 		    !(ret = rec_get(f->v.r, "else")))
-			eevo_warnf("could not find element '%s' in record", car(args)->v.s);
+			eevo_warnf("could not find element '%s' in record", fst(args)->v.s);
 		return ret;
 	case EEVO_TYPE:
 		if (f->v.t.func)
@@ -889,9 +889,9 @@ eevo_eval(EevoSt st, EevoRec env, Eevo v)
 			eevo_warnf("could not find symbol '%s'", v->v.s);
 		return f;
 	case EEVO_PAIR:
-		if (!(f = eevo_eval(st, env, car(v))))
+		if (!(f = eevo_eval(st, env, fst(v))))
 			return NULL;
-		return eval_proc(st, env, f, cdr(v));
+		return eval_proc(st, env, f, rst(v));
 	default:
 		return v;
 	}
@@ -1003,8 +1003,8 @@ eevo_print(Eevo v)
 		ret = print_rec(v->v.r);
 		break;
 	case EEVO_PAIR:
-		head = eevo_print(car(v));
-		tail = nilp(cdr(v)) ? "" : eevo_print(cdr(v));
+		head = eevo_print(fst(v));
+		tail = nilp(rst(v)) ? "" : eevo_print(rst(v));
 		len = strlen(head) + strlen(tail) + 1;
 		if (!(ret = str_grow(ret, len, &size)))
 			return NULL;
@@ -1096,9 +1096,9 @@ eevo_env_lib(EevoSt st, char* lib)
 	st->filec = 0;
 	skip_ws(st, 1);
 	parsed = eevo_pair(eevo_sym(st, "do"), st->nil);
-	for (Eevo pos = parsed; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = cdr(pos))
-		cdr(pos) = eevo_pair(expr, st->nil);
-	ret = eevo_eval_body(st, st->env, cdr(parsed));
+	for (Eevo pos = parsed; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = rst(pos))
+		rst(pos) = eevo_pair(expr, st->nil);
+	ret = eevo_eval_body(st, st->env, rst(parsed));
 	st->file = file;
 	st->filec = filec;
 	return ret;

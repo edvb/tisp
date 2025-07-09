@@ -47,8 +47,8 @@ static Eevo
 prim_strlen(EevoSt st, EevoRec env, Eevo args)
 {
 	eevo_arg_min(args, "strlen", 1);
-	eevo_arg_type(car(args), "strlen", EEVO_STR | EEVO_SYM);
-	return eevo_int(strlen(car(args)->v.s));
+	eevo_arg_type(fst(args), "strlen", EEVO_STR | EEVO_SYM);
+	return eevo_int(strlen(fst(args)->v.s));
 }
 
 /* perform interpolation on explicit string, evaluating anything inside curly braces */
@@ -60,9 +60,9 @@ form_strfmt(EevoSt st, EevoRec env, Eevo args)
 	int ret_len, ret_cap, pos = 0;
 	Eevo v;
 	eevo_arg_num(args, "strfmt", 1);
-	eevo_arg_type(car(args), "strfmt", EEVO_STR);
+	eevo_arg_type(fst(args), "strfmt", EEVO_STR);
 
-	str = car(args)->v.s;
+	str = fst(args)->v.s;
 	ret_len = strlen(str), ret_cap = 2*ret_len;
 	if (!(ret = malloc(sizeof(char) * ret_cap)))
 		perror("; malloc"), exit(1);

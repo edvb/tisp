@@ -9,42 +9,25 @@ def defmacro
   Also see: def"
     cond
       (pair? args)
-        list 'def (car args) (list 'Macro (cdr args) ... body)
+        list 'def (fst args) (list 'Macro (rst args) ... body)
       else
         error 'defmacro "expected macro name and argument List, recieved "
               typeof args
 
 ;;; CXR
 
-; TODO def car cdr with get syntax ?
-def caar(x) car(car(x))
-def cadr(x) car(cdr(x))
-def cdar(x) cdr(car(x))
-def cddr(x) cdr(cdr(x))
-def caaar(x) car(car(car(x)))
-def caadr(x) car(car(cdr(x)))
-def cadar(x) car(cdr(car(x)))
-def caddr(x) car(cdr(cdr(x)))
-def cdaar(x) cdr(car(car(x)))
-def cdadr(x) cdr(car(cdr(x)))
-def cddar(x) cdr(cdr(car(x)))
-def cdddr(x) cdr(cdr(cdr(x)))
-def caaaar(x) car(car(car(car(x))))
-def caaadr(x) car(car(car(cdr(x))))
-def caadar(x) car(car(cdr(car(x))))
-def caaddr(x) car(car(cdr(cdr(x))))
-def cadaar(x) car(cdr(car(car(x))))
-def cadadr(x) car(cdr(car(cdr(x))))
-def caddar(x) car(cdr(cdr(car(x))))
-def cadddr(x) car(cdr(cdr(cdr(x))))
-def cdaaar(x) cdr(car(car(car(x))))
-def cdaadr(x) cdr(car(car(cdr(x))))
-def cdadar(x) cdr(car(cdr(car(x))))
-def cdaddr(x) cdr(car(cdr(cdr(x))))
-def cddaar(x) cdr(cdr(car(car(x))))
-def cddadr(x) cdr(cdr(car(cdr(x))))
-def cdddar(x) cdr(cdr(cdr(car(x))))
-def cddddr(x) cdr(cdr(cdr(cdr(x))))
+def snd(x)   fst(rst(x))
+def ffst(x)  fst(fst(x))
+def rfst(x)  rst(fst(x))
+def rrst(x)  rst(rst(x))
+def fffst(x) fst(fst(fst(x)))
+def ffrst(x) fst(fst(rst(x)))
+def frfst(x) fst(rst(fst(x)))
+def frrst(x) fst(rst(rst(x)))
+def rffst(x) rst(fst(fst(x)))
+def rfrst(x) rst(fst(rst(x)))
+def rrfst(x) rst(rst(fst(x)))
+def rrrst(x) rst(rst(rst(x)))
 
 ;;; Types
 
@@ -63,8 +46,8 @@ def macro?(x)       (= Type(x) Macro)
 def record?(x)      (= Type(x) Rec)
 def pair?(x)        (= Type(x) Pair)
 def atom?(x)        (not pair?(x))
-def cons?(x)        (and pair?(x) (not (pair? (cdr x))))
-def list?(x)        (if pair?(x) list?(cdr(x)) not(x))
+def cons?(x)        (and pair?(x) (not (pair? (rst x))))
+def list?(x)        (if pair?(x) list?(rst(x)) not(x))
 def boolean?(x)     (or (= x True) nil?(x))
 def true?(x)        (= x True)
 def false?          nil?
@@ -84,7 +67,7 @@ defmacro assert(expr)
 
 ;;; Control Flow
 
-; TODO if b = pair and car b = else use cdr b
+; TODO if b = pair and fst b = else use rst b
 defmacro (if con a b)
   "Execute a if condition con is true, otherwise run b"
   [cond [con a] [True b]]
@@ -102,7 +85,7 @@ defmacro (let vars ... body)
   [(list* 'Func ()
       (append
         (map
-          @(list* 'def (car it) (cdr it))
+          @(list* 'def (fst it) (rst it))
           vars)
         body))]
 
@@ -111,15 +94,15 @@ defmacro (let vars ... body)
   Also see: let"
   (list 'let
         (list*
-          (list proc (list* 'Func (map car vars) body))
+          (list proc (list* 'Func (map fst vars) body))
           vars)
-        (list* proc (map car vars))))
+        (list* proc (map fst vars))))
 
 ; TODO support else that is run if no values are equal
 (defmacro (switch val ... body)
   "Compare value to first element in each body statement, only running line where they are equal"
   (list* 'cond (map
-                 @`((= ,val ,(car it)) ,(cadr it))
+                 @`((= ,val ,(fst it)) ,(snd it))
                  body)))
 
 (defmacro (quasiquote expr)
@@ -129,44 +112,44 @@ defmacro (let vars ... body)
   Can be shortened with the ` prefix.
   Also see: quote, unquote, unquote-splice"
   (def (check form)
-    (unless (and (pair? (cdr form)) (nil? (cddr form)))
-      (error (car form) "invalid form " form)))
+    (unless (and (pair? (rst form)) (nil? (rrst form)))
+      (error (fst form) "invalid form " form)))
   (def (quasicons a d)
     (if (pair? d)
-      (if (= (car d) 'quote)
-        (if (and (pair? a) (= (car a) 'quote))
-          (list 'quote (list* (cadr a) (cadr d)))
-          (if (nil? (cadr d))
+      (if (= (fst d) 'quote)
+        (if (and (pair? a) (= (fst a) 'quote))
+          (list 'quote (list* (snd a) (snd d)))
+          (if (nil? (snd d))
             (list 'list a)
             (list list* a d)))
-        (if (member (car d) '(list list*))
-          (list* (car d) a (cdr d))
+        (if (member (fst d) '(list list*))
+          (list* (fst d) a (rst d))
           (list list* a d)))
       (list list* a d)))
   (recur f ((expr expr) (n 0))
     (cond
       ((nil? expr) Nil)
       ((atom? expr) (list 'quote expr))
-      ((= (car expr) 'quasiquote)
+      ((= (fst expr) 'quasiquote)
        (check expr)
-       (quasicons ''quasiquote (f (cdr expr) (+ n 1))))
-      ((= (car expr) 'unquote)
-       (check expr)
-       (if (= n 0)
-         (cadr expr)
-         (quasicons ''unquote (f (cdr expr) (- n 1)))))
-      ((= (car expr) 'unquote-splice)
+       (quasicons ''quasiquote (f (rst expr) (+ n 1))))
+      ((= (fst expr) 'unquote)
        (check expr)
        (if (= n 0)
-         (error 'unquote-splice "invalid context for " (cadr expr))
-         (quasicons ''unquote-splice (f (cdr expr) (- n 1)))))
-      ((and (= n 0) (and (pair? (car expr)) (= (caar expr) 'unquote-splice)))
-       (check (car expr))
-       (let (d: (f (cdr expr) n))
+         (snd expr)
+         (quasicons ''unquote (f (rst expr) (- n 1)))))
+      ((= (fst expr) 'unquote-splice)
+       (check expr)
+       (if (= n 0)
+         (error 'unquote-splice "invalid context for " (snd expr))
+         (quasicons ''unquote-splice (f (rst expr) (- n 1)))))
+      ((and (= n 0) (and (pair? (fst expr)) (= (ffst expr) 'unquote-splice)))
+       (check (fst expr))
+       (let (d: (f (rst expr) n))
          (if d
-           (list 'append (cadar expr) d)
-           (cadar expr))))
-      (else (quasicons (f (car expr) n) (f (cdr expr) n))))))
+           (list 'append (frfst expr) d)
+           (frfst expr))))
+      (else (quasicons (f (fst expr) n) (f (rst expr) n))))))
 
 (defmacro (unquote expr)
   "Unquote expression so its evaluated before placed into the quasiquote

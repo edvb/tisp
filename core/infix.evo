@@ -47,7 +47,7 @@ defmacro (|> val forms)
   > 3 |> (* 2) |> (- 7) ;; => 1
   > '(1 2 3) |> append([4 5 6]) ;; => (1 2 3 4 5 6)"
   if pair?(forms)
-    `(,car(forms) ,val ,@cdr(forms)) ; TODO if caar(forms) not = quote
+    `(,fst(forms) ,val ,@rst(forms)) ; TODO if ffst(forms) not = quote
     `(,forms ,val)
 
 defmacro (|>> val forms)
@@ -70,15 +70,15 @@ defmacro (<| func ... args)
 def pop-recur(ops elem popped)
   "Recursively pop the ops, returns stack of ops and list of popped elements"
   ; append to popped, not push, because order of returned popped stack should be same as was in working stack
-  if (and ops (<= infix-ops(elem) infix-ops(car(ops))))
-    pop-recur cdr(ops) elem append(popped [car(ops)])
+  if (and ops (<= infix-ops(elem) infix-ops(fst(ops))))
+    pop-recur rst(ops) elem append(popped [fst(ops)])
     cons cons(elem ops) popped
 
 def apply-op(op args)
   "Replace first two entries of queue with application of op on them
   apply-op f (x y z w) ;=> ((f y x) z w)"
   if (>= length(args) 2)
-    cons list(op cadr(args) car(args)) cddr(args)
+    cons list(op snd(args) fst(args)) rrst(args)
     op
 
 ; TODO combine multi = to optimize, and fix things
@@ -87,19 +87,19 @@ def apply-ops(ops vals)
   Top of the stack should be the first operator to be applied
   apply-ops (* -) (1 2 3) => a-ops (-) ((* 2 1) 3) => a-ops (-) ((* 2 1) 3) => (- 3 (* 2 1))"
   if pair?(ops)
-    apply-ops cdr(ops) apply-op(car(ops) vals)
+    apply-ops rst(ops) apply-op(fst(ops) vals)
     vals
 
 def shunting-yard(queue ops exprs)
   "Shunting-yard algorithm for operators"
   if pair?(exprs)
-    if assoc(car(exprs) records(infix-ops)) ; if expr is an operator
-      let (val: pop-recur(ops car(exprs) Nil)
-           new-ops: car(val)
-           popped: cdr(val))
-        shunting-yard apply-ops(popped queue) new-ops cdr(exprs)
-      shunting-yard push(queue car(exprs)) ops cdr(exprs) ; not infix op eg Num, Sym etc
-    car apply-ops(ops queue)
+    if assoc(fst(exprs) records(infix-ops)) ; if expr is an operator
+      let (val: pop-recur(ops fst(exprs) Nil)
+           new-ops: fst(val)
+           popped: rst(val))
+        shunting-yard apply-ops(popped queue) new-ops rst(exprs)
+      shunting-yard push(queue fst(exprs)) ops rst(exprs) ; not infix op eg Num, Sym etc
+    fst apply-ops(ops queue)
 
 defmacro (infix ... exprs)
   "Infix binary operations
