@@ -220,10 +220,12 @@ Returns first element of given list.
 Return rest of the given list, either just the second element if it is a pair,
 or another list with the first element removed.
 
-### cons
+### Pair
 
 Creates a new pair with the two given arguments, first one as the fst, second
 as the rst. Can be chained together to create a list if ending with `Nil`.
+
+See also Pair and List types.
 
 ### quote
 
@@ -371,6 +373,20 @@ Lists and symbols are quoted (`(list 1 2 3) => '(1 2 3)`), errors are comments.
 The only exception is anonymous functions/macros which will be supported soon.
 To print a value as valid eevo code use `display` and `displayln`, to get a
 plain output use `print` and `println`.
+
+### Legacy Free
+
+The traditional `car`/`cdr` have little meaning beyond their historical use, so instead replace
+them with `fst`/`rst` to get the first expression in a list and the rest of the list respectively.
+Compositions can be shorted just like with cxr: `fst(fst(x))` is the same as `ffst(x)`,
+`rst(fst(rst(x)))` is `rfrst(x)`, etc.
+The combination of `fst(rst(x))` is given the name `snd` since it is very common to get the
+second expression of a list, and to avoid confusing `frst` as first.
+The function to construct a new pair is changed from `cons` to `Pair` to stay consistent with
+other ways to create new types.
+
+Likewise, `lambda` is renamed to `Func`, since function has a clear well known meaning,
+opposed to lambda which has meaning only from convention.
 
 ## See Also
 

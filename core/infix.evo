@@ -72,13 +72,13 @@ def pop-recur(ops elem popped)
   ; append to popped, not push, because order of returned popped stack should be same as was in working stack
   if (and ops (<= infix-ops(elem) infix-ops(fst(ops))))
     pop-recur rst(ops) elem append(popped [fst(ops)])
-    cons cons(elem ops) popped
+    Pair Pair(elem ops) popped
 
 def apply-op(op args)
   "Replace first two entries of queue with application of op on them
   apply-op f (x y z w) ;=> ((f y x) z w)"
   if (>= length(args) 2)
-    cons list(op snd(args) fst(args)) rrst(args)
+    Pair list(op snd(args) fst(args)) rrst(args)
     op
 
 ; TODO combine multi = to optimize, and fix things

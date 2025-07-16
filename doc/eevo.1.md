@@ -31,10 +31,10 @@ to see the result.
 
 ```
 $ eevo
-> (cons 1 2)
-'(1 . 2)
-> (list 1 (+ 1 1) 3 (* 2 2))
-'(1 2 4)
+> Pair 1 2
+[1 ... 2]
+> list 1 (+ 1 1) 3 (* 2 2)
+[1 2 3 4]
 ```
 
 Alternatively you can pass a file name which will be opened and run, outputting

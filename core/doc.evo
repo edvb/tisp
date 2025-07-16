@@ -6,8 +6,8 @@ def docstr-reg
     (rst
       "rst(lst)"
       "Rest of list after first element, or second element of pair")
-    (cons
-      "cons(a d)"
+    (Pair
+      "Pair(a d)"
       "Create new pair with a fst of a and rst of d")
     (quote
       "quote(expr)"

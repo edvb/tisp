@@ -39,9 +39,9 @@ prim_rst(EevoSt st, EevoRec env, Eevo args)
 
 /* return new pair */
 static Eevo
-prim_cons(EevoSt st, EevoRec env, Eevo args)
+prim_Pair(EevoSt st, EevoRec env, Eevo args)
 {
-	eevo_arg_num(args, "cons", 2);
+	eevo_arg_num(args, "Pair", 2);
 	return eevo_pair(fst(args), snd(args));
 }
 
@@ -263,8 +263,7 @@ eevo_env_core(EevoSt st)
 {
 	eevo_env_prim(fst);
 	eevo_env_prim(rst);
-	eevo_env_prim(cons);
-	st->types[11]->v.t.func = eevo_prim(EEVO_PRIM, prim_cons, "Pair");
+	st->types[11]->v.t.func = eevo_prim(EEVO_PRIM, prim_Pair, "Pair");
 	eevo_env_form(quote);
 	eevo_env_prim(eval);
 	eevo_env_name_prim(=, eq);

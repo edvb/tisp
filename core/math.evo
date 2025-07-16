@@ -119,5 +119,5 @@ def range(start end)
   > range -4 0   ; [-4 -3 -2 -1 0]"
   recur f (n: end  res: Nil)
     if (>= n start)
-      f dec(n) (cons n res)
+      f dec(n) [n ... res]
       res

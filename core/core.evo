@@ -14,7 +14,7 @@ def defmacro
         error 'defmacro "expected macro name and argument List, recieved "
               typeof args
 
-;;; CXR
+;;; fst/rst
 
 def snd(x)   fst(rst(x))
 def ffst(x)  fst(fst(x))
@@ -46,7 +46,6 @@ def macro?(x)       (= Type(x) Macro)
 def record?(x)      (= Type(x) Rec)
 def pair?(x)        (= Type(x) Pair)
 def atom?(x)        (not pair?(x))
-def cons?(x)        (and pair?(x) (not (pair? (rst x))))
 def list?(x)        (if pair?(x) list?(rst(x)) not(x))
 def boolean?(x)     (or (= x True) nil?(x))
 def true?(x)        (= x True)
