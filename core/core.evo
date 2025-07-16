@@ -1,6 +1,6 @@
 ;;; core.evo
 def list(... lst) "Create list" lst
-def quit() '~No REPL to quit from~
+def quit '~No REPL to quit from~
 
 def defmacro
   Macro (args ... body)
