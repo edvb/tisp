@@ -12,7 +12,7 @@ EXE = eevo
 SRC = eevo.c main.c
 OBJ = $(SRC:.c=.o)
 LIB = $(CORE:.c=.so)
-DOC = doc/eevo.1.md doc/eevo.7.md
+DOC = doc/eevo.1.md doc/eevo.5.md
 MAN = $(DOC:.md=)
 
 MANOPTS = -nCD -t EEVO -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`"
@@ -61,9 +61,9 @@ man: $(MAN)
 	@echo updating man page $@
 	@markman $(MANOPTS) -s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" $< > $@
 
-%.7: %.7.md $(EXE)
+%.5: %.5.md $(EXE)
 	@echo updating man page $@
-	@markman $(MANOPTS) -7 $< > $@
+	@markman $(MANOPTS) -5 $< > $@
 
 dist: core.evo.h
 	@echo creating dist tarball
@@ -86,13 +86,13 @@ install: all
 	@sed -e "s@\./@@g" < evo > $(DESTDIR)$(PREFIX)/bin/evo
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/evo
 	@echo installing $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@echo installing $(DESTDIR)$(MANPREFIX)/man7/$(EXE).7
-	@mkdir -p $(DESTDIR)$(MANPREFIX)/man7
+	@echo installing $(DESTDIR)$(MANPREFIX)/man5/$(EXE).5
+	@mkdir -p $(DESTDIR)$(MANPREFIX)/man5
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	@cp -f doc/$(EXE).1 $(DESTDIR)$(MANPREFIX)/man1/
-	@cp -f doc/$(EXE).7 $(DESTDIR)$(MANPREFIX)/man7/
+	@cp -f doc/$(EXE).5 $(DESTDIR)$(MANPREFIX)/man5/
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@chmod 644 $(DESTDIR)$(MANPREFIX)/man7/$(EXE).7
+	@chmod 644 $(DESTDIR)$(MANPREFIX)/man5/$(EXE).5
 	@echo installing core to $(DESTDIR)$(PREFIX)/lib/eevo/pkgs/core
 	@mkdir -p $(DESTDIR)$(PREFIX)/lib/eevo/pkgs/core
 	@cp -f $(EVO) $(LIB) $(DESTDIR)$(PREFIX)/lib/eevo/pkgs/core
@@ -102,8 +102,8 @@ uninstall:
 	@rm -f $(DESTDIR)$(PREFIX)/bin/$(EXE)
 	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man1
 	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
-	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man7
-	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).7
+	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man5
+	@rm -f $(DESTDIR)$(MANPREFIX)/man1/$(EXE).5
 	@echo removing shared libraries from $(DESTDIR)$(PREFIX)/lib/eevo
 	@rm -rf $(DESTDIR)$(PREFIX)/lib/eevo/
 	@echo removing eevo libraries from $(DESTDIR)$(PREFIX)/share/eevo
