@@ -105,7 +105,7 @@ prim_write(EevoSt st, EevoRec env, Eevo args)
 		fflush(f);
 	else
 		fclose(f);
-	return st->none;
+	return Void;
 }
 
 /* return string of given file or read from stdin */
@@ -119,7 +119,7 @@ prim_read(EevoSt st, EevoRec env, Eevo args)
 		fname = fst(args)->v.s;
 	}
 	if (!(file = read_file(fname)))
-		return st->nil;
+		return Nil;
 	return eevo_str(st, file);
 }
 
@@ -137,9 +137,9 @@ prim_parse(EevoSt st, EevoRec env, Eevo args)
 	eevo_arg_type(expr, "parse", EEVO_STR);
 	st->file = expr->v.s;
 	st->filec = 0;
-	ret = eevo_pair(eevo_sym(st, "do"), st->nil);
+	ret = eevo_pair(eevo_sym(st, "do"), Nil);
 	for (Eevo pos = ret; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = rst(pos))
-		rst(pos) = eevo_pair(expr, st->nil);
+		rst(pos) = eevo_pair(expr, Nil);
 	st->file = file;
 	st->filec = filec;
 	if (rst(ret)->t == EEVO_PAIR && nilp(rrst(ret)))
@@ -168,9 +168,9 @@ prim_load(EevoSt st, EevoRec env, Eevo args)
 		strcat(name, ".evo");
 		if (access(name, R_OK) != -1) {
 			char *file = read_file(name);
-			Eevo body = prim_parse(st, env, eevo_pair(eevo_sym(st, file), st->nil));
+			Eevo body = prim_parse(st, env, eevo_pair(eevo_sym(st, file), Nil));
 			eevo_eval_body(st, env, body);
-			return st->none;
+			return Void;
 		}
 	}
 
@@ -195,7 +195,7 @@ prim_load(EevoSt st, EevoRec env, Eevo args)
 	(*tibenv)(st);
 
 	st->libhc++;
-	return st->none;
+	return Void;
 }
 
 void

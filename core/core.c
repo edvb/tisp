@@ -59,7 +59,7 @@ prim_eval(EevoSt st, EevoRec env, Eevo args)
 {
 	Eevo v;
 	eevo_arg_num(args, "eval", 1);
-	return (v = eevo_eval(st, st->env, fst(args))) ? v : st->none;
+	return (v = eevo_eval(st, st->env, fst(args))) ? v : Void;
 }
 
 /* test equality of all values given */
@@ -67,12 +67,12 @@ static Eevo
 prim_eq(EevoSt st, EevoRec env, Eevo args)
 {
 	if (nilp(args))
-		return st->t;
+		return True;
 	for (; !nilp(rst(args)); args = rst(args))
 		if (!vals_eq(fst(args), snd(args)))
-			return st->nil;
-	/* return nilp(fst(args)) ? st->t : fst(args); */
-	return st->t;
+			return Nil;
+	/* return nilp(fst(args)) ? True : fst(args); */
+	return True;
 }
 
 /* evaluates and returns first expression with a true conditional */
@@ -85,7 +85,7 @@ form_cond(EevoSt st, EevoRec env, Eevo args)
 			return NULL;
 		else if (!nilp(cond)) /* TODO incorporate else directly into cond */
 			return eevo_eval_body(st, env, rfst(v));
-	return st->none;
+	return Void;
 }
 
 /* return type of eevo value */
@@ -128,7 +128,7 @@ form_Func(EevoSt st, EevoRec env, Eevo args)
 	Eevo params, body;
 	eevo_arg_min(args, "Func", 1);
 	if (nilp(rst(args))) { /* if only 1 argument is given, auto fill func parameters */
-		params = eevo_pair(eevo_sym(st, "it"), st->nil);
+		params = eevo_pair(eevo_sym(st, "it"), Nil);
 		body = args;
 	} else {
 		params = fst(args);
@@ -184,7 +184,7 @@ prim_recmerge(EevoSt st, EevoRec env, Eevo args)
 static Eevo
 prim_records(EevoSt st, EevoRec env, Eevo args)
 {
-	Eevo ret = st->nil;
+	Eevo ret = Nil;
 	eevo_arg_num(args, "records", 1);
 	eevo_arg_type(fst(args), "records", EEVO_REC);
 	for (EevoRec r = fst(args)->v.r; r; r = r->next)
@@ -223,7 +223,7 @@ form_def(EevoSt st, EevoRec env, Eevo args)
 	if (val->t & (EEVO_FUNC|EEVO_MACRO) && !val->v.f.name)
 		val->v.f.name = sym->v.s; /* TODO some bug here */
 	rec_add(env, sym->v.s, val);
-	return st->none;
+	return Void;
 }
 
 /* TODO fix crashing if try to undefine builtin */
@@ -237,7 +237,7 @@ form_undefine(EevoSt st, EevoRec env, Eevo args)
 		if (e->key) {
 			e->key = NULL;
 			/* TODO eevo_free(e->val); */
-			return st->none;
+			return Void;
 		}
 	}
 	eevo_warnf("undefine!: could not find symbol %s to undefine", fst(args)->v.s);
@@ -254,7 +254,7 @@ form_definedp(EevoSt st, EevoRec env, Eevo args)
 		if (e->key)
 			break;
 	}
-	return (e && e->key) ? st->t : st->nil;
+	return (e && e->key) ? True : Nil;
 }
 
 

@@ -197,12 +197,12 @@ static Eevo                                         \
 prim_##NAME(EevoSt st, EevoRec vars, Eevo args)     \
 {                                                   \
 	if (eevo_lstlen(args) != 2)                 \
-		return st->t;                       \
+		return True;                        \
 	eevo_arg_type(fst(args), #OP, EEVO_NUM);    \
 	eevo_arg_type(snd(args), #OP, EEVO_NUM);    \
 	return ((num(fst(args))*den(snd(args)))  OP \
 		(num(snd(args))*den(fst(args)))) ?  \
-		st->t : st->nil;                    \
+		True : Nil;                         \
 }
 
 PRIM_COMPARE(lt,  <)

@@ -27,6 +27,14 @@
 
 #include "eevo.h"
 
+struct Eevo_ eevo_nil  = { .t = EEVO_NIL };
+struct Eevo_ eevo_true = { .t = EEVO_SYM, .v = { .s = "True" } };
+struct Eevo_ eevo_void = { .t = EEVO_NONE };
+
+#define Nil &eevo_nil
+#define True &eevo_true
+#define Void &eevo_void
+
 #define fst(P)  ((P)->v.p.fst)
 #define rst(P)  ((P)->v.p.rst)
 #define snd(P)  fst(rst(P))
@@ -439,9 +447,9 @@ eevo_list(EevoSt st, int n, ...)
 	Eevo lst;
 	va_list argp;
 	va_start(argp, n);
-	lst = eevo_pair(va_arg(argp, Eevo), st->nil);
+	lst = eevo_pair(va_arg(argp, Eevo), Nil);
 	for (Eevo cur = lst; n > 1; n--, cur = rst(cur))
-		rst(cur) = eevo_pair(va_arg(argp, Eevo), st->nil);
+		rst(cur) = eevo_pair(va_arg(argp, Eevo), Nil);
 	va_end(argp);
 	return lst;
 }
@@ -595,11 +603,11 @@ read_sym(EevoSt st, int (*is_char)(char))
 Eevo
 read_pair(EevoSt st, char endchar)
 {
-	Eevo v, ret = eevo_pair(NULL, st->nil);
+	Eevo v, ret = eevo_pair(NULL, Nil);
 	int skipnl = endchar != '\n';
 	skip_ws(st, 1);
 	/* if (!eevo_fget(st)) */
-	/* 	return st->nil; */
+	/* 	return Nil; */
 		/* eevo_warnf("reached end before closing '%c'", endchar); */
 	/* TODO replace w/ strchr to also check for NULL and allow }} */
 	/* !strchr(endchars, eevo_fget(st)) */
@@ -614,7 +622,7 @@ read_pair(EevoSt st, char endchar)
 			rst(pos) = v;
 			break;
 		}
-		rst(pos) = eevo_pair(v, st->nil);
+		rst(pos) = eevo_pair(v, Nil);
 		/* if (v->t == EEVO_SYM && is_op(v->v.s[0])) { */
 		/* 	is_infix = 1; */
 		/* 	skip_ws(st, 1); */
@@ -653,7 +661,7 @@ eevo_read_sexpr(EevoSt st)
 	/* TODO replace w/ fget? */
 	/* if == ] } ) etc say expected value before */
 	if (strlen(st->file+st->filec) == 0) /* empty list */
-		return st->none;
+		return Void;
 	if (isnum(st->file+st->filec)) /* number */
 		return read_num(st);
 	if (eevo_fget(st) == '"') /* string */
@@ -736,7 +744,7 @@ eevo_read_sugar(EevoSt st, Eevo v)
 		if (!(w = eevo_read(st)))
 			eevo_warn("invalid UFCS");
 		if (w->t != EEVO_PAIR)
-			w = eevo_pair(w, st->nil);
+			w = eevo_pair(w, Nil);
 		return eevo_pair(fst(w), eevo_pair(v, rst(w)));
 	}
 	/* return eevo_pair(v, eevo_read(st)); */
@@ -754,7 +762,7 @@ eevo_read_line(EevoSt st, int level)
 	if (!(ret = read_pair(st, '\n'))) /* read line */
 		return NULL;
 	if (ret->t != EEVO_PAIR) /* force to be pair */
-		ret = eevo_pair(ret, st->nil);
+		ret = eevo_pair(ret, Nil);
 	for (pos = ret; rst(pos)->t == EEVO_PAIR; pos = rst(pos)) ; /* get last pair */
 	for (; eevo_fget(st); pos = rst(pos)) { /* read indented lines as sub-expressions */
 		Eevo v;
@@ -778,7 +786,7 @@ eevo_read_line(EevoSt st, int level)
 Eevo
 eevo_eval_list(EevoSt st, EevoRec env, Eevo v)
 {
-	Eevo ret = eevo_pair(NULL, st->nil), ev;
+	Eevo ret = eevo_pair(NULL, Nil), ev;
 	for (Eevo cur = ret; !nilp(v); v = rst(v), cur = rst(cur)) {
 		if (v->t != EEVO_PAIR) { /* last element in improper list */
 			if (!(ev = eevo_eval(st, env, v)))
@@ -788,7 +796,7 @@ eevo_eval_list(EevoSt st, EevoRec env, Eevo v)
 		}
 		if (!(ev = eevo_eval(st, env, fst(v))))
 			return NULL;
-		rst(cur) = eevo_pair(ev, st->nil);
+		rst(cur) = eevo_pair(ev, Nil);
 	}
 	return rst(ret);
 }
@@ -797,7 +805,7 @@ eevo_eval_list(EevoSt st, EevoRec env, Eevo v)
 Eevo
 eevo_eval_body(EevoSt st, EevoRec env, Eevo body)
 {
-	Eevo ret = st->none;
+	Eevo ret = Void;
 	for (; body->t == EEVO_PAIR; body = rst(body))
 		if (nilp(rst(body)) && fst(body)->t == EEVO_PAIR) { /* func call is last, do tail call */
 			Eevo f, args;
@@ -1042,17 +1050,11 @@ eevo_env_init(size_t cap)
 	st->strs = rec_new(cap, NULL);
 	st->syms = rec_new(cap, NULL);
 
-	/* TODO make globals */
-	st->nil = eevo_val(EEVO_NIL);
-	st->none = eevo_val(EEVO_NONE);
-	st->t = eevo_val(EEVO_SYM);
-	st->t->v.s = "True";
-
 	st->env = rec_new(cap, NULL);
-	eevo_env_add(st, "True", st->t);
-	eevo_env_add(st, "Nil", st->nil);
-	eevo_env_add(st, "Void", st->none);
-	eevo_env_add(st, "bt", st->nil);
+	eevo_env_add(st, "True", True);
+	eevo_env_add(st, "Nil", Nil);
+	eevo_env_add(st, "Void", Void);
+	eevo_env_add(st, "bt", Nil);
 	eevo_env_add(st, "version", eevo_str(st, "0.1"));
 
 	/* Types */
@@ -1095,9 +1097,9 @@ eevo_env_lib(EevoSt st, char* lib)
 	st->file = lib;
 	st->filec = 0;
 	skip_ws(st, 1);
-	parsed = eevo_pair(eevo_sym(st, "do"), st->nil);
+	parsed = eevo_pair(eevo_sym(st, "do"), Nil);
 	for (Eevo pos = parsed; eevo_fget(st) && (expr = eevo_read_line(st, 0)); pos = rst(pos))
-		rst(pos) = eevo_pair(expr, st->nil);
+		rst(pos) = eevo_pair(expr, Nil);
 	ret = eevo_eval_body(st, st->env, rst(parsed));
 	st->file = file;
 	st->filec = filec;

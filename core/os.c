@@ -35,7 +35,7 @@ prim_cd(EevoSt st, EevoRec env, Eevo args)
 		eevo_warnf("cd!: expected string or symbol, received %s", eevo_type_str(dir->t));
 	if (chdir(dir->v.s))
 		return perror("; error: cd"), NULL;
-	return st->none;
+	return Void;
 }
 
 /* return string of current working directory */
