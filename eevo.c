@@ -29,7 +29,7 @@
 
 struct Eevo_ eevo_nil  = { .t = EEVO_NIL };
 struct Eevo_ eevo_true = { .t = EEVO_SYM, .v = { .s = "True" } };
-struct Eevo_ eevo_void = { .t = EEVO_NONE };
+struct Eevo_ eevo_void = { .t = EEVO_VOID };
 
 #define Nil &eevo_nil
 #define True &eevo_true
@@ -71,7 +71,7 @@ char *
 eevo_type_str(EevoType t)
 {
 	switch (t) {
-	case EEVO_NONE:  return "Void";
+	case EEVO_VOID:  return "Void";
 	case EEVO_NIL:   return "Nil";
 	case EEVO_INT:   return "Int";
 	case EEVO_DEC:   return "Dec";
@@ -950,7 +950,7 @@ eevo_print(Eevo v)
 	int size = 64;
 	char *head, *tail, *ret = calloc(size, sizeof(char));
 	switch (v->t) {
-	case EEVO_NONE:
+	case EEVO_VOID:
 		strcat(ret, "Void");
 		break;
 	case EEVO_NIL:
@@ -1058,7 +1058,7 @@ eevo_env_init(size_t cap)
 	eevo_env_add(st, "version", eevo_str(st, "0.1"));
 
 	/* Types */
-	st->types[0]  = eevo_type(st, EEVO_NONE,  "TVoid", NULL);
+	st->types[0]  = eevo_type(st, EEVO_VOID,  "TVoid", NULL);
 	st->types[1]  = eevo_type(st, EEVO_NIL,   "TNil",  NULL);
 	st->types[2]  = eevo_type(st, EEVO_INT,   "Int",   NULL);
 	st->types[3]  = eevo_type(st, EEVO_DEC,   "Dec",   NULL);
@@ -1072,7 +1072,7 @@ eevo_env_init(size_t cap)
 	st->types[11] = eevo_type(st, EEVO_PAIR,  "Pair",  NULL);
 	/* Eevo lst = eevo_sym(st, "lst"); */
 	/* Eevo List = eevo_func(EEVO_FUNC, "List", lst, eevo_list(st, 1, lst), st->env); */
-	/* st->types[11] = eevo_type(st, EEVO_PAIR | EEVO_NONE,  "List",  List); */
+	/* st->types[11] = eevo_type(st, EEVO_PAIR | EEVO_VOID,  "List",  List); */
 	st->types[12] = eevo_type(st, EEVO_REC,   "Rec",   eevo_prim(EEVO_FORM, eevo_rec,    "Rec"));
 	st->types[13] = eevo_type(st, EEVO_TYPE,  "Type",  eevo_prim(EEVO_PRIM, eevo_typeof, "Type"));
 	for (int i = 0; i < LEN(st->types); i++)

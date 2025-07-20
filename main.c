@@ -67,14 +67,14 @@ readstr:
 		} else { /* otherwise read as file */
 			v = read_parse_eval(st, eevo_pair(eevo_str(st, argv[i]), st->nil));
 		}
-		if (v && v->t != EEVO_NONE) {
+		if (v && v->t != EEVO_VOID) {
 			char *s = eevo_print(v);
 			fputs(s, stdout);
 			free(s);
 		}
 	}
 
-	/* if (v && v->t != EEVO_NONE) */
+	/* if (v && v->t != EEVO_VOID) */
 		puts("");
 
 	free(st);

@@ -87,7 +87,7 @@ typedef struct EevoRec_ {
 
 /* possible eevo value types */
 typedef enum {
-	EEVO_NONE  = 1 << 0,  /* void */
+	EEVO_VOID  = 1 << 0,  /* void */
 	EEVO_NIL   = 1 << 1,  /* nil: false, empty list */
 	EEVO_INT   = 1 << 2,  /* integer: whole number */
 	EEVO_DEC   = 1 << 3,  /* decimal: floating point number */
@@ -107,7 +107,7 @@ typedef enum {
 	EEVO_EXPR     = EEVO_NUM | EEVO_SYM | EEVO_PAIR,
 	EEVO_TEXT     = EEVO_STR | EEVO_SYM,
 	EEVO_PROC     = EEVO_FUNC | EEVO_PRIM | EEVO_MACRO | EEVO_FORM,
-	EEVO_LIT      = EEVO_NONE | EEVO_NIL | EEVO_NUM | EEVO_STR | EEVO_PROC,
+	EEVO_LIT      = EEVO_VOID | EEVO_NIL | EEVO_NUM | EEVO_STR | EEVO_PROC,
 	EEVO_LIST     = EEVO_PAIR | EEVO_NIL,
 	EEVO_CALLABLE = EEVO_PROC | EEVO_REC | EEVO_TYPE, // | EEVO_PAIR
 	EEVO_FUNCTOR  = EEVO_PAIR | EEVO_REC | EEVO_TYPE,
