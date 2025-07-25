@@ -13,7 +13,7 @@ SRC = eevo.c main.c
 OBJ = $(SRC:.c=.o)
 LIB = $(CORE:.c=.so)
 DOC = doc/eevo.1.md doc/eevo.5.md
-MAN = $(DOC:.md=)
+MAN = $(DOC:doc/%.md=doc/man/%)
 
 MANOPTS = -nCD -t EEVO -V "$(EXE) $(VERSION)" -d "`date '+%B %Y'`"
 VERSIONSHORT=$(shell cut -d '.' -f 1,2 <<< $(VERSION))
@@ -57,11 +57,11 @@ clean:
 
 man: $(MAN)
 
-%.1: %.1.md $(EXE)
+doc/man/%.1: doc/%.1.md $(EXE)
 	@echo updating man page $@
 	@markman $(MANOPTS) -s "`./$(EXE) -h 2>&1 | cut -d' ' -f2-`" $< > $@
 
-%.5: %.5.md $(EXE)
+doc/man/%.5: doc/%.5.md $(EXE)
 	@echo updating man page $@
 	@markman $(MANOPTS) -5 $< > $@
 
@@ -89,8 +89,8 @@ install: all
 	@echo installing $(DESTDIR)$(MANPREFIX)/man5/$(EXE).5
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man5
 	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
-	@cp -f doc/$(EXE).1 $(DESTDIR)$(MANPREFIX)/man1/
-	@cp -f doc/$(EXE).5 $(DESTDIR)$(MANPREFIX)/man5/
+	@cp -f doc/man/$(EXE).1 $(DESTDIR)$(MANPREFIX)/man1/
+	@cp -f doc/man/$(EXE).5 $(DESTDIR)$(MANPREFIX)/man5/
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/$(EXE).1
 	@chmod 644 $(DESTDIR)$(MANPREFIX)/man5/$(EXE).5
 	@echo installing core to $(DESTDIR)$(PREFIX)/lib/eevo/pkgs/core
