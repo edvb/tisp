@@ -907,25 +907,45 @@ eevo_eval(EevoSt st, EevoRec env, Eevo v)
 
 /* print */
 
-/* Resize string if its length is larger or equal to its size
- *   modify size to new max size after grown */
-static char *
-str_grow(char *str, int len, int *size)
-{
-	char *ret = str;
-	if (len >= *size)
-		if (!(ret = realloc(str, *size *= 2)))
-			return free(str), NULL;
-	return ret;
-}
-
-/* Convert record to string */
-static char *
-print_rec(EevoRec rec)
+/* determine size of string to be printed */
+size_t
+print_size(Eevo v)
 {
 	int len = 0;
-	int size = 64;
-	char *ret = calloc(size, sizeof(char));
+	switch (v->t) {
+	case EEVO_VOID:  return 5;
+	case EEVO_NIL:   return 4;
+	case EEVO_INT:   return snprintf(NULL, 0, "%d", (int)num(v)) + 1;
+	case EEVO_DEC:   return snprintf(NULL, 0, "%.15G", num(v)) + 3;
+	case EEVO_RATIO: return snprintf(NULL, 0, "%d/%d", (int)num(v), (int)den(v)) + 1;
+	case EEVO_STR:
+	case EEVO_SYM:   return strlen(v->v.s) + 1;
+	case EEVO_FUNC:
+	case EEVO_MACRO:
+		if (!v->v.f.name) return 5; /* anon */
+		return strlen(v->v.f.name) + 1;
+	case EEVO_PRIM:
+	case EEVO_FORM: return strlen(v->v.pr.name);
+	case EEVO_TYPE: return strlen(v->v.t.name);
+	case EEVO_REC:
+		for (EevoRec r = v->v.r; r; r = r->next)
+			for (int i = 0, c = 0; c < r->size; i++)
+				if (r->items[i].key) {
+					len += strlen(r->items[i].key) +
+					       print_size(r->items[i].val) + 2;
+					c++;
+				}
+		return len;
+	case EEVO_PAIR: return print_size(fst(v)) + print_size(rst(v)) + 1;
+	default:        return 0;
+	}
+}
+
+/* Convert record to string stored in ret */
+static void
+print_rec(char *ret, EevoRec rec)
+{
+	int len = 0;
 	for (EevoRec r = rec; r; r = r->next)
 		for (int i = 0, c = 0; c < r->size; i++)
 			if (r->items[i].key) {
@@ -933,12 +953,10 @@ print_rec(EevoRec rec)
 				char *key = r->items[i].key;
 				char *val = eevo_print(r->items[i].val);
 				len += strlen(key) + strlen(val) + 2;
-				if (!(ret = str_grow(ret, len, &size)))
-					return NULL;
 				snprintf(ret + strlen(ret), len-olen, "%s:%s", key, val);
+				free(val);
 				c++;
 			}
-	return ret;
 }
 
 /* Convert eevo value to string to be printed
@@ -946,8 +964,7 @@ print_rec(EevoRec rec)
 char *
 eevo_print(Eevo v)
 {
-	int len;
-	int size = 64;
+	int size = print_size(v);
 	char *head, *tail, *ret = calloc(size, sizeof(char));
 	switch (v->t) {
 	case EEVO_VOID:
@@ -957,30 +974,18 @@ eevo_print(Eevo v)
 		strcat(ret, "Nil");
 		break;
 	case EEVO_INT:
-		len = snprintf(NULL, 0, "%d", (int)num(v)) + 1;
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
-		snprintf(ret, len, "%d", (int)num(v));
+		snprintf(ret, size, "%d", (int)num(v));
 		break;
 	case EEVO_DEC:
-		len = snprintf(NULL, 0, "%.15G", num(v)) + 3;
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
-		snprintf(ret, len, "%.15G", num(v));
+		snprintf(ret, size, "%.15G", num(v));
 		if (num(v) == (int)num(v))
 			strcat(ret, ".0");
 		break;
 	case EEVO_RATIO:
-		len = snprintf(NULL, 0, "%d/%d", (int)num(v), (int)den(v)) + 1;
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
-		snprintf(ret, len, "%d/%d", (int)num(v), (int)den(v));
+		snprintf(ret, size, "%d/%d", (int)num(v), (int)den(v));
 		break;
 	case EEVO_STR:
 	case EEVO_SYM:
-		len = strlen(v->v.s);
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
 		strcat(ret, v->v.s);
 		break;
 	case EEVO_FUNC:
@@ -989,34 +994,25 @@ eevo_print(Eevo v)
 			strcat(ret, "anon");
 			break;
 		}
-		len = strlen(v->v.f.name);
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
 		strcat(ret, v->v.f.name);
 		break;
 	case EEVO_PRIM:
 	case EEVO_FORM:
-		len = strlen(v->v.pr.name);
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
 		strcat(ret, v->v.pr.name);
 		break;
 	case EEVO_TYPE:
-		len = strlen(v->v.t.name);
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
 		strcat(ret, v->v.t.name);
 		break;
 	case EEVO_REC:
-		ret = print_rec(v->v.r);
+		print_rec(ret, v->v.r);
 		break;
 	case EEVO_PAIR:
 		head = eevo_print(fst(v));
 		tail = nilp(rst(v)) ? "" : eevo_print(rst(v));
-		len = strlen(head) + strlen(tail) + 1;
-		if (!(ret = str_grow(ret, len, &size)))
-			return NULL;
-		snprintf(ret, len, "%s%s", head, tail);
+		snprintf(ret, size, "%s%s", head, tail);
+		free(head);
+		if (!nilp(rst(v)))
+			free(tail);
 		break;
 	default:
 		free(ret);
