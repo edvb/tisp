@@ -62,10 +62,10 @@ readstr:
 				fputs("usage: eevo [-rhv] [-e EXPRESSION] [FILE ...] [-]\n", stderr);
 				exit(argv[i][1] == 'h' ? 0 : 1);
 			} else { /* single hypen read from stdin */
-				v = read_parse_eval(st, st->nil);
+				v = read_parse_eval(st, &eevo_nil);
 			}
 		} else { /* otherwise read as file */
-			v = read_parse_eval(st, eevo_pair(eevo_str(st, argv[i]), st->nil));
+			v = read_parse_eval(st, eevo_pair(eevo_str(st, argv[i]), &eevo_nil));
 		}
 		if (v && v->t != EEVO_VOID) {
 			char *s = eevo_print(v);

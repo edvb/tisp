@@ -24,6 +24,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* Global literals */
+extern struct Eevo_ eevo_nil;
+extern struct Eevo_ eevo_true;
+extern struct Eevo_ eevo_void;
+
 #define EEVO_REC_FACTOR 2
 
 #define EEVO_OP_CHARS "_+-*/\\|=^<>.:"
@@ -141,7 +146,6 @@ struct Eevo_ {
 struct EevoSt_ {
 	char *file;
 	size_t filec;
-	Eevo none, nil, t;
 	Eevo types[14];
 	EevoRec env, strs, syms;
 	void **libh;
